@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+
 type Job = {
   id: string;
   title: string;
@@ -23,10 +24,8 @@ export default function MyJobsPage() {
       });
 
     if (error) {
-      alert(JSON.stringify(error, null, 2));
-
       console.error(error);
-
+      alert(JSON.stringify(error, null, 2));
       return;
     }
 
@@ -39,6 +38,21 @@ export default function MyJobsPage() {
     fetchJobs();
   }, []);
 
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm("この求人を削除しますか？");
+
+    if (!confirmed) return;
+
+    const { error } = await supabase.from("saved_jobs").delete().eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    fetchJobs();
+  };
+
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -50,20 +64,6 @@ export default function MyJobsPage() {
       alert("ログインしてください");
       return;
     }
-    const handleDelete = async (id: string) => {
-      const confirmed = window.confirm("この求人を削除しますか？");
-
-      if (!confirmed) return;
-
-      const { error } = await supabase.from("saved_jobs").delete().eq("id", id);
-
-      if (error) {
-        alert(error.message);
-        return;
-      }
-
-      fetchJobs();
-    };
 
     const { error } = await supabase.from("saved_jobs").insert({
       user_id: user.id,
@@ -93,13 +93,13 @@ export default function MyJobsPage() {
           <Link
             href="/mypage"
             className="
-      bg-gray-500
-      text-white
-      px-4
-      py-2
-      rounded-lg
-      hover:bg-gray-600
-    "
+              bg-gray-500
+              text-white
+              px-4
+              py-2
+              rounded-lg
+              hover:bg-gray-600
+            "
           >
             ← マイページへ戻る
           </Link>
@@ -153,11 +153,11 @@ export default function MyJobsPage() {
             <div
               key={job.id}
               className="
-      bg-white
-      p-6
-      rounded-2xl
-      shadow
-    "
+                bg-white
+                p-6
+                rounded-2xl
+                shadow
+              "
             >
               <div className="flex justify-between">
                 <div>
@@ -168,9 +168,9 @@ export default function MyJobsPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="
-            text-blue-600
-            break-all
-          "
+                      text-blue-600
+                      break-all
+                    "
                   >
                     {job.url}
                   </a>
@@ -179,13 +179,13 @@ export default function MyJobsPage() {
                 <button
                   onClick={() => handleDelete(job.id)}
                   className="
-          bg-red-500
-          text-white
-          px-4
-          py-2
-          rounded-lg
-          h-fit
-        "
+                    bg-red-500
+                    text-white
+                    px-4
+                    py-2
+                    rounded-lg
+                    h-fit
+                  "
                 >
                   削除
                 </button>

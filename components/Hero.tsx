@@ -1,44 +1,77 @@
+import Link from "next/link";
+
 export default function Hero() {
   return (
     <section
       className="
-        h-[80vh]
+        min-h-[80vh]
         flex
         items-center
         justify-center
+        bg-gradient-to-r
+        from-blue-600
+        to-cyan-500
         text-white
-        bg-cover
-        bg-center
+        px-6
       "
-      style={{
-        backgroundImage:
-          "linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,.4)), url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e')",
-      }}
     >
-      <div className="text-center px-6">
-        <h2 className="text-5xl md:text-7xl font-bold mb-6">
+      <div className="max-w-4xl text-center">
+        <h1 className="text-5xl md:text-7xl font-bold mb-6">
           海外生活を、
           <br />
           もっとリアルに。
-        </h2>
+        </h1>
 
-        <p className="text-xl md:text-2xl mb-8">
-          仕事 × 応募 × 住まい × 生活設計
+        <p className="text-xl md:text-2xl mb-10">
+          家探し × 仕事探し × 生活設計を
+          <br />
+          ひとつのサービスで。
         </p>
 
-        <button
-          className="
-            bg-blue-600
-            hover:bg-blue-700
-            px-8
-            py-4
-            rounded-xl
-            text-lg
-            font-semibold
-          "
-        >
-          はじめる
-        </button>
+        <div className="flex flex-col md:flex-row justify-center gap-4">
+          <Link
+            href="/register"
+            className="
+              inline-block
+              bg-white
+              text-blue-600
+              px-8
+              py-4
+              rounded-xl
+              font-semibold
+              text-lg
+              hover:bg-gray-100
+              transition
+            "
+          >
+            無料ではじめる
+          </Link>
+
+          <Link
+            href="/login"
+            className="
+              inline-block
+              border-2
+              border-white
+              px-8
+              py-4
+              rounded-xl
+              font-semibold
+              text-lg
+              hover:bg-white
+              hover:text-blue-600
+              transition
+            "
+          >
+            ログイン
+          </Link>
+        </div>
+
+        <div className="mt-12 text-sm md:text-base opacity-90">
+          <p>ニュージーランドのワーホリからスタート。</p>
+
+          <p>今後、オーストラリア・カナダにも対応予定。</p>
+        </div>
       </div>
     </section>
   );

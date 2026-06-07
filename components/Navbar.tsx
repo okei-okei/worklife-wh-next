@@ -9,7 +9,22 @@ export default function Navbar() {
         <Link href="/">ホーム</Link>
         <Link href="/jobs">仕事</Link>
         <Link href="/properties">物件</Link>
-        <Link href="/login">ログイン</Link>
+        <div className="flex gap-4">
+          <Link href="/login">ログイン</Link>
+
+          <Link
+            href="/register"
+            className="
+      bg-blue-600
+      text-white
+      px-4
+      py-2
+      rounded-lg
+    "
+          >
+            無料登録
+          </Link>
+        </div>
       </nav>
     </header>
   );

@@ -1,9 +1,255 @@
-export default function PropertiesPage() {
-  return (
-    <main className="min-h-screen p-6">
-      <h1 className="text-3xl font-bold">物件一覧</h1>
+"use client";
 
-      <p className="mt-4">Trade Meなどの物件情報を表示するページです。</p>
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+
+type Property = {
+  id: string;
+  title: string;
+  url: string;
+
+  city?: string;
+  address?: string;
+
+  weekly_rent?: number;
+
+  ai_score?: number;
+  ai_comment?: string;
+};
+
+export default function MyPropertiesPage() {
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+
+  const [properties, setProperties] = useState<Property[]>([]);
+
+  const fetchProperties = async () => {
+    const { data, error } = await supabase
+      .from("saved_properties")
+      .select("*")
+      .order("created_at", {
+        ascending: false,
+      });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      setProperties(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm("この物件を削除しますか？");
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("saved_properties")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    fetchProperties();
+  };
+
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("ログインしてください");
+      return;
+    }
+
+    const fakeAiScore = Math.floor(Math.random() * 5) + 1;
+
+    const fakeComment =
+      fakeAiScore >= 4
+        ? "住みやすそうな物件です"
+        : "周辺環境を確認してください";
+
+    const { error } = await supabase.from("saved_properties").insert({
+      user_id: user.id,
+
+      title,
+      url,
+
+      city: "未解析",
+      address: "未解析",
+
+      weekly_rent: null,
+
+      ai_score: fakeAiScore,
+      ai_comment: fakeComment,
+    });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("物件を保存しました");
+
+    setTitle("");
+    setUrl("");
+
+    fetchProperties();
+  };
+
+  return (
+    <main className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold">保存した物件</h1>
+
+          <Link
+            href="/mypage"
+            className="
+              bg-gray-500
+              text-white
+              px-4
+              py-2
+              rounded-lg
+            "
+          >
+            ← マイページへ戻る
+          </Link>
+        </div>
+
+        <form
+          onSubmit={handleSave}
+          className="
+            bg-white
+            p-6
+            rounded-2xl
+            shadow
+            mb-8
+            space-y-4
+          "
+        >
+          <input
+            type="text"
+            placeholder="物件名"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="
+              w-full
+              border
+              p-3
+              rounded-lg
+            "
+            required
+          />
+
+          <input
+            type="url"
+            placeholder="Trade MeなどのURL"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="
+              w-full
+              border
+              p-3
+              rounded-lg
+            "
+            required
+          />
+
+          <button
+            type="submit"
+            className="
+              bg-green-600
+              text-white
+              px-6
+              py-3
+              rounded-lg
+            "
+          >
+            保存する
+          </button>
+        </form>
+
+        <div className="space-y-4">
+          {properties.map((property) => (
+            <div
+              key={property.id}
+              className="
+                bg-white
+                p-6
+                rounded-2xl
+                shadow
+              "
+            >
+              <div className="flex justify-between">
+                <div>
+                  <h2 className="text-xl font-bold">{property.title}</h2>
+
+                  <a
+                    href={property.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="
+                      text-blue-600
+                      break-all
+                    "
+                  >
+                    {property.url}
+                  </a>
+
+                  <p className="mt-2">
+                    都市:
+                    {property.city}
+                  </p>
+
+                  <p>
+                    家賃:
+                    {property.weekly_rent
+                      ? `$${property.weekly_rent}`
+                      : "未設定"}
+                  </p>
+
+                  <p>
+                    AI評価:
+                    {property.ai_score}
+                    /5
+                  </p>
+
+                  <p>{property.ai_comment}</p>
+                </div>
+
+                <button
+                  onClick={() => handleDelete(property.id)}
+                  className="
+                    bg-red-500
+                    text-white
+                    px-4
+                    py-2
+                    rounded-lg
+                    h-fit
+                  "
+                >
+                  削除
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </main>
   );
 }

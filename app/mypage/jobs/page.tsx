@@ -8,6 +8,15 @@ type Job = {
   id: string;
   title: string;
   url: string;
+
+  company?: string;
+  city?: string;
+
+  hourly_rate?: number;
+
+  ai_score?: number;
+
+  ai_comment?: string;
 };
 
 export default function MyJobsPage() {
@@ -65,10 +74,23 @@ export default function MyJobsPage() {
       return;
     }
 
+    const fakeAiScore = Math.floor(Math.random() * 5) + 1;
+
+    const fakeComment =
+      fakeAiScore >= 4 ? "ワーホリ向けの求人です" : "条件を確認してください";
+
     const { error } = await supabase.from("saved_jobs").insert({
       user_id: user.id,
       title,
       url,
+
+      company: "未解析",
+      city: "未解析",
+
+      hourly_rate: null,
+
+      ai_score: fakeAiScore,
+      ai_comment: fakeComment,
     });
 
     if (error) {
@@ -163,6 +185,21 @@ export default function MyJobsPage() {
                 <div>
                   <h2 className="text-xl font-bold">{job.title}</h2>
 
+                  <p>{job.company}</p>
+
+                  <p>{job.city}</p>
+
+                  <p>
+                    時給:
+                    {job.hourly_rate ? `$${job.hourly_rate}` : "未設定"}
+                  </p>
+
+                  <p>
+                    AI評価:
+                    {job.ai_score ?? "-"}
+                  </p>
+
+                  <p>{job.ai_comment}</p>
                   <a
                     href={job.url}
                     target="_blank"

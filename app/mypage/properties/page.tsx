@@ -8,19 +8,15 @@ type Property = {
   id: string;
   title: string;
   url: string;
-
-  city?: string;
-  address?: string;
-
-  weekly_rent?: number;
-
-  ai_score?: number;
-  ai_comment?: string;
+  location: string | null;
+  rent_weekly: number | null;
 };
 
 export default function MyPropertiesPage() {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
+  const [location, setLocation] = useState("");
+  const [rentWeekly, setRentWeekly] = useState("");
 
   const [properties, setProperties] = useState<Property[]>([]);
 
@@ -34,6 +30,7 @@ export default function MyPropertiesPage() {
 
     if (error) {
       console.error(error);
+      alert(error.message);
       return;
     }
 
@@ -76,26 +73,12 @@ export default function MyPropertiesPage() {
       return;
     }
 
-    const fakeAiScore = Math.floor(Math.random() * 5) + 1;
-
-    const fakeComment =
-      fakeAiScore >= 4
-        ? "住みやすそうな物件です"
-        : "周辺環境を確認してください";
-
     const { error } = await supabase.from("saved_properties").insert({
       user_id: user.id,
-
       title,
       url,
-
-      city: "未解析",
-      address: "未解析",
-
-      weekly_rent: null,
-
-      ai_score: fakeAiScore,
-      ai_comment: fakeComment,
+      location,
+      rent_weekly: rentWeekly ? Number(rentWeekly) : null,
     });
 
     if (error) {
@@ -107,13 +90,15 @@ export default function MyPropertiesPage() {
 
     setTitle("");
     setUrl("");
+    setLocation("");
+    setRentWeekly("");
 
     fetchProperties();
   };
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold">保存した物件</h1>
 
@@ -147,27 +132,33 @@ export default function MyPropertiesPage() {
             placeholder="物件名"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="
-              w-full
-              border
-              p-3
-              rounded-lg
-            "
+            className="w-full border p-3 rounded-lg"
             required
           />
 
           <input
             type="url"
-            placeholder="Trade MeなどのURL"
+            placeholder="Trade Me URL"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="
-              w-full
-              border
-              p-3
-              rounded-lg
-            "
+            className="w-full border p-3 rounded-lg"
             required
+          />
+
+          <input
+            type="text"
+            placeholder="住所"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            className="w-full border p-3 rounded-lg"
+          />
+
+          <input
+            type="number"
+            placeholder="週家賃 ($)"
+            value={rentWeekly}
+            onChange={(e) => setRentWeekly(e.target.value)}
+            className="w-full border p-3 rounded-lg"
           />
 
           <button
@@ -199,6 +190,15 @@ export default function MyPropertiesPage() {
                 <div>
                   <h2 className="text-xl font-bold">{property.title}</h2>
 
+                  <p className="mt-2">住所: {property.location || "未設定"}</p>
+
+                  <p>
+                    週家賃:{" "}
+                    {property.rent_weekly
+                      ? `$${property.rent_weekly}`
+                      : "未設定"}
+                  </p>
+
                   <a
                     href={property.url}
                     target="_blank"
@@ -210,26 +210,6 @@ export default function MyPropertiesPage() {
                   >
                     {property.url}
                   </a>
-
-                  <p className="mt-2">
-                    都市:
-                    {property.city}
-                  </p>
-
-                  <p>
-                    家賃:
-                    {property.weekly_rent
-                      ? `$${property.weekly_rent}`
-                      : "未設定"}
-                  </p>
-
-                  <p>
-                    AI評価:
-                    {property.ai_score}
-                    /5
-                  </p>
-
-                  <p>{property.ai_comment}</p>
                 </div>
 
                 <button

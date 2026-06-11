@@ -84,6 +84,21 @@ export default function MyPage() {
 
             <p>カバーレターや応募メールを作成できます。</p>
           </div>
+
+          <Link
+            href="/planner"
+            className="
+    bg-blue-600
+    text-white
+    p-6
+    rounded-2xl
+    text-center
+    text-xl
+    font-bold
+  "
+          >
+            ライフプランナー
+          </Link>
         </div>
       </div>
     </main>

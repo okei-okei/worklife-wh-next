@@ -113,6 +113,18 @@ export default function MyPage() {
             </div>
           </Link>
 
+          <Link href="/mypage/cover-letter" className="block min-w-0">
+            <div className="min-w-0 cursor-pointer rounded-2xl bg-white p-4 shadow hover:shadow-lg md:p-6">
+              <h2 className="mb-2 text-xl font-bold text-gray-900 md:text-2xl">
+                カバーレター作成
+              </h2>
+
+              <p className="text-base font-medium leading-7 text-gray-800">
+                求人と履歴書から英語のカバーレターを作成できます。
+              </p>
+            </div>
+          </Link>
+
           <Link
             href="/planner"
             className="flex min-w-0 items-center justify-center rounded-2xl bg-blue-600 p-4 text-center text-xl font-bold text-white md:p-6"

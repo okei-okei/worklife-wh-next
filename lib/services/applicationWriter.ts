@@ -82,3 +82,54 @@ ${fullName}
 ${email}
 ${phone}`;
 }
+
+export function generateCoverLetter({
+  job,
+  resume,
+}: {
+  job: ApplicationJob;
+  resume: ApplicationResume;
+}) {
+  const fullName = valueOrPlaceholder(resume.full_name, "[Your Name]");
+  const email = valueOrPlaceholder(resume.email, "[Your Email]");
+  const phone = valueOrPlaceholder(resume.phone, "[Your Phone Number]");
+  const visaType = valueOrPlaceholder(resume.visa_type, "a valid work visa");
+  const availableFrom = formatAvailableFrom(resume.available_from);
+  const introduction = valueOrPlaceholder(
+    resume.self_introduction,
+    "I am motivated, reliable, and excited to contribute to a workplace in New Zealand.",
+  );
+  const experience = valueOrPlaceholder(
+    resume.work_experience,
+    "I have relevant work experience that has helped me build practical skills and a strong work ethic.",
+  );
+  const skills = valueOrPlaceholder(
+    resume.skills,
+    "My strengths include communication, teamwork, adaptability, and a willingness to learn quickly.",
+  );
+
+  // This is intentionally template-based for the MVP. Later, this function can
+  // be replaced by an AI-backed implementation without changing the page UI.
+  return `Dear Hiring Manager,
+
+I am writing to express my interest in the ${job.title} position.
+
+${introduction}
+
+Through my previous experience, I have developed skills that I believe would be valuable for this role. My relevant experience includes:
+${experience}
+
+My key strengths include:
+${skills}
+
+I currently hold ${visaType}, and I am able to work legally in New Zealand. I am available to start from ${availableFrom}.
+
+I would welcome the opportunity to discuss how my experience and attitude could contribute to your team. I am available for an interview at your convenience.
+
+Thank you for considering my application. I look forward to hearing from you.
+
+Kind regards,
+${fullName}
+${email}
+${phone}`;
+}

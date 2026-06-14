@@ -15,15 +15,12 @@ type Props = {
   onEdit: (job: Job) => void;
 };
 
-function buildApplicationHref(job: Job, documentType: string) {
+function buildJobApplicationHref(job: Job) {
   const params = new URLSearchParams({
-    target_type: "job",
-    target_source: "saved",
-    target_id: job.id,
-    document_type: documentType,
+    saved_job_id: job.id,
   });
 
-  return `/mypage/applications?${params.toString()}`;
+  return `/mypage/job-application?${params.toString()}`;
 }
 
 export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
@@ -135,17 +132,10 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
           {/* RIGHT SIDE ACTIONS */}
           <div className="flex flex-col gap-2 sm:w-48">
             <Link
-              href={buildApplicationHref(job, "application_email")}
+              href={buildJobApplicationHref(job)}
               className="w-full rounded-lg bg-green-600 px-4 py-3 text-center font-bold text-white sm:py-2"
             >
-              応募メール
-            </Link>
-
-            <Link
-              href={buildApplicationHref(job, "cover_letter")}
-              className="w-full rounded-lg bg-purple-600 px-4 py-3 text-center font-bold text-white sm:py-2"
-            >
-              カバーレター
+              応募する
             </Link>
 
             {/* EDIT */}

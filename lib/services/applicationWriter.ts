@@ -10,6 +10,9 @@ export type ApplicationTarget = {
   address?: string | null;
   company?: string | null;
   ownerName?: string | null;
+  description?: string | null;
+  hourlyRate?: number | null;
+  workHours?: number | null;
 };
 
 export type ApplicationJob = ApplicationTarget;
@@ -112,6 +115,14 @@ const templateApplicationWriter: ApplicationWriter = {
       resume.english_level,
       "conversational English",
     );
+    const companyLine = target.company ? ` at ${target.company}` : "";
+    const roleMemo = target.description?.trim()
+      ? `\nI understand that the role involves: ${target.description.trim()}\n`
+      : "";
+    const conditionLine =
+      target.hourlyRate || target.workHours
+        ? `\nI also understand the listed conditions as ${target.hourlyRate ? `$${target.hourlyRate} per hour` : "the listed hourly rate"}${target.workHours ? ` and around ${target.workHours} hours per week` : ""}.\n`
+        : "";
 
     if (target.type === "property") {
       const locationLine = target.location || target.address;
@@ -146,9 +157,10 @@ ${phone}`;
 
 Dear Hiring Manager,
 
-I am writing to apply for the ${target.title} position.
+I am writing to apply for the ${target.title} position${companyLine}.
 
 ${introduction}
+${roleMemo}${conditionLine}
 
 I currently hold ${visaType}, and I am available to start from ${availableFrom}. My English level is ${englishLevel}.
 
@@ -157,6 +169,8 @@ ${experience}
 
 My key skills include:
 ${skills}
+
+I have attached my resume for your review.
 
 I would be grateful for the opportunity to discuss my application in an interview. I am flexible with interview times and can provide any further information if needed.
 
@@ -186,6 +200,10 @@ ${phone}`;
       resume.skills,
       "My strengths include communication, teamwork, adaptability, and a willingness to learn quickly.",
     );
+    const companyLine = target.company ? ` at ${target.company}` : "";
+    const roleMemo = target.description?.trim()
+      ? `\nFrom the job information, I understand that the role involves: ${target.description.trim()}\n`
+      : "";
 
     if (target.type === "property") {
       return `Dear Property Manager,
@@ -214,9 +232,10 @@ ${phone}`;
 
     return `Dear Hiring Manager,
 
-I am writing to express my interest in the ${target.title} position.
+I am writing to express my interest in the ${target.title} position${companyLine}.
 
 ${introduction}
+${roleMemo}
 
 Through my previous experience, I have developed skills that I believe would be valuable for this role. My relevant experience includes:
 ${experience}
@@ -225,6 +244,8 @@ My key strengths include:
 ${skills}
 
 I currently hold ${visaType}, and I am able to work legally in New Zealand. I am available to start from ${availableFrom}.
+
+I have attached my resume for your review.
 
 I would welcome the opportunity to discuss how my experience and attitude could contribute to your team. I am available for an interview at your convenience.
 

@@ -6,6 +6,8 @@ create table if not exists public.application_documents (
   document_type text not null check (document_type in ('email', 'cover_letter')),
   title text,
   content text not null,
+  file_path text,
+  file_url text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -16,11 +18,18 @@ comment on table public.application_documents is
 comment on column public.application_documents.target_id is
   'When target_type is job, this references saved_jobs.id. When target_type is property, this references saved_properties.id. Conditional foreign keys are enforced by the application and RLS ownership checks.';
 
+comment on column public.application_documents.file_path is
+  'Private Supabase Storage path for a generated PDF version of the application document.';
+
 create index if not exists application_documents_user_target_idx
   on public.application_documents (user_id, target_type, target_id);
 
 create index if not exists application_documents_user_document_idx
   on public.application_documents (user_id, document_type, created_at desc);
+
+create index if not exists application_documents_user_file_path_idx
+  on public.application_documents (user_id, file_path)
+  where file_path is not null;
 
 create or replace function public.set_application_documents_updated_at()
 returns trigger

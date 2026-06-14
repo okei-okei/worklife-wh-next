@@ -147,25 +147,20 @@ export default function ChecklistPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
+    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
           <div>
-            <h1 className="text-4xl font-bold">住居決定後チェックリスト</h1>
-            <p className="mt-2 text-gray-600">
+            <h1 className="text-2xl font-bold md:text-4xl">
+              住居決定後チェックリスト
+            </h1>
+            <p className="mt-2 text-base font-medium leading-7 text-gray-800">
               入居後に必要な手続きをまとめて管理できます。
             </p>
           </div>
-
-          <Link
-            href="/mypage"
-            className="rounded-lg bg-gray-500 px-4 py-2 text-white"
-          >
-            ← マイページ
-          </Link>
         </div>
 
-        <section className="rounded-2xl bg-white p-6 shadow">
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-bold">進捗</h2>
 
@@ -182,7 +177,7 @@ export default function ChecklistPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-white p-6 shadow">
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <div className="space-y-3">
             {CHECKLIST_ITEMS.map((item) => {
               const checked = Boolean(checkedItems[item.key]);
@@ -217,7 +212,7 @@ export default function ChecklistPage() {
                     {item.partnerHref ? (
                       <Link
                         href={item.partnerHref}
-                        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
+                        className="w-full rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center text-sm font-bold text-blue-700 hover:bg-blue-100 sm:w-auto"
                       >
                         おすすめサービスを見る
                       </Link>
@@ -236,6 +231,15 @@ export default function ChecklistPage() {
             })}
           </div>
         </section>
+
+        <div className="flex justify-center">
+          <Link
+            href="/mypage"
+            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+          >
+            ← マイページホームへ戻る
+          </Link>
+        </div>
       </div>
     </main>
   );

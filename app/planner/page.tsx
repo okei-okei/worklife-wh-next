@@ -404,17 +404,10 @@ export default function PlannerPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl min-w-0">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-8">
           <h1 className="min-w-0 whitespace-normal break-words text-2xl font-bold md:text-4xl">
             ライフプランナー（最適化AI）
           </h1>
-
-          <Link
-            href="/mypage"
-            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
-          >
-            ← マイページ
-          </Link>
         </div>
 
         <PlannerInputPanel
@@ -515,6 +508,15 @@ export default function PlannerPage() {
           emptyMessage={emptyMessage}
           onSelectResult={setSelectedResultKey}
         />
+
+        <div className="mt-6 flex justify-center">
+          <Link
+            href="/mypage"
+            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+          >
+            ← マイページホームへ戻る
+          </Link>
+        </div>
       </div>
     </main>
   );

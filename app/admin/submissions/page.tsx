@@ -145,7 +145,7 @@ export default function AdminSubmissionsPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH Admin
@@ -159,15 +159,9 @@ export default function AdminSubmissionsPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white"
+              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-center text-white sm:w-auto sm:py-2"
             >
               管理ダッシュボード
-            </Link>
-            <Link
-              href="/mypage"
-              className="rounded-lg bg-gray-500 px-4 py-2 text-white"
-            >
-              ← マイページ
             </Link>
           </div>
         </div>
@@ -282,6 +276,15 @@ export default function AdminSubmissionsPage() {
             </div>
           )}
         </section>
+
+        <div className="flex justify-center">
+          <Link
+            href="/mypage"
+            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+          >
+            ← マイページホームへ戻る
+          </Link>
+        </div>
       </div>
     </main>
   );

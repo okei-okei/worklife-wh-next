@@ -35,7 +35,7 @@ export default function MyPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl min-w-0">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mb-8">
           <div className="min-w-0">
             <h1 className="text-2xl font-bold md:text-4xl">マイページ</h1>
 
@@ -43,13 +43,6 @@ export default function MyPage() {
               {email}
             </p>
           </div>
-
-          <button
-            onClick={handleLogout}
-            className="w-full rounded-lg bg-red-600 px-4 py-3 font-bold text-white sm:w-auto sm:py-2"
-          >
-            ログアウト
-          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
@@ -131,6 +124,15 @@ export default function MyPage() {
           >
             ライフプランナー
           </Link>
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={handleLogout}
+            className="w-full rounded-lg bg-red-600 px-4 py-3 font-bold text-white sm:w-auto"
+          >
+            ログアウト
+          </button>
         </div>
       </div>
     </main>

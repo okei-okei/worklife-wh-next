@@ -39,6 +39,53 @@ type ApplicationDocumentTarget = ApplicationTarget & {
 };
 
 const resumeBucketName = "resumes";
+const applicationDocumentsBucketName = "application-documents";
+
+function buildPdfFileName(targetTitle: string) {
+  const safeTitle =
+    targetTitle
+      .replace(/[^a-zA-Z0-9._-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .toLowerCase() || "cover-letter";
+
+  return `${Date.now()}-${safeTitle}-cover-letter.pdf`;
+}
+
+async function createCoverLetterPdfBlob(title: string, content: string) {
+  const { jsPDF } = await import("jspdf");
+  const doc = new jsPDF({
+    unit: "pt",
+    format: "a4",
+  });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 56;
+  const maxWidth = pageWidth - margin * 2;
+  let y = margin;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  const titleLines = doc.splitTextToSize(title, maxWidth);
+  doc.text(titleLines, margin, y);
+  y += titleLines.length * 20 + 20;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  const lines = doc.splitTextToSize(content, maxWidth);
+
+  for (const line of lines) {
+    if (y > pageHeight - margin) {
+      doc.addPage();
+      y = margin;
+    }
+
+    doc.text(line, margin, y);
+    y += 16;
+  }
+
+  return doc.output("blob");
+}
 
 export default function CoverLetterPage() {
   const router = useRouter();
@@ -55,6 +102,7 @@ export default function CoverLetterPage() {
   const [coverLetterDraft, setCoverLetterDraft] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPdfSaving, setIsPdfSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -292,10 +340,94 @@ export default function CoverLetterPage() {
     setSuccessMessage("カバーレターを保存しました。");
   };
 
+  const handleSavePdf = async () => {
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (!userId) {
+      setErrorMessage("ログイン状態を確認できませんでした。再ログインしてください。");
+      return;
+    }
+
+    if (!selectedTarget) {
+      setErrorMessage("PDFを保存する対象を選択してください。");
+      return;
+    }
+
+    if (!coverLetterDraft.trim()) {
+      setErrorMessage("PDFで保存するカバーレターがありません。");
+      return;
+    }
+
+    setIsPdfSaving(true);
+
+    try {
+      const title = `${selectedTarget.title} - Cover Letter`;
+      const fileName = buildPdfFileName(selectedTarget.title);
+      const filePath = `application-documents/${userId}/${fileName}`;
+      const pdfBlob = await createCoverLetterPdfBlob(title, coverLetterDraft);
+
+      const uploadResponse = await supabase.storage
+        .from(applicationDocumentsBucketName)
+        .upload(filePath, pdfBlob, {
+          contentType: "application/pdf",
+          upsert: false,
+        });
+
+      if (uploadResponse.error) {
+        setErrorMessage(
+          `PDFの保存に失敗しました。${uploadResponse.error.message}`,
+        );
+        setIsPdfSaving(false);
+        return;
+      }
+
+      const insertResponse = await supabase
+        .from("application_documents")
+        .insert({
+          user_id: userId,
+          target_type: selectedTarget.type,
+          target_id: selectedTarget.id,
+          document_type: "cover_letter",
+          title,
+          content: coverLetterDraft,
+          file_path: filePath,
+        });
+
+      if (insertResponse.error) {
+        await supabase.storage
+          .from(applicationDocumentsBucketName)
+          .remove([filePath]);
+        setErrorMessage(
+          `PDF情報の保存に失敗しました。${insertResponse.error.message}`,
+        );
+        setIsPdfSaving(false);
+        return;
+      }
+
+      const objectUrl = URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(objectUrl);
+
+      setSuccessMessage("カバーレターPDFを保存しました。");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? `PDFの作成に失敗しました。${error.message}`
+          : "PDFの作成に失敗しました。",
+      );
+    } finally {
+      setIsPdfSaving(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
           <div className="min-w-0">
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH
@@ -307,13 +439,6 @@ export default function CoverLetterPage() {
               保存した求人・物件と履歴書情報から、英語のカバーレター下書きを作成して保存できます。
             </p>
           </div>
-
-          <Link
-            href="/mypage"
-            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
-          >
-            ← マイページ
-          </Link>
         </div>
 
         {isLoading ? (
@@ -447,6 +572,15 @@ export default function CoverLetterPage() {
 
               <button
                 type="button"
+                onClick={handleSavePdf}
+                disabled={isPdfSaving}
+                className="w-full rounded-lg bg-purple-600 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-purple-300 sm:w-auto"
+              >
+                {isPdfSaving ? "PDF保存中..." : "PDFで保存"}
+              </button>
+
+              <button
+                type="button"
                 onClick={handleCopy}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 font-bold text-gray-900 sm:w-auto"
               >
@@ -491,6 +625,15 @@ export default function CoverLetterPage() {
             </label>
           </section>
         )}
+
+        <div className="flex justify-center">
+          <Link
+            href="/mypage"
+            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+          >
+            ← マイページホームへ戻る
+          </Link>
+        </div>
       </div>
     </main>
   );

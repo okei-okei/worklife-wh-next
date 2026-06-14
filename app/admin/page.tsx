@@ -131,7 +131,7 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
           <div>
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH Admin
@@ -141,13 +141,6 @@ export default function AdminPage() {
               サービスの利用状況と提携導線の反応を確認できます。
             </p>
           </div>
-
-          <Link
-            href="/mypage"
-            className="rounded-lg bg-gray-500 px-4 py-2 text-white"
-          >
-            ← マイページ
-          </Link>
         </div>
 
         <section className="rounded-2xl bg-white p-5 shadow">
@@ -221,6 +214,15 @@ export default function AdminPage() {
             </p>
           )}
         </section>
+
+        <div className="flex justify-center">
+          <Link
+            href="/mypage"
+            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+          >
+            ← マイページホームへ戻る
+          </Link>
+        </div>
       </div>
     </main>
   );

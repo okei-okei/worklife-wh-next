@@ -380,7 +380,7 @@ export default function ResumePage() {
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
           <div className="min-w-0">
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH
@@ -390,13 +390,6 @@ export default function ResumePage() {
               応募メールやカバーレター作成に使う基本情報とPDF履歴書を保存できます。
             </p>
           </div>
-
-          <Link
-            href="/mypage"
-            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
-          >
-            ← マイページ
-          </Link>
         </div>
 
         {isLoading ? (
@@ -556,6 +549,15 @@ export default function ResumePage() {
             ) : null}
           </>
         )}
+
+        <div className="flex justify-center">
+          <Link
+            href="/mypage"
+            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+          >
+            ← マイページホームへ戻る
+          </Link>
+        </div>
       </div>
     </main>
   );

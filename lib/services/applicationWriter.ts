@@ -1,9 +1,16 @@
 export type ApplicationWriterProvider = "template" | "openai";
 
-export type ApplicationJob = {
+export type ApplicationTargetType = "job" | "property";
+
+export type ApplicationTarget = {
   title: string;
+  type?: ApplicationTargetType;
   url?: string | null;
+  location?: string | null;
+  address?: string | null;
 };
+
+export type ApplicationJob = ApplicationTarget;
 
 export type ApplicationResume = {
   full_name?: string | null;
@@ -19,13 +26,19 @@ export type ApplicationResume = {
 };
 
 type ApplicationWriterInput = {
-  job: ApplicationJob;
+  target?: ApplicationTarget;
+  job?: ApplicationJob;
+  resume: ApplicationResume;
+};
+
+type NormalizedApplicationWriterInput = {
+  target: ApplicationTarget;
   resume: ApplicationResume;
 };
 
 type ApplicationWriter = {
-  generateApplicationEmail: (input: ApplicationWriterInput) => string;
-  generateCoverLetter: (input: ApplicationWriterInput) => string;
+  generateApplicationEmail: (input: NormalizedApplicationWriterInput) => string;
+  generateCoverLetter: (input: NormalizedApplicationWriterInput) => string;
 };
 
 function valueOrPlaceholder(
@@ -41,6 +54,15 @@ function formatAvailableFrom(value: string | null | undefined) {
   return value;
 }
 
+function normalizeInput(
+  input: ApplicationWriterInput,
+): NormalizedApplicationWriterInput {
+  return {
+    target: input.target || input.job || { title: "[Target]", type: "job" },
+    resume: input.resume,
+  };
+}
+
 function getConfiguredApplicationWriterProvider(): ApplicationWriterProvider {
   const provider = process.env.NEXT_PUBLIC_APPLICATION_WRITER_PROVIDER;
 
@@ -52,19 +74,19 @@ function getConfiguredApplicationWriterProvider(): ApplicationWriterProvider {
 }
 
 const templateApplicationWriter: ApplicationWriter = {
-  generateApplicationEmail({ job, resume }) {
+  generateApplicationEmail({ target, resume }) {
     const fullName = valueOrPlaceholder(resume.full_name, "[Your Name]");
     const email = valueOrPlaceholder(resume.email, "[Your Email]");
     const phone = valueOrPlaceholder(resume.phone, "[Your Phone Number]");
-    const visaType = valueOrPlaceholder(resume.visa_type, "a valid work visa");
+    const visaType = valueOrPlaceholder(resume.visa_type, "a valid visa");
     const availableFrom = formatAvailableFrom(resume.available_from);
     const introduction = valueOrPlaceholder(
       resume.self_introduction,
-      "I am currently looking for a working holiday job opportunity and I am very interested in this role.",
+      "I am currently in New Zealand on a working holiday and I am looking for a suitable opportunity.",
     );
     const experience = valueOrPlaceholder(
       resume.work_experience,
-      "I have relevant work experience and I am confident I can contribute positively to your team.",
+      "I have relevant experience and I am confident I can communicate clearly and act responsibly.",
     );
     const skills = valueOrPlaceholder(
       resume.skills,
@@ -75,11 +97,40 @@ const templateApplicationWriter: ApplicationWriter = {
       "conversational English",
     );
 
-    return `Subject: Application for ${job.title}
+    if (target.type === "property") {
+      const locationLine = target.location || target.address;
+
+      return `Subject: Enquiry about ${target.title}
+
+Dear Property Manager,
+
+I am writing to enquire about ${target.title}${locationLine ? ` in ${locationLine}` : ""}.
+
+${introduction}
+
+I currently hold ${visaType}, and I am available from ${availableFrom}. My English level is ${englishLevel}.
+
+A little about me:
+${experience}
+
+My key strengths include:
+${skills}
+
+I would be grateful for the opportunity to arrange a viewing or discuss the next steps. I can provide any further information if needed.
+
+Thank you for your time and consideration.
+
+Kind regards,
+${fullName}
+${email}
+${phone}`;
+    }
+
+    return `Subject: Application for ${target.title}
 
 Dear Hiring Manager,
 
-I am writing to apply for the ${job.title} position.
+I am writing to apply for the ${target.title} position.
 
 ${introduction}
 
@@ -101,28 +152,53 @@ ${email}
 ${phone}`;
   },
 
-  generateCoverLetter({ job, resume }) {
+  generateCoverLetter({ target, resume }) {
     const fullName = valueOrPlaceholder(resume.full_name, "[Your Name]");
     const email = valueOrPlaceholder(resume.email, "[Your Email]");
     const phone = valueOrPlaceholder(resume.phone, "[Your Phone Number]");
-    const visaType = valueOrPlaceholder(resume.visa_type, "a valid work visa");
+    const visaType = valueOrPlaceholder(resume.visa_type, "a valid visa");
     const availableFrom = formatAvailableFrom(resume.available_from);
     const introduction = valueOrPlaceholder(
       resume.self_introduction,
-      "I am motivated, reliable, and excited to contribute to a workplace in New Zealand.",
+      "I am motivated, reliable, and excited to build my life in New Zealand.",
     );
     const experience = valueOrPlaceholder(
       resume.work_experience,
-      "I have relevant work experience that has helped me build practical skills and a strong work ethic.",
+      "I have relevant experience that has helped me build practical skills, reliability, and a strong sense of responsibility.",
     );
     const skills = valueOrPlaceholder(
       resume.skills,
       "My strengths include communication, teamwork, adaptability, and a willingness to learn quickly.",
     );
 
+    if (target.type === "property") {
+      return `Dear Property Manager,
+
+I am writing to express my interest in ${target.title}.
+
+${introduction}
+
+I am currently looking for a comfortable and responsible living arrangement in New Zealand. I currently hold ${visaType}, and I am available from ${availableFrom}.
+
+My background includes:
+${experience}
+
+My strengths as a tenant include:
+${skills}
+
+I would appreciate the opportunity to arrange a viewing or discuss the application process. I can provide further details or references if required.
+
+Thank you for considering my enquiry. I look forward to hearing from you.
+
+Kind regards,
+${fullName}
+${email}
+${phone}`;
+    }
+
     return `Dear Hiring Manager,
 
-I am writing to express my interest in the ${job.title} position.
+I am writing to express my interest in the ${target.title} position.
 
 ${introduction}
 
@@ -146,19 +222,19 @@ ${phone}`;
 };
 
 const openAiApplicationWriter: ApplicationWriter = {
-  generateApplicationEmail({ job, resume }) {
+  generateApplicationEmail(input) {
     // OpenAI API keys must never be stored in NEXT_PUBLIC_* variables or called
     // directly from the browser. This provider is a placeholder for the future
     // app/api/ai/application/route.ts server endpoint, where OPENAI_API_KEY can
     // be read securely and the response can be normalized for the UI.
-    return templateApplicationWriter.generateApplicationEmail({ job, resume });
+    return templateApplicationWriter.generateApplicationEmail(input);
   },
 
-  generateCoverLetter({ job, resume }) {
+  generateCoverLetter(input) {
     // Keep the UI unchanged: pages call generateCoverLetter() only. When AI is
     // introduced, this provider can route through a server action/API endpoint
     // while the template provider remains available as a free fallback.
-    return templateApplicationWriter.generateCoverLetter({ job, resume });
+    return templateApplicationWriter.generateCoverLetter(input);
   },
 };
 
@@ -173,9 +249,9 @@ function getApplicationWriter(): ApplicationWriter {
 }
 
 export function generateApplicationEmail(input: ApplicationWriterInput) {
-  return getApplicationWriter().generateApplicationEmail(input);
+  return getApplicationWriter().generateApplicationEmail(normalizeInput(input));
 }
 
 export function generateCoverLetter(input: ApplicationWriterInput) {
-  return getApplicationWriter().generateCoverLetter(input);
+  return getApplicationWriter().generateCoverLetter(normalizeInput(input));
 }

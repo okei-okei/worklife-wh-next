@@ -101,15 +101,17 @@ export default function MyPage() {
             </div>
           </Link>
 
-          <div className="min-w-0 rounded-2xl bg-white p-4 shadow md:p-6">
-            <h2 className="mb-2 text-xl font-bold text-gray-900 md:text-2xl">
-              AI応募支援
-            </h2>
+          <Link href="/mypage/apply-email" className="block min-w-0">
+            <div className="min-w-0 cursor-pointer rounded-2xl bg-white p-4 shadow hover:shadow-lg md:p-6">
+              <h2 className="mb-2 text-xl font-bold text-gray-900 md:text-2xl">
+                応募メール作成
+              </h2>
 
-            <p className="text-base font-medium leading-7 text-gray-800">
-              カバーレターや応募メールを作成できます。
-            </p>
-          </div>
+              <p className="text-base font-medium leading-7 text-gray-800">
+                保存した求人と履歴書から応募メールを作成できます。
+              </p>
+            </div>
+          </Link>
 
           <Link
             href="/planner"

@@ -1,3 +1,9 @@
+import type {
+  RouteCoordinates,
+  RouteMode,
+  RouteProvider,
+} from "@/lib/services/routeService";
+
 export type Job = {
   id: string;
   title: string;
@@ -20,6 +26,11 @@ export type ScoreResult = {
   property: Property;
   distance: number | null;
   travelMin: number | null;
+  routeMode: RouteMode;
+  routeProvider: RouteProvider;
+  routeCoordinates: RouteCoordinates[];
+  routeMessage?: string;
+  isRouteFallback: boolean;
   monthlyGrossIncome: number;
   paye: number;
   monthlyNetIncome: number;
@@ -40,6 +51,10 @@ export type MapLine = {
     lat: number;
     lng: number;
   };
+  coordinates?: Array<{
+    lat: number;
+    lng: number;
+  }>;
 };
 
 export type PlannerSettings = {

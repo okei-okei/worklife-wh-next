@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PlannerInputPanel } from "./_components/PlannerInputPanel";
 import { PlannerMapSection } from "./_components/PlannerMapSection";
@@ -11,6 +11,7 @@ import { usePlannerSettings } from "./_hooks/usePlannerSettings";
 import {
   calculateMonthlyLivingCost,
   calculatePlannerResults,
+  createPlannerRouteKey,
 } from "./_lib/plannerCalculations";
 import {
   getHighlightedLine,
@@ -19,6 +20,33 @@ import {
   getResultLines,
 } from "./_lib/mapHelpers";
 import type { PlannerInputConfig } from "./_lib/types";
+import {
+  getRouteInfo,
+  type RouteInfo,
+  type RouteMode,
+} from "@/lib/services/routeService";
+
+const routeModeOptions: Array<{
+  value: RouteMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "driving",
+    label: "車",
+    description: "道路経路の推定距離・時間",
+  },
+  {
+    value: "walking",
+    label: "徒歩",
+    description: "徒歩経路の推定距離・時間",
+  },
+  {
+    value: "transit",
+    label: "公共交通",
+    description: "Google Maps連携後に対応予定",
+  },
+];
 
 export default function PlannerPage() {
   const [maxWeeklyRent, setMaxWeeklyRent] = useState("");
@@ -27,6 +55,12 @@ export default function PlannerPage() {
   const [selectedResultKey, setSelectedResultKey] = useState<string | null>(
     null,
   );
+  const [routeMode, setRouteMode] = useState<RouteMode>("driving");
+  const [routeInfoByKey, setRouteInfoByKey] = useState<
+    Record<string, RouteInfo>
+  >({});
+  const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
+  const [routeStatusMessage, setRouteStatusMessage] = useState("");
 
   const {
     currentUserId,
@@ -58,7 +92,7 @@ export default function PlannerPage() {
     monthlyOtherCost,
   });
 
-  const results = useMemo(() => {
+  const fallbackResults = useMemo(() => {
     return calculatePlannerResults({
       jobs,
       properties,
@@ -69,6 +103,7 @@ export default function PlannerPage() {
       monthlyTransportCost,
       monthlyPhoneCost,
       monthlyOtherCost,
+      routeMode,
     });
   }, [
     jobs,
@@ -80,6 +115,118 @@ export default function PlannerPage() {
     monthlyTransportCost,
     monthlyPhoneCost,
     monthlyOtherCost,
+    routeMode,
+  ]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadRouteInfo = async () => {
+      if (routeMode === "transit") {
+        setIsLoadingRoutes(false);
+        setRouteStatusMessage("公共交通はGoogle Maps連携後に対応予定です。");
+        return;
+      }
+
+      const routeTargets = fallbackResults
+        .filter(
+          (result) =>
+            result.job.latitude &&
+            result.job.longitude &&
+            result.property.latitude &&
+            result.property.longitude,
+        )
+        .slice(0, 10);
+
+      const missingTargets = routeTargets.filter((result) => {
+        const key = createPlannerRouteKey(result.job.id, result.property.id);
+        return !routeInfoByKey[key];
+      });
+
+      if (!missingTargets.length) {
+        setIsLoadingRoutes(false);
+        setRouteStatusMessage(
+          routeTargets.length
+            ? "推定経路距離・推定移動時間を表示中です。"
+            : "",
+        );
+        return;
+      }
+
+      setIsLoadingRoutes(true);
+      setRouteStatusMessage("推定経路距離・推定移動時間を取得中です...");
+
+      const entries = await Promise.all(
+        missingTargets.map(async (result) => {
+          const key = createPlannerRouteKey(result.job.id, result.property.id);
+          const routeInfo = await getRouteInfo({
+            origin: {
+              latitude: result.job.latitude,
+              longitude: result.job.longitude,
+            },
+            destination: {
+              latitude: result.property.latitude,
+              longitude: result.property.longitude,
+            },
+            mode: routeMode,
+          });
+
+          return [key, routeInfo] as const;
+        }),
+      );
+
+      if (!isActive) return;
+
+      setRouteInfoByKey((current) => {
+        const next = { ...current };
+
+        for (const [key, routeInfo] of entries) {
+          next[key] = routeInfo;
+        }
+
+        return next;
+      });
+      setIsLoadingRoutes(false);
+      setRouteStatusMessage(
+        entries.some(([, routeInfo]) => routeInfo.isFallback)
+          ? "一部の経路はAPI結果を取得できなかったため、直線距離をフォールバック表示しています。"
+          : "推定経路距離・推定移動時間を表示中です。",
+      );
+    };
+
+    loadRouteInfo();
+
+    return () => {
+      isActive = false;
+    };
+  }, [fallbackResults, routeInfoByKey, routeMode]);
+
+  const results = useMemo(() => {
+    return calculatePlannerResults({
+      jobs,
+      properties,
+      maxWeeklyRent,
+      maxCommuteMinutes,
+      minHourlyRate,
+      monthlyFoodCost,
+      monthlyTransportCost,
+      monthlyPhoneCost,
+      monthlyOtherCost,
+      routeMode,
+      routeInfoByKey,
+    });
+  }, [
+    jobs,
+    properties,
+    maxWeeklyRent,
+    maxCommuteMinutes,
+    minHourlyRate,
+    monthlyFoodCost,
+    monthlyTransportCost,
+    monthlyPhoneCost,
+    monthlyOtherCost,
+    routeMode,
+    routeInfoByKey,
   ]);
 
   const activeFilterCount = [
@@ -247,6 +394,16 @@ export default function PlannerPage() {
     setMinHourlyRate("");
   };
 
+  const handleRouteModeChange = (mode: RouteMode) => {
+    setRouteMode(mode);
+    setRouteInfoByKey({});
+    setSelectedResultKey(null);
+    setRouteStatusMessage("");
+  };
+
+  const routeProviderLabel =
+    process.env.NEXT_PUBLIC_ROUTE_PROVIDER || "osrm";
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl min-w-0">
@@ -295,6 +452,54 @@ export default function PlannerPage() {
             </div>
           }
         />
+
+        <section className="mb-6 rounded-2xl bg-white p-4 text-gray-900 shadow md:p-6">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-xl font-bold md:text-2xl">移動手段</h2>
+              <p className="mt-1 text-sm font-semibold text-gray-800">
+                直線距離ではなく、推定経路距離と推定移動時間で比較します。
+              </p>
+            </div>
+
+            <div className="text-sm font-bold text-gray-800">
+              Provider: {routeProviderLabel}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {routeModeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleRouteModeChange(option.value)}
+                className={
+                  routeMode === option.value
+                    ? "rounded-xl border-2 border-blue-600 bg-blue-50 p-4 text-left text-gray-900"
+                    : "rounded-xl border border-gray-300 bg-white p-4 text-left text-gray-900"
+                }
+              >
+                <span className="block text-lg font-bold">{option.label}</span>
+                <span className="mt-1 block text-sm font-semibold text-gray-800">
+                  {option.description}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {routeStatusMessage ? (
+            <p
+              className={
+                routeMode === "transit"
+                  ? "mt-4 rounded-xl bg-orange-50 p-3 text-sm font-bold text-orange-700"
+                  : "mt-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-700"
+              }
+            >
+              {isLoadingRoutes ? "取得中: " : ""}
+              {routeStatusMessage}
+            </p>
+          ) : null}
+        </section>
 
         {topResult ? <RecommendedPlanCard result={topResult} /> : null}
 

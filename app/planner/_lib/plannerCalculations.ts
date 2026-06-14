@@ -2,6 +2,7 @@ import {
   calculateDistanceKm,
   estimateTravelTimeMinutes,
 } from "@/lib/services/distanceService";
+import type { RouteInfo, RouteMode } from "@/lib/services/routeService";
 import type { Job, Property, ScoreResult } from "./types";
 
 type CalculatePlannerResultsParams = {
@@ -14,7 +15,13 @@ type CalculatePlannerResultsParams = {
   monthlyTransportCost: string;
   monthlyPhoneCost: string;
   monthlyOtherCost: string;
+  routeMode?: RouteMode;
+  routeInfoByKey?: Record<string, RouteInfo>;
 };
+
+export function createPlannerRouteKey(jobId: string, propertyId: string) {
+  return `${jobId}-${propertyId}`;
+}
 
 export function calculateMonthlyLivingCost({
   monthlyFoodCost,
@@ -54,6 +61,8 @@ export function calculatePlannerResults({
   monthlyTransportCost,
   monthlyPhoneCost,
   monthlyOtherCost,
+  routeMode = "driving",
+  routeInfoByKey = {},
 }: CalculatePlannerResultsParams): ScoreResult[] {
   if (!jobs.length || !properties.length) return [];
 
@@ -77,7 +86,9 @@ export function calculatePlannerResults({
 
   for (const job of jobs) {
     for (const property of properties) {
-      const distance = calculateDistanceKm(
+      const routeKey = createPlannerRouteKey(job.id, property.id);
+      const routeInfo = routeInfoByKey[routeKey];
+      const fallbackDistance = calculateDistanceKm(
         {
           latitude: job.latitude,
           longitude: job.longitude,
@@ -88,8 +99,15 @@ export function calculatePlannerResults({
         },
       );
 
-      const travel = estimateTravelTimeMinutes(distance);
-      const travelMin = travel?.drive || null;
+      const fallbackTravel = estimateTravelTimeMinutes(fallbackDistance);
+      const fallbackTravelMin =
+        routeMode === "walking"
+          ? fallbackTravel?.walk || null
+          : routeMode === "driving"
+            ? fallbackTravel?.drive || null
+            : null;
+      const distance = routeInfo?.distanceKm ?? fallbackDistance;
+      const travelMin = routeInfo?.durationMin ?? fallbackTravelMin;
 
       const monthlyGrossIncome =
         (job.hourly_rate || 0) * (job.work_hours || 0) * 4.33;
@@ -118,6 +136,11 @@ export function calculatePlannerResults({
         property,
         distance,
         travelMin,
+        routeMode,
+        routeProvider: routeInfo?.provider || "fallback",
+        routeCoordinates: routeInfo?.coordinates || [],
+        routeMessage: routeInfo?.message,
+        isRouteFallback: routeInfo?.isFallback ?? !routeInfo,
         monthlyGrossIncome,
         paye,
         monthlyNetIncome,

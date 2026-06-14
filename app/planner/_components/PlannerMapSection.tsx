@@ -80,10 +80,12 @@ export function PlannerMapSection({
             </div>
 
             <div className="text-sm font-bold text-gray-900 sm:text-right">
+              推定経路距離:{" "}
               {selectedResult.distance
                 ? `${selectedResult.distance.toFixed(2)} km`
                 : "距離不明"}{" "}
               /{" "}
+              推定移動時間:{" "}
               {selectedResult.travelMin
                 ? `${selectedResult.travelMin} 分`
                 : "時間不明"}

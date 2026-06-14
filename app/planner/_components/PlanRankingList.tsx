@@ -88,13 +88,13 @@ export function PlanRankingList({
                   </p>
 
                   <p>
-                    通勤距離:{" "}
+                    推定経路距離:{" "}
                     {result.distance
                       ? `${result.distance.toFixed(2)} km`
                       : "不明"}
                   </p>
                   <p>
-                    通勤時間:{" "}
+                    推定移動時間:{" "}
                     {result.travelMin ? `${result.travelMin} 分` : "不明"}
                   </p>
                   <p>通勤ペナルティ: -{result.commutePenalty.toFixed(0)}</p>
@@ -103,6 +103,10 @@ export function PlanRankingList({
                   </p>
                   <p className="font-bold text-green-700">
                     スコア: {result.score.toFixed(0)}
+                  </p>
+                  <p>
+                    経路: {result.routeMode} / {result.routeProvider}
+                    {result.isRouteFallback ? " / フォールバック" : ""}
                   </p>
                 </div>
               </div>

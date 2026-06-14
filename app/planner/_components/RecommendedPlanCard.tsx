@@ -55,14 +55,14 @@ export function RecommendedPlanCard({ result }: RecommendedPlanCardProps) {
         </div>
 
         <div className="rounded-xl bg-gray-50 p-4">
-          <p className="text-sm font-bold text-gray-800">通勤距離</p>
+          <p className="text-sm font-bold text-gray-800">推定経路距離</p>
           <p className="mt-1 text-2xl font-bold text-gray-900 md:text-3xl">
             {result.distance ? `${result.distance.toFixed(2)} km` : "不明"}
           </p>
         </div>
 
         <div className="rounded-xl bg-gray-50 p-4">
-          <p className="text-sm font-bold text-gray-800">通勤時間</p>
+          <p className="text-sm font-bold text-gray-800">推定移動時間</p>
           <p className="mt-1 text-2xl font-bold text-gray-900 md:text-3xl">
             {result.travelMin ? `${result.travelMin} 分` : "不明"}
           </p>
@@ -74,6 +74,12 @@ export function RecommendedPlanCard({ result }: RecommendedPlanCardProps) {
         <p>月家賃: {formatCurrency(result.monthlyRent)}</p>
         <p>月生活費: {formatCurrency(result.monthlyLivingCost)}</p>
         <p>スコア: {result.score.toFixed(0)}</p>
+      </div>
+
+      <div className="mt-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-800">
+        経路: {result.routeMode} / provider: {result.routeProvider}
+        {result.isRouteFallback ? " / フォールバック表示" : ""}
+        {result.routeMessage ? ` / ${result.routeMessage}` : ""}
       </div>
     </section>
   );

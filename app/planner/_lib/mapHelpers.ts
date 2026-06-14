@@ -40,6 +40,10 @@ export function getResultLines(results: ScoreResult[]): MapLine[] {
         lat: result.property.latitude!,
         lng: result.property.longitude!,
       },
+      coordinates: result.routeCoordinates.map((coordinate) => ({
+        lat: coordinate.latitude,
+        lng: coordinate.longitude,
+      })),
     }));
 }
 
@@ -64,5 +68,9 @@ export function getHighlightedLine(
       lat: selectedResult.property.latitude,
       lng: selectedResult.property.longitude,
     },
+    coordinates: selectedResult.routeCoordinates.map((coordinate) => ({
+      lat: coordinate.latitude,
+      lng: coordinate.longitude,
+    })),
   };
 }

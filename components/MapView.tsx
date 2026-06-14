@@ -46,6 +46,10 @@ type Line = {
     lat: number;
     lng: number;
   };
+  coordinates?: Array<{
+    lat: number;
+    lng: number;
+  }>;
 };
 
 type Props = {
@@ -122,10 +126,17 @@ export default function MapView({
         {lines.map((line, i) => (
           <Polyline
             key={i}
-            positions={[
-              [line.from.lat, line.from.lng],
-              [line.to.lat, line.to.lng],
-            ]}
+            positions={
+              line.coordinates?.length
+                ? line.coordinates.map((coordinate) => [
+                    coordinate.lat,
+                    coordinate.lng,
+                  ])
+                : [
+                    [line.from.lat, line.from.lng],
+                    [line.to.lat, line.to.lng],
+                  ]
+            }
             pathOptions={{
               color: "#94a3b8",
               weight: 2,
@@ -136,10 +147,17 @@ export default function MapView({
 
         {highlightedLine && (
           <Polyline
-            positions={[
-              [highlightedLine.from.lat, highlightedLine.from.lng],
-              [highlightedLine.to.lat, highlightedLine.to.lng],
-            ]}
+            positions={
+              highlightedLine.coordinates?.length
+                ? highlightedLine.coordinates.map((coordinate) => [
+                    coordinate.lat,
+                    coordinate.lng,
+                  ])
+                : [
+                    [highlightedLine.from.lat, highlightedLine.from.lng],
+                    [highlightedLine.to.lat, highlightedLine.to.lng],
+                  ]
+            }
             pathOptions={{
               color: "#f97316",
               weight: 7,

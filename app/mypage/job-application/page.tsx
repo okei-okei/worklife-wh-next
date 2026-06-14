@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import NzLocationPicker from "@/components/NzLocationPicker";
 import {
   generateJobApplicationEmail,
   generateJobCoverLetter,
@@ -31,6 +32,10 @@ type ResumeFile = {
   file_path: string;
   file_url: string | null;
   signed_url?: string | null;
+};
+
+type DraftRow = {
+  form_data: Partial<JobApplicationDetails> | null;
 };
 
 const emptyManualJob = {
@@ -72,6 +77,7 @@ function JobApplicationPageContent() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
+  const [userId, setUserId] = useState("");
   const [selectedJobId, setSelectedJobId] = useState(savedJobIdFromQuery);
   const [sourceMode, setSourceMode] = useState<SourceMode>("saved");
   const [documentType, setDocumentType] =
@@ -86,6 +92,18 @@ function JobApplicationPageContent() {
   const [draft, setDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const buildResumeDefaults = (resumeData: ApplicationResume | null) => ({
+    ...emptyJobDetails,
+    fullName: resumeData?.full_name || "",
+    currentCity: resumeData?.current_city || "",
+    visaType: resumeData?.visa_type || "",
+    availableFrom: resumeData?.available_from || "",
+    englishLevel: resumeData?.english_level || "",
+    relevantExperience: resumeData?.work_experience || "",
+    skills: resumeData?.skills || "",
+    selfPromotion: resumeData?.self_introduction || "",
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -103,10 +121,13 @@ function JobApplicationPageContent() {
         return;
       }
 
+      setUserId(user.id);
+
       const [
         savedJobsResult,
         resumeResult,
         resumeFileResult,
+        draftResult,
       ] = await Promise.all([
         supabase
           .from("saved_jobs")
@@ -127,6 +148,12 @@ function JobApplicationPageContent() {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle<ResumeFile>(),
+        supabase
+          .from("user_form_drafts")
+          .select("form_data")
+          .eq("user_id", user.id)
+          .eq("draft_type", "job_application")
+          .maybeSingle<DraftRow>(),
       ]);
 
       if (!isMounted) return;
@@ -147,18 +174,18 @@ function JobApplicationPageContent() {
       } else {
         setResume(resumeResult.data);
 
-        if (resumeResult.data) {
+        const resumeDefaults = buildResumeDefaults(resumeResult.data);
+
+        if (draftResult.error) {
+          console.warn(draftResult.error.message);
+          setJobDetails(resumeDefaults);
+        } else if (draftResult.data?.form_data) {
           setJobDetails({
-            ...emptyJobDetails,
-            fullName: resumeResult.data.full_name || "",
-            currentCity: resumeResult.data.current_city || "",
-            visaType: resumeResult.data.visa_type || "",
-            availableFrom: resumeResult.data.available_from || "",
-            englishLevel: resumeResult.data.english_level || "",
-            relevantExperience: resumeResult.data.work_experience || "",
-            skills: resumeResult.data.skills || "",
-            selfPromotion: resumeResult.data.self_introduction || "",
+            ...resumeDefaults,
+            ...draftResult.data.form_data,
           });
+        } else {
+          setJobDetails(resumeDefaults);
         }
       }
 
@@ -223,6 +250,54 @@ function JobApplicationPageContent() {
 
   const targetUrl = activeTarget?.url?.trim() || "";
 
+  const saveDraft = async (showMessage = true) => {
+    if (!userId) return false;
+
+    const { error } = await supabase.from("user_form_drafts").upsert(
+      {
+        user_id: userId,
+        draft_type: "job_application",
+        form_data: jobDetails,
+      },
+      {
+        onConflict: "user_id,draft_type",
+      },
+    );
+
+    if (error) {
+      setErrorMessage(
+        "入力内容の保存に失敗しました。Supabaseに user_form_drafts テーブルが作成されているか確認してください。",
+      );
+      return false;
+    }
+
+    if (showMessage) {
+      setSuccessMessage("入力内容を保存しました。");
+      setErrorMessage("");
+    }
+
+    return true;
+  };
+
+  const resetDraft = async () => {
+    if (!userId) return;
+
+    const { error } = await supabase
+      .from("user_form_drafts")
+      .delete()
+      .eq("user_id", userId)
+      .eq("draft_type", "job_application");
+
+    if (error) {
+      setErrorMessage("保存済み入力内容のリセットに失敗しました。");
+      return;
+    }
+
+    setJobDetails(buildResumeDefaults(resume));
+    setSuccessMessage("保存済み入力内容をリセットしました。");
+    setErrorMessage("");
+  };
+
   const handleGenerate = () => {
     setErrorMessage("");
     setSuccessMessage("");
@@ -236,6 +311,8 @@ function JobApplicationPageContent() {
       setErrorMessage("氏名を入力してください。");
       return;
     }
+
+    saveDraft(false);
 
     const content =
       documentType === "application_email"
@@ -492,12 +569,32 @@ function JobApplicationPageContent() {
         </section>
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <h2 className="text-xl font-bold text-gray-900">
-            2. 応募者情報を入力する
-          </h2>
-          <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
-            日本語で入力してください。出力は英語の応募文として整えます。履歴書情報がある項目は初期値として反映しています。
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                2. 応募者情報を入力する
+              </h2>
+              <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
+                日本語で入力してください。出力は英語の応募文として整えます。履歴書情報がある項目は初期値として反映しています。
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => saveDraft(true)}
+                className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
+              >
+                入力内容を保存
+              </button>
+              <button
+                type="button"
+                onClick={resetDraft}
+                className="w-full rounded-lg bg-gray-200 px-4 py-3 font-bold text-gray-900 sm:w-auto"
+              >
+                入力内容をリセット
+              </button>
+            </div>
+          </div>
 
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="block">
@@ -511,20 +608,30 @@ function JobApplicationPageContent() {
                 placeholder="例: Kei Tanaka"
               />
             </label>
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">現在地</span>
-              <input
+            <div className="md:col-span-2">
+              <NzLocationPicker
+                label="現在地"
                 value={jobDetails.currentCity || ""}
-                onChange={(event) =>
+                onChange={(value) =>
                   setJobDetails({
                     ...jobDetails,
-                    currentCity: event.target.value,
+                    currentCity: value,
                   })
                 }
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: Auckland"
+                onCoordinatesChange={(coords) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    currentCity:
+                      coords.latitude && coords.longitude
+                        ? "現在地"
+                        : jobDetails.currentCity || "",
+                    currentLatitude: coords.latitude,
+                    currentLongitude: coords.longitude,
+                  })
+                }
+                allLabel="未設定"
               />
-            </label>
+            </div>
             <label className="block">
               <span className="text-sm font-bold text-gray-900">
                 ビザの種類

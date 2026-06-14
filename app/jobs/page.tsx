@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 
 type PublicJob = {
@@ -33,12 +34,41 @@ function buildLoginRedirect(path: string) {
   return `/login?redirect=${encodeURIComponent(path)}`;
 }
 
+function calculateDistanceKm(
+  from: { latitude: number; longitude: number },
+  to: { latitude: number; longitude: number },
+) {
+  const earthRadiusKm = 6371;
+  const dLat = ((to.latitude - from.latitude) * Math.PI) / 180;
+  const dLon = ((to.longitude - from.longitude) * Math.PI) / 180;
+  const lat1 = (from.latitude * Math.PI) / 180;
+  const lat2 = (to.latitude * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) *
+      Math.sin(dLon / 2) *
+      Math.cos(lat1) *
+      Math.cos(lat2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusKm * c;
+}
+
 export default function JobsPage() {
   const router = useRouter();
   const [jobs, setJobs] = useState<PublicJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [filterCoordinates, setFilterCoordinates] = useState<{
+    latitude: number | null;
+    longitude: number | null;
+  }>({ latitude: null, longitude: null });
+  const [minHourlyRate, setMinHourlyRate] = useState("");
+  const [minWorkHours, setMinWorkHours] = useState("");
+  const [accommodationOnly, setAccommodationOnly] = useState(false);
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     apply?: (job: PublicJob) => void;
@@ -253,6 +283,99 @@ export default function JobsPage() {
     return `時給 $${hourlyRate.toLocaleString()}`;
   };
 
+  const filteredJobs = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const normalizedLocation = locationFilter.trim().toLowerCase();
+    const minimumHourlyRate = minHourlyRate ? Number(minHourlyRate) : null;
+    const minimumWorkHours = minWorkHours ? Number(minWorkHours) : null;
+
+    return jobs.filter((job) => {
+      const searchableText = [
+        job.title,
+        job.company,
+        job.description,
+        job.city,
+        job.address,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      if (normalizedQuery && !searchableText.includes(normalizedQuery)) {
+        return false;
+      }
+
+      if (normalizedLocation && normalizedLocation !== "現在地") {
+        const jobLocationText = [job.city, job.address]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!jobLocationText.includes(normalizedLocation)) {
+          return false;
+        }
+      }
+
+      if (
+        normalizedLocation === "現在地" &&
+        filterCoordinates.latitude &&
+        filterCoordinates.longitude &&
+        job.latitude &&
+        job.longitude
+      ) {
+        const distanceKm = calculateDistanceKm(
+          {
+            latitude: filterCoordinates.latitude,
+            longitude: filterCoordinates.longitude,
+          },
+          {
+            latitude: job.latitude,
+            longitude: job.longitude,
+          },
+        );
+
+        if (distanceKm > 50) return false;
+      }
+
+      if (
+        minimumHourlyRate !== null &&
+        (job.hourly_rate === null || job.hourly_rate < minimumHourlyRate)
+      ) {
+        return false;
+      }
+
+      if (
+        minimumWorkHours !== null &&
+        (job.work_hours === null || job.work_hours < minimumWorkHours)
+      ) {
+        return false;
+      }
+
+      if (accommodationOnly && !job.accommodation_available) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    accommodationOnly,
+    filterCoordinates,
+    jobs,
+    locationFilter,
+    minHourlyRate,
+    minWorkHours,
+    searchQuery,
+  ]);
+
+  const resetFilters = () => {
+    setSearchQuery("");
+    setLocationFilter("");
+    setFilterCoordinates({ latitude: null, longitude: null });
+    setMinHourlyRate("");
+    setMinWorkHours("");
+    setAccommodationOnly(false);
+  };
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -291,6 +414,78 @@ export default function JobsPage() {
           </div>
         )}
 
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">検索</span>
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900 placeholder:text-gray-600"
+                placeholder="求人名、会社名、仕事内容、地域、住所で検索"
+              />
+            </label>
+
+            <NzLocationPicker
+              label="地域"
+              value={locationFilter}
+              onChange={setLocationFilter}
+              onCoordinatesChange={setFilterCoordinates}
+            />
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                時給の下限
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={minHourlyRate}
+                onChange={(event) => setMinHourlyRate(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 25"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                週勤務時間の下限
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={minWorkHours}
+                onChange={(event) => setMinWorkHours(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 30"
+              />
+            </label>
+            <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:mt-7">
+              <input
+                type="checkbox"
+                checked={accommodationOnly}
+                onChange={(event) => setAccommodationOnly(event.target.checked)}
+                className="h-5 w-5"
+              />
+              住み込み可のみ
+            </label>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="w-full rounded-lg bg-gray-700 px-4 py-3 font-bold text-white sm:w-auto"
+              >
+                条件をリセット
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-4 text-sm font-bold text-gray-800">
+            結果: {filteredJobs.length}件
+          </p>
+        </section>
+
         {isLoading ? (
           <div className="rounded-2xl bg-white p-6 shadow">
             <p className="font-medium text-gray-800">
@@ -304,9 +499,18 @@ export default function JobsPage() {
               掲載申請が承認されると、このページに求人が表示されます。
             </p>
           </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="rounded-2xl bg-white p-6 shadow">
+            <h2 className="text-2xl font-bold">
+              条件に合う求人が見つかりません
+            </h2>
+            <p className="mt-2 leading-7 text-gray-800">
+              検索キーワードやフィルター条件を変更して再度お試しください。
+            </p>
+          </div>
         ) : (
           <div className="grid gap-6">
-            {jobs.map((job) => (
+            {filteredJobs.map((job) => (
               <article key={job.id} className="rounded-2xl bg-white p-6 shadow">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>

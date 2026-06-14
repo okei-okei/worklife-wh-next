@@ -48,6 +48,8 @@ export type JobApplicationDetails = {
   attachResume?: boolean;
   interviewAvailability?: string;
   additionalMessage?: string;
+  currentLatitude?: number | null;
+  currentLongitude?: number | null;
 };
 
 export type PropertyInquiryDetails = {
@@ -61,6 +63,8 @@ export type PropertyInquiryDetails = {
   viewingAvailability?: string;
   questions?: string;
   additionalMessage?: string;
+  currentLatitude?: number | null;
+  currentLongitude?: number | null;
 };
 
 type ApplicationWriterInput = {
@@ -157,6 +161,8 @@ function mergeJobDetails(
     attachResume: details?.attachResume ?? true,
     interviewAvailability: valueOrPlaceholder(details?.interviewAvailability, ""),
     additionalMessage: valueOrPlaceholder(details?.additionalMessage, ""),
+    currentLatitude: details?.currentLatitude ?? null,
+    currentLongitude: details?.currentLongitude ?? null,
   };
 }
 
@@ -174,6 +180,8 @@ function mergePropertyDetails(
     viewingAvailability: valueOrPlaceholder(details?.viewingAvailability, ""),
     questions: valueOrPlaceholder(details?.questions, ""),
     additionalMessage: valueOrPlaceholder(details?.additionalMessage, ""),
+    currentLatitude: details?.currentLatitude ?? null,
+    currentLongitude: details?.currentLongitude ?? null,
   };
 }
 

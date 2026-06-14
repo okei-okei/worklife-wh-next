@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import NzLocationPicker from "@/components/NzLocationPicker";
 import {
   generatePropertyInquiryEmail,
   type ApplicationTarget,
@@ -20,6 +21,10 @@ type SavedProperty = {
   address: string | null;
   rent_weekly: number | null;
   status: string | null;
+};
+
+type DraftRow = {
+  form_data: Partial<PropertyInquiryDetails> | null;
 };
 
 const emptyManualProperty = {
@@ -57,6 +62,7 @@ function PropertyInquiryPageContent() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [properties, setProperties] = useState<SavedProperty[]>([]);
+  const [userId, setUserId] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] =
     useState(propertyIdFromQuery);
   const [sourceMode, setSourceMode] = useState<SourceMode>("saved");
@@ -83,24 +89,46 @@ function PropertyInquiryPageContent() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("saved_properties")
-        .select("id,title,url,location,address,rent_weekly,status")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      setUserId(user.id);
+
+      const [propertiesResult, draftResult] = await Promise.all([
+        supabase
+          .from("saved_properties")
+          .select("id,title,url,location,address,rent_weekly,status")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("user_form_drafts")
+          .select("form_data")
+          .eq("user_id", user.id)
+          .eq("draft_type", "property_inquiry")
+          .maybeSingle<DraftRow>(),
+      ]);
 
       if (!isMounted) return;
 
-      if (error) {
-        setErrorMessage(error.message);
+      if (propertiesResult.error) {
+        setErrorMessage(propertiesResult.error.message);
         setProperties([]);
       } else {
-        const savedProperties = data || [];
+        const savedProperties = propertiesResult.data || [];
         setProperties(savedProperties);
 
         if (!propertyIdFromQuery && savedProperties[0]?.id) {
           setSelectedPropertyId(savedProperties[0].id);
         }
+      }
+
+      if (draftResult.error) {
+        console.warn(draftResult.error.message);
+        setPropertyDetails(emptyPropertyDetails);
+      } else if (draftResult.data?.form_data) {
+        setPropertyDetails({
+          ...emptyPropertyDetails,
+          ...draftResult.data.form_data,
+        });
+      } else {
+        setPropertyDetails(emptyPropertyDetails);
       }
 
       setIsLoading(false);
@@ -149,6 +177,54 @@ function PropertyInquiryPageContent() {
 
   const targetUrl = activeTarget?.url?.trim() || "";
 
+  const saveDraft = async (showMessage = true) => {
+    if (!userId) return false;
+
+    const { error } = await supabase.from("user_form_drafts").upsert(
+      {
+        user_id: userId,
+        draft_type: "property_inquiry",
+        form_data: propertyDetails,
+      },
+      {
+        onConflict: "user_id,draft_type",
+      },
+    );
+
+    if (error) {
+      setErrorMessage(
+        "入力内容の保存に失敗しました。Supabaseに user_form_drafts テーブルが作成されているか確認してください。",
+      );
+      return false;
+    }
+
+    if (showMessage) {
+      setSuccessMessage("入力内容を保存しました。");
+      setErrorMessage("");
+    }
+
+    return true;
+  };
+
+  const resetDraft = async () => {
+    if (!userId) return;
+
+    const { error } = await supabase
+      .from("user_form_drafts")
+      .delete()
+      .eq("user_id", userId)
+      .eq("draft_type", "property_inquiry");
+
+    if (error) {
+      setErrorMessage("保存済み入力内容のリセットに失敗しました。");
+      return;
+    }
+
+    setPropertyDetails(emptyPropertyDetails);
+    setSuccessMessage("保存済み入力内容をリセットしました。");
+    setErrorMessage("");
+  };
+
   const handleGenerate = () => {
     setErrorMessage("");
     setSuccessMessage("");
@@ -162,6 +238,8 @@ function PropertyInquiryPageContent() {
       setErrorMessage("氏名を入力してください。");
       return;
     }
+
+    saveDraft(false);
 
     const content = generatePropertyInquiryEmail({
       target: activeTarget,
@@ -411,12 +489,32 @@ function PropertyInquiryPageContent() {
         </section>
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <h2 className="text-xl font-bold text-gray-900">
-            2. 問い合わせ内容を入力する
-          </h2>
-          <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
-            日本語で入力してください。出力は英語の問い合わせメールとして整えます。
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                2. 問い合わせ内容を入力する
+              </h2>
+              <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
+                日本語で入力してください。出力は英語の問い合わせメールとして整えます。
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => saveDraft(true)}
+                className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
+              >
+                入力内容を保存
+              </button>
+              <button
+                type="button"
+                onClick={resetDraft}
+                className="w-full rounded-lg bg-gray-200 px-4 py-3 font-bold text-gray-900 sm:w-auto"
+              >
+                入力内容をリセット
+              </button>
+            </div>
+          </div>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="block">
               <span className="text-sm font-bold text-gray-900">氏名</span>
@@ -432,20 +530,30 @@ function PropertyInquiryPageContent() {
                 placeholder="例: Kei Tanaka"
               />
             </label>
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">現在地</span>
-              <input
+            <div className="md:col-span-2">
+              <NzLocationPicker
+                label="現在地"
                 value={propertyDetails.currentCity || ""}
-                onChange={(event) =>
+                onChange={(value) =>
                   setPropertyDetails({
                     ...propertyDetails,
-                    currentCity: event.target.value,
+                    currentCity: value,
                   })
                 }
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: Auckland"
+                onCoordinatesChange={(coords) =>
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    currentCity:
+                      coords.latitude && coords.longitude
+                        ? "現在地"
+                        : propertyDetails.currentCity || "",
+                    currentLatitude: coords.latitude,
+                    currentLongitude: coords.longitude,
+                  })
+                }
+                allLabel="未設定"
               />
-            </label>
+            </div>
             <label className="block">
               <span className="text-sm font-bold text-gray-900">
                 入居希望日

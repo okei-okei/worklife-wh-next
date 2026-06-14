@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 
 type PublicProperty = {
@@ -16,6 +17,10 @@ type PublicProperty = {
   url: string | null;
   latitude: number | null;
   longitude: number | null;
+  room_type?: string | null;
+  available_from?: string | null;
+  furnished?: boolean | null;
+  bills_included?: boolean | null;
 };
 
 function isMissingColumnError(error: { message?: string } | null) {
@@ -29,12 +34,43 @@ function buildLoginRedirect(path: string) {
   return `/login?redirect=${encodeURIComponent(path)}`;
 }
 
+function calculateDistanceKm(
+  from: { latitude: number; longitude: number },
+  to: { latitude: number; longitude: number },
+) {
+  const earthRadiusKm = 6371;
+  const dLat = ((to.latitude - from.latitude) * Math.PI) / 180;
+  const dLon = ((to.longitude - from.longitude) * Math.PI) / 180;
+  const lat1 = (from.latitude * Math.PI) / 180;
+  const lat2 = (to.latitude * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLon / 2) *
+      Math.sin(dLon / 2) *
+      Math.cos(lat1) *
+      Math.cos(lat2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusKm * c;
+}
+
 export default function PropertiesPage() {
   const router = useRouter();
   const [properties, setProperties] = useState<PublicProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [savingPropertyId, setSavingPropertyId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [filterCoordinates, setFilterCoordinates] = useState<{
+    latitude: number | null;
+    longitude: number | null;
+  }>({ latitude: null, longitude: null });
+  const [maxRentWeekly, setMaxRentWeekly] = useState("");
+  const [roomType, setRoomType] = useState("");
+  const [availableFrom, setAvailableFrom] = useState("");
+  const [furnishedOnly, setFurnishedOnly] = useState(false);
+  const [billsIncludedOnly, setBillsIncludedOnly] = useState(false);
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     inquiry?: (property: PublicProperty) => void;
@@ -251,6 +287,118 @@ export default function PropertiesPage() {
     return `週 $${rentWeekly.toLocaleString()}`;
   };
 
+  const filteredProperties = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const normalizedLocation = locationFilter.trim().toLowerCase();
+    const maximumRent = maxRentWeekly ? Number(maxRentWeekly) : null;
+
+    return properties.filter((property) => {
+      const searchableText = [
+        property.title,
+        property.city,
+        property.area,
+        property.address,
+        property.description,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      if (normalizedQuery && !searchableText.includes(normalizedQuery)) {
+        return false;
+      }
+
+      if (normalizedLocation && normalizedLocation !== "現在地") {
+        const propertyLocationText = [
+          property.city,
+          property.area,
+          property.address,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!propertyLocationText.includes(normalizedLocation)) {
+          return false;
+        }
+      }
+
+      if (
+        normalizedLocation === "現在地" &&
+        filterCoordinates.latitude &&
+        filterCoordinates.longitude &&
+        property.latitude &&
+        property.longitude
+      ) {
+        const distanceKm = calculateDistanceKm(
+          {
+            latitude: filterCoordinates.latitude,
+            longitude: filterCoordinates.longitude,
+          },
+          {
+            latitude: property.latitude,
+            longitude: property.longitude,
+          },
+        );
+
+        if (distanceKm > 50) return false;
+      }
+
+      if (
+        maximumRent !== null &&
+        (property.rent_weekly === null || property.rent_weekly > maximumRent)
+      ) {
+        return false;
+      }
+
+      if (
+        roomType.trim() &&
+        !property.room_type?.toLowerCase().includes(roomType.trim().toLowerCase())
+      ) {
+        return false;
+      }
+
+      if (
+        availableFrom &&
+        property.available_from &&
+        property.available_from > availableFrom
+      ) {
+        return false;
+      }
+
+      if (furnishedOnly && !property.furnished) {
+        return false;
+      }
+
+      if (billsIncludedOnly && !property.bills_included) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    availableFrom,
+    billsIncludedOnly,
+    filterCoordinates,
+    furnishedOnly,
+    locationFilter,
+    maxRentWeekly,
+    properties,
+    roomType,
+    searchQuery,
+  ]);
+
+  const resetFilters = () => {
+    setSearchQuery("");
+    setLocationFilter("");
+    setFilterCoordinates({ latitude: null, longitude: null });
+    setMaxRentWeekly("");
+    setRoomType("");
+    setAvailableFrom("");
+    setFurnishedOnly(false);
+    setBillsIncludedOnly(false);
+  };
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -289,6 +437,98 @@ export default function PropertiesPage() {
           </div>
         )}
 
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">検索</span>
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900 placeholder:text-gray-600"
+                placeholder="物件名、エリア、住所、説明で検索"
+              />
+            </label>
+
+            <NzLocationPicker
+              label="地域"
+              value={locationFilter}
+              onChange={setLocationFilter}
+              onCoordinatesChange={setFilterCoordinates}
+            />
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-5">
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                週家賃の上限
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={maxRentWeekly}
+                onChange={(event) => setMaxRentWeekly(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 300"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                部屋タイプ
+              </span>
+              <input
+                value={roomType}
+                onChange={(event) => setRoomType(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: private"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                入居可能日
+              </span>
+              <input
+                type="date"
+                value={availableFrom}
+                onChange={(event) => setAvailableFrom(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+              />
+            </label>
+            <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:mt-7">
+              <input
+                type="checkbox"
+                checked={furnishedOnly}
+                onChange={(event) => setFurnishedOnly(event.target.checked)}
+                className="h-5 w-5"
+              />
+              家具付き
+            </label>
+            <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:mt-7">
+              <input
+                type="checkbox"
+                checked={billsIncludedOnly}
+                onChange={(event) =>
+                  setBillsIncludedOnly(event.target.checked)
+                }
+                className="h-5 w-5"
+              />
+              光熱費込み
+            </label>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-bold text-gray-800">
+              結果: {filteredProperties.length}件
+            </p>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="w-full rounded-lg bg-gray-700 px-4 py-3 font-bold text-white sm:w-auto"
+            >
+              条件をリセット
+            </button>
+          </div>
+        </section>
+
         {isLoading ? (
           <div className="rounded-2xl bg-white p-6 shadow">
             <p className="font-medium text-gray-800">
@@ -302,9 +542,18 @@ export default function PropertiesPage() {
               掲載申請が承認されると、このページに物件が表示されます。
             </p>
           </div>
+        ) : filteredProperties.length === 0 ? (
+          <div className="rounded-2xl bg-white p-6 shadow">
+            <h2 className="text-2xl font-bold">
+              条件に合う物件が見つかりません
+            </h2>
+            <p className="mt-2 leading-7 text-gray-800">
+              検索キーワードやフィルター条件を変更して再度お試しください。
+            </p>
+          </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
-            {properties.map((property) => (
+            {filteredProperties.map((property) => (
               <article
                 key={property.id}
                 className="rounded-2xl bg-white p-6 shadow"

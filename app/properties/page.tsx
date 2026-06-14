@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -25,12 +25,21 @@ function isMissingColumnError(error: { message?: string } | null) {
   );
 }
 
+function buildLoginRedirect(path: string) {
+  return `/login?redirect=${encodeURIComponent(path)}`;
+}
+
 export default function PropertiesPage() {
   const router = useRouter();
   const [properties, setProperties] = useState<PublicProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [savingPropertyId, setSavingPropertyId] = useState<string | null>(null);
+  const handledPendingActionRef = useRef(false);
+  const pendingActionHandlersRef = useRef<{
+    inquiry?: (property: PublicProperty) => void;
+    save?: (property: PublicProperty) => void;
+  }>({});
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -60,13 +69,16 @@ export default function PropertiesPage() {
     fetchProperties();
   }, []);
 
-  const ensureSavedProperty = async (property: PublicProperty) => {
+  const ensureSavedProperty = async (
+    property: PublicProperty,
+    authRedirectPath: string,
+  ) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      router.push("/login");
+      router.push(buildLoginRedirect(authRedirectPath));
       return;
     }
 
@@ -149,7 +161,10 @@ export default function PropertiesPage() {
     setSavingPropertyId(property.id);
 
     try {
-      const result = await ensureSavedProperty(property);
+      const result = await ensureSavedProperty(
+        property,
+        `/properties?action=save&public_property_id=${property.id}`,
+      );
 
       if (!result) return;
 
@@ -174,7 +189,10 @@ export default function PropertiesPage() {
     setSavingPropertyId(property.id);
 
     try {
-      const result = await ensureSavedProperty(property);
+      const result = await ensureSavedProperty(
+        property,
+        `/properties?action=inquiry&public_property_id=${property.id}`,
+      );
 
       if (!result) return;
 
@@ -188,6 +206,42 @@ export default function PropertiesPage() {
       setSavingPropertyId(null);
     }
   };
+
+  useEffect(() => {
+    pendingActionHandlersRef.current = {
+      inquiry: handleInquiryProperty,
+      save: handleSaveProperty,
+    };
+  });
+
+  useEffect(() => {
+    if (isLoading || handledPendingActionRef.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get("action");
+    const publicPropertyId = params.get("public_property_id");
+
+    if (!action || !publicPropertyId) return;
+
+    const property = properties.find((item) => item.id === publicPropertyId);
+
+    if (!property) return;
+
+    handledPendingActionRef.current = true;
+
+    const timer = window.setTimeout(() => {
+      if (action === "inquiry") {
+        pendingActionHandlersRef.current.inquiry?.(property);
+        return;
+      }
+
+      if (action === "save") {
+        pendingActionHandlersRef.current.save?.(property);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [isLoading, properties]);
 
   const formatRent = (rentWeekly: number | null) => {
     if (rentWeekly === null) {

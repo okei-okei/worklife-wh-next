@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -29,12 +29,21 @@ function isMissingColumnError(error: { message?: string } | null) {
   );
 }
 
+function buildLoginRedirect(path: string) {
+  return `/login?redirect=${encodeURIComponent(path)}`;
+}
+
 export default function JobsPage() {
   const router = useRouter();
   const [jobs, setJobs] = useState<PublicJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
+  const handledPendingActionRef = useRef(false);
+  const pendingActionHandlersRef = useRef<{
+    apply?: (job: PublicJob) => void;
+    save?: (job: PublicJob) => void;
+  }>({});
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -64,13 +73,13 @@ export default function JobsPage() {
     fetchJobs();
   }, []);
 
-  const ensureSavedJob = async (job: PublicJob) => {
+  const ensureSavedJob = async (job: PublicJob, authRedirectPath: string) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      router.push("/login");
+      router.push(buildLoginRedirect(authRedirectPath));
       return;
     }
 
@@ -154,7 +163,10 @@ export default function JobsPage() {
     setSavingJobId(job.id);
 
     try {
-      const result = await ensureSavedJob(job);
+      const result = await ensureSavedJob(
+        job,
+        `/jobs?action=save&public_job_id=${job.id}`,
+      );
 
       if (!result) return;
 
@@ -179,7 +191,10 @@ export default function JobsPage() {
     setSavingJobId(job.id);
 
     try {
-      const result = await ensureSavedJob(job);
+      const result = await ensureSavedJob(
+        job,
+        `/jobs?action=apply&public_job_id=${job.id}`,
+      );
 
       if (!result) return;
 
@@ -193,6 +208,42 @@ export default function JobsPage() {
       setSavingJobId(null);
     }
   };
+
+  useEffect(() => {
+    pendingActionHandlersRef.current = {
+      apply: handleApplyJob,
+      save: handleSaveJob,
+    };
+  });
+
+  useEffect(() => {
+    if (isLoading || handledPendingActionRef.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get("action");
+    const publicJobId = params.get("public_job_id");
+
+    if (!action || !publicJobId) return;
+
+    const job = jobs.find((item) => item.id === publicJobId);
+
+    if (!job) return;
+
+    handledPendingActionRef.current = true;
+
+    const timer = window.setTimeout(() => {
+      if (action === "apply") {
+        pendingActionHandlersRef.current.apply?.(job);
+        return;
+      }
+
+      if (action === "save") {
+        pendingActionHandlersRef.current.save?.(job);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [isLoading, jobs]);
 
   const formatHourlyRate = (hourlyRate: number | null) => {
     if (hourlyRate === null) {

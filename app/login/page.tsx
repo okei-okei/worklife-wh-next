@@ -5,6 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+function getSafeRedirectPath() {
+  if (typeof window === "undefined") return "/mypage";
+
+  const redirect = new URLSearchParams(window.location.search).get("redirect");
+
+  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
+    return "/mypage";
+  }
+
+  return redirect;
+}
+
 export default function LoginPage() {
   const router = useRouter();
 
@@ -33,8 +45,10 @@ export default function LoginPage() {
       return;
     }
 
-    setSuccessMessage("ログインしました。マイページへ移動します。");
-    router.push("/mypage");
+    const redirectPath = getSafeRedirectPath();
+
+    setSuccessMessage("ログインしました。移動します。");
+    router.push(redirectPath);
   };
 
   return (

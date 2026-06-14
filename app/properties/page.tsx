@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type PublicProperty = {
@@ -18,6 +19,7 @@ type PublicProperty = {
 };
 
 export default function PropertiesPage() {
+  const router = useRouter();
   const [properties, setProperties] = useState<PublicProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -60,7 +62,29 @@ export default function PropertiesPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("ログインしてください。");
+      setSavingPropertyId(null);
+      router.push("/login");
+      return;
+    }
+
+    const saveUrl = property.url || "";
+    const { data: existingProperty, error: existingError } = await supabase
+      .from("saved_properties")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("url", saveUrl)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingError) {
+      console.error(existingError);
+      setMessage("保存状況の確認に失敗しました。時間をおいて再度お試しください。");
+      setSavingPropertyId(null);
+      return;
+    }
+
+    if (existingProperty) {
+      setMessage("すでに保存済みです。");
       setSavingPropertyId(null);
       return;
     }
@@ -68,7 +92,7 @@ export default function PropertiesPage() {
     const { error } = await supabase.from("saved_properties").insert({
       user_id: user.id,
       title: property.title,
-      url: property.url || "",
+      url: saveUrl,
       location: property.area || property.city || "",
       address: property.address || property.area || property.city || "",
       rent_weekly: property.rent_weekly,
@@ -80,7 +104,7 @@ export default function PropertiesPage() {
       console.error(error);
       setMessage("保存に失敗しました。時間をおいて再度お試しください。");
     } else {
-      setMessage("物件をマイページに保存しました。");
+      setMessage("マイページの保存リストに追加しました。");
     }
 
     setSavingPropertyId(null);
@@ -95,15 +119,17 @@ export default function PropertiesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
+    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH 公開物件
             </p>
-            <h1 className="text-4xl font-bold">ワーホリ向け物件</h1>
-            <p className="mt-2 text-gray-600">
+            <h1 className="text-2xl font-bold md:text-4xl">
+              ワーホリ向け物件
+            </h1>
+            <p className="mt-2 text-base font-medium leading-7 text-gray-800">
               運営または掲載者が公開した物件を確認し、気になる物件をマイページへ保存できます。
             </p>
           </div>
@@ -111,13 +137,13 @@ export default function PropertiesPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/mypage"
-              className="rounded-lg bg-white px-4 py-2 font-bold text-gray-700 shadow"
+              className="w-full rounded-lg bg-white px-4 py-3 text-center font-bold text-gray-900 shadow sm:w-auto sm:py-2"
             >
               マイページ
             </Link>
             <Link
               href="/company/submit"
-              className="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white"
+              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
             >
               掲載申請
             </Link>
@@ -132,12 +158,14 @@ export default function PropertiesPage() {
 
         {isLoading ? (
           <div className="rounded-2xl bg-white p-6 shadow">
-            <p className="text-gray-600">物件情報を読み込み中です...</p>
+            <p className="font-medium text-gray-800">
+              物件情報を読み込み中です...
+            </p>
           </div>
         ) : properties.length === 0 ? (
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-2xl font-bold">公開物件は準備中です</h2>
-            <p className="mt-2 leading-7 text-gray-600">
+            <p className="mt-2 leading-7 text-gray-800">
               掲載申請が承認されると、このページに物件が表示されます。
             </p>
           </div>
@@ -151,7 +179,7 @@ export default function PropertiesPage() {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-bold">{property.title}</h2>
-                    <p className="mt-1 text-gray-600">
+                    <p className="mt-1 font-medium text-gray-800">
                       {property.city || "都市未設定"}
                       {property.area ? ` / ${property.area}` : ""}
                     </p>
@@ -172,7 +200,7 @@ export default function PropertiesPage() {
                   <button
                     onClick={() => handleSaveProperty(property)}
                     disabled={savingPropertyId === property.id}
-                    className="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white disabled:bg-gray-300"
+                    className="w-full rounded-lg bg-blue-600 px-4 py-3 font-bold text-white disabled:bg-gray-300 sm:w-auto sm:py-2"
                   >
                     {savingPropertyId === property.id ? "保存中..." : "保存する"}
                   </button>
@@ -182,7 +210,7 @@ export default function PropertiesPage() {
                       href={property.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="rounded-lg border border-gray-300 px-4 py-2 font-bold text-gray-700 hover:bg-gray-50"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto sm:py-2"
                     >
                       物件ページを見る
                     </a>

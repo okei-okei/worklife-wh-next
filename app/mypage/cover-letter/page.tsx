@@ -8,21 +8,12 @@ import {
   generateCoverLetter,
   type ApplicationResume,
   type ApplicationTarget,
-  type ApplicationTargetType,
 } from "@/lib/services/applicationWriter";
 
 type SavedJob = {
   id: string;
   title: string;
   url: string | null;
-};
-
-type SavedProperty = {
-  id: string;
-  title: string;
-  url: string | null;
-  location: string | null;
-  address: string | null;
 };
 
 type ResumeFile = {
@@ -35,7 +26,7 @@ type ResumeFile = {
 
 type ApplicationDocumentTarget = ApplicationTarget & {
   id: string;
-  type: ApplicationTargetType;
+  type: "job";
 };
 
 const resumeBucketName = "resumes";
@@ -90,15 +81,12 @@ async function createCoverLetterPdfBlob(title: string, content: string) {
 export default function CoverLetterPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
-  const [targetType, setTargetType] = useState<ApplicationTargetType>("job");
   const [jobs, setJobs] = useState<SavedJob[]>([]);
-  const [properties, setProperties] = useState<SavedProperty[]>([]);
   const [resume, setResume] = useState<ApplicationResume | null>(null);
   const [latestResumeFile, setLatestResumeFile] = useState<ResumeFile | null>(
     null,
   );
   const [selectedJobId, setSelectedJobId] = useState("");
-  const [selectedPropertyId, setSelectedPropertyId] = useState("");
   const [coverLetterDraft, setCoverLetterDraft] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -107,22 +95,6 @@ export default function CoverLetterPage() {
   const [successMessage, setSuccessMessage] = useState("");
 
   const selectedTarget = useMemo<ApplicationDocumentTarget | null>(() => {
-    if (targetType === "property") {
-      const property =
-        properties.find((item) => item.id === selectedPropertyId) || null;
-
-      if (!property) return null;
-
-      return {
-        id: property.id,
-        type: "property",
-        title: property.title,
-        url: property.url,
-        location: property.location,
-        address: property.address,
-      };
-    }
-
     const job = jobs.find((item) => item.id === selectedJobId) || null;
 
     if (!job) return null;
@@ -133,7 +105,7 @@ export default function CoverLetterPage() {
       title: job.title,
       url: job.url,
     };
-  }, [jobs, properties, selectedJobId, selectedPropertyId, targetType]);
+  }, [jobs, selectedJobId]);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -150,21 +122,11 @@ export default function CoverLetterPage() {
 
     setUserId(user.id);
 
-    const [
-      jobsResponse,
-      propertiesResponse,
-      resumeResponse,
-      latestResumeFileResponse,
-    ] =
+    const [jobsResponse, resumeResponse, latestResumeFileResponse] =
       await Promise.all([
         supabase
           .from("saved_jobs")
           .select("id, title, url")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("saved_properties")
-          .select("id, title, url, location, address")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
         supabase
@@ -191,14 +153,6 @@ export default function CoverLetterPage() {
       return;
     }
 
-    if (propertiesResponse.error) {
-      setErrorMessage(
-        `物件情報の読み込みに失敗しました。${propertiesResponse.error.message}`,
-      );
-      setIsLoading(false);
-      return;
-    }
-
     if (resumeResponse.error) {
       setErrorMessage(
         `履歴書情報の読み込みに失敗しました。${resumeResponse.error.message}`,
@@ -216,9 +170,7 @@ export default function CoverLetterPage() {
     }
 
     const loadedJobs = (jobsResponse.data || []) as SavedJob[];
-    const loadedProperties = (propertiesResponse.data || []) as SavedProperty[];
     setJobs(loadedJobs);
-    setProperties(loadedProperties);
     setResume(resumeResponse.data || null);
     if (latestResumeFileResponse.data) {
       const { data } = await supabase.storage
@@ -233,9 +185,6 @@ export default function CoverLetterPage() {
       setLatestResumeFile(null);
     }
     setSelectedJobId((current) => current || loadedJobs[0]?.id || "");
-    setSelectedPropertyId(
-      (current) => current || loadedProperties[0]?.id || "",
-    );
     setIsLoading(false);
   }, [router]);
 
@@ -247,23 +196,12 @@ export default function CoverLetterPage() {
     return () => window.clearTimeout(timer);
   }, [loadData]);
 
-  const handleTargetTypeChange = (nextType: ApplicationTargetType) => {
-    setTargetType(nextType);
-    setCoverLetterDraft("");
-    setErrorMessage("");
-    setSuccessMessage("");
-  };
-
   const handleGenerate = () => {
     setErrorMessage("");
     setSuccessMessage("");
 
     if (!selectedTarget) {
-      setErrorMessage(
-        targetType === "job"
-          ? "カバーレターを作成する求人を選択してください。"
-          : "カバーレターを作成する物件を選択してください。",
-      );
+      setErrorMessage("カバーレターを作成する求人を選択してください。");
       return;
     }
 
@@ -436,7 +374,7 @@ export default function CoverLetterPage() {
               カバーレター作成
             </h1>
             <p className="mt-2 text-base font-medium leading-7 text-gray-800">
-              保存した求人・物件と履歴書情報から、英語のカバーレター下書きを作成して保存できます。
+              保存した求人と履歴書情報から、英語のカバーレター下書きを作成して保存できます。
             </p>
           </div>
         </div>
@@ -447,71 +385,26 @@ export default function CoverLetterPage() {
           </section>
         ) : (
           <section className="space-y-5 rounded-2xl bg-white p-4 shadow md:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => handleTargetTypeChange("job")}
-                className={`w-full rounded-lg px-4 py-3 font-bold sm:w-auto ${
-                  targetType === "job"
-                    ? "bg-blue-600 text-white"
-                    : "border border-gray-300 bg-white text-gray-900"
-                }`}
-              >
-                求人向け
-              </button>
-              <button
-                type="button"
-                onClick={() => handleTargetTypeChange("property")}
-                className={`w-full rounded-lg px-4 py-3 font-bold sm:w-auto ${
-                  targetType === "property"
-                    ? "bg-blue-600 text-white"
-                    : "border border-gray-300 bg-white text-gray-900"
-                }`}
-              >
-                物件向け
-              </button>
-            </div>
-
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <label className="block">
                 <span className="mb-2 block text-sm font-bold text-gray-900">
-                  {targetType === "job" ? "保存済み求人" : "保存済み物件"}
+                  保存済み求人
                 </span>
-                {targetType === "job" ? (
-                  <select
-                    value={selectedJobId}
-                    onChange={(event) => setSelectedJobId(event.target.value)}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  >
-                    {jobs.length ? (
-                      jobs.map((job) => (
-                        <option key={job.id} value={job.id}>
-                          {job.title}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="">保存済み求人がありません</option>
-                    )}
-                  </select>
-                ) : (
-                  <select
-                    value={selectedPropertyId}
-                    onChange={(event) =>
-                      setSelectedPropertyId(event.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  >
-                    {properties.length ? (
-                      properties.map((property) => (
-                        <option key={property.id} value={property.id}>
-                          {property.title}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="">保存済み物件がありません</option>
-                    )}
-                  </select>
-                )}
+                <select
+                  value={selectedJobId}
+                  onChange={(event) => setSelectedJobId(event.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  {jobs.length ? (
+                    jobs.map((job) => (
+                      <option key={job.id} value={job.id}>
+                        {job.title}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">保存済み求人がありません</option>
+                  )}
+                </select>
               </label>
 
               <div className="space-y-3 rounded-xl bg-blue-50 p-4 text-sm font-bold text-blue-800">
@@ -615,11 +508,7 @@ export default function CoverLetterPage() {
                 value={coverLetterDraft}
                 onChange={(event) => setCoverLetterDraft(event.target.value)}
                 rows={18}
-                placeholder={
-                  targetType === "job"
-                    ? "求人を選択してカバーレターを作成してください。"
-                    : "物件を選択してカバーレターを作成してください。"
-                }
+                placeholder="求人を選択してカバーレターを作成してください。"
                 className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium leading-7 text-gray-900 outline-none placeholder:text-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </label>

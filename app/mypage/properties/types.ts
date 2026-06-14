@@ -6,6 +6,7 @@ export type Property = {
   location: string | null;
   address: string | null;
   rent_weekly: number | null;
+  status: string | null;
   latitude: number | null;
   longitude: number | null;
 };

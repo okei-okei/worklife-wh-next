@@ -107,6 +107,7 @@ export default function PropertiesPage() {
       location: property.area || property.city || "",
       address: property.address || property.area || property.city || "",
       rent_weekly: property.rent_weekly,
+      status: "気になる",
       latitude: property.latitude,
       longitude: property.longitude,
     });

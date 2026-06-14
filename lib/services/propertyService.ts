@@ -43,6 +43,7 @@ export async function saveProperty({
     location,
     rent_weekly: rentWeekly,
     address,
+    status: "気になる",
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
   });

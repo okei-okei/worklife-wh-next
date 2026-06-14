@@ -4,10 +4,35 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { getStatusBadgeClassName } from "@/lib/applicationStatus";
+
+type StatusSummary = {
+  savedJobCount: number;
+  appliedJobCount: number;
+  interviewJobCount: number;
+  hiredJobCount: number;
+  savedPropertyCount: number;
+  propertyInquiredCount: number;
+  viewingPropertyCount: number;
+  confirmedPropertyCount: number;
+};
+
+const initialStatusSummary: StatusSummary = {
+  savedJobCount: 0,
+  appliedJobCount: 0,
+  interviewJobCount: 0,
+  hiredJobCount: 0,
+  savedPropertyCount: 0,
+  propertyInquiredCount: 0,
+  viewingPropertyCount: 0,
+  confirmedPropertyCount: 0,
+};
 
 export default function MyPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [summary, setSummary] =
+    useState<StatusSummary>(initialStatusSummary);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -21,6 +46,40 @@ export default function MyPage() {
       }
 
       setEmail(user.email || "");
+
+      const [jobsResponse, propertiesResponse] = await Promise.all([
+        supabase.from("saved_jobs").select("status").eq("user_id", user.id),
+        supabase
+          .from("saved_properties")
+          .select("status")
+          .eq("user_id", user.id),
+      ]);
+
+      const jobRows = (jobsResponse.data || []) as Array<{
+        status: string | null;
+      }>;
+      const propertyRows = (propertiesResponse.data || []) as Array<{
+        status: string | null;
+      }>;
+
+      setSummary({
+        savedJobCount: jobRows.length,
+        appliedJobCount: jobRows.filter((row) => row.status === "応募済み")
+          .length,
+        interviewJobCount: jobRows.filter((row) => row.status === "面接予定")
+          .length,
+        hiredJobCount: jobRows.filter((row) => row.status === "採用").length,
+        savedPropertyCount: propertyRows.length,
+        propertyInquiredCount: propertyRows.filter(
+          (row) => row.status === "問い合わせ済み",
+        ).length,
+        viewingPropertyCount: propertyRows.filter(
+          (row) => row.status === "内見予定",
+        ).length,
+        confirmedPropertyCount: propertyRows.filter(
+          (row) => row.status === "入居決定",
+        ).length,
+      });
     };
 
     checkUser();
@@ -44,6 +103,64 @@ export default function MyPage() {
             </p>
           </div>
         </div>
+
+        <section className="mb-6 rounded-2xl bg-white p-4 shadow md:p-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-gray-900 md:text-2xl">
+              応募・問い合わせ状況
+            </h2>
+            <p className="mt-1 text-sm font-medium text-gray-800">
+              保存した求人・物件の進捗をまとめて確認できます。
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {[
+              { label: "保存済み求人", value: summary.savedJobCount },
+              {
+                label: "応募済み",
+                value: summary.appliedJobCount,
+                status: "応募済み",
+              },
+              {
+                label: "面接予定",
+                value: summary.interviewJobCount,
+                status: "面接予定",
+              },
+              { label: "採用", value: summary.hiredJobCount, status: "採用" },
+              { label: "保存済み物件", value: summary.savedPropertyCount },
+              {
+                label: "問い合わせ済み",
+                value: summary.propertyInquiredCount,
+                status: "問い合わせ済み",
+              },
+              {
+                label: "内見予定",
+                value: summary.viewingPropertyCount,
+                status: "内見予定",
+              },
+              {
+                label: "入居決定",
+                value: summary.confirmedPropertyCount,
+                status: "入居決定",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className={`rounded-xl p-4 ${
+                  item.status
+                    ? getStatusBadgeClassName(item.status)
+                    : "bg-gray-100 text-gray-900"
+                }`}
+              >
+                <p className="text-sm font-bold">{item.label}</p>
+                <p className="mt-2 text-3xl font-bold">
+                  {item.value.toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
           <Link href="/mypage/jobs" className="block min-w-0">

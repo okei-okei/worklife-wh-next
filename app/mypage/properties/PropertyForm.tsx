@@ -70,6 +70,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
       location,
       address,
       rent_weekly: rent ? Number(rent) : null,
+      status: "気になる",
       latitude: geo.latitude,
       longitude: geo.longitude,
     });

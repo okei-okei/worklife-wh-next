@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import {
+  getStatusBadgeClassName,
+  propertyStatusOptions,
+} from "@/lib/applicationStatus";
 import { Property } from "./types";
 
 type Props = {
@@ -28,6 +32,26 @@ export default function PropertyList({
   onRefresh,
   onEdit,
 }: Props) {
+  const handleStatusChange = async (property: Property, status: string) => {
+    if (!userId) {
+      alert("ログインしてください");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("saved_properties")
+      .update({ status })
+      .eq("id", property.id)
+      .eq("user_id", userId);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    onRefresh();
+  };
+
   const handleDelete = async (id: string) => {
     if (!userId) {
       alert("ログインしてください");
@@ -65,6 +89,28 @@ export default function PropertyList({
             <p className="text-sm font-medium text-gray-700">
               エリア: {p.location || "-"}
             </p>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <span
+                className={`w-fit rounded-full px-3 py-1 text-sm font-bold ${getStatusBadgeClassName(
+                  p.status,
+                )}`}
+              >
+                {p.status || "気になる"}
+              </span>
+
+              <select
+                value={p.status || "気になる"}
+                onChange={(event) => handleStatusChange(p, event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-900 sm:w-auto"
+              >
+                {propertyStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <p className="text-sm font-medium text-gray-700">
               家賃: {p.rent_weekly ? `$${p.rent_weekly}/週` : "未設定"}

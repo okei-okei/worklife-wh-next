@@ -11,6 +11,7 @@ import {
   type ApplicationResume,
   type ApplicationTarget,
 } from "@/lib/services/applicationWriter";
+import { getStatusBadgeClassName } from "@/lib/applicationStatus";
 
 type TargetType = "job" | "property";
 type TargetSource = "saved" | "public" | "manual";
@@ -174,8 +175,11 @@ function ApplicationsPageContent() {
   const [manualUrl, setManualUrl] = useState("");
   const [manualAddress, setManualAddress] = useState("");
   const [draft, setDraft] = useState("");
+  const [statusUpdateTarget, setStatusUpdateTarget] =
+    useState<SelectableTarget | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -389,6 +393,7 @@ function ApplicationsPageContent() {
   const handleGenerate = () => {
     setErrorMessage("");
     setSuccessMessage("");
+    setStatusUpdateTarget(null);
 
     if (!selectedTarget || !selectedTarget.title.trim()) {
       setErrorMessage("対象のタイトルを入力または選択してください。");
@@ -483,6 +488,35 @@ function ApplicationsPageContent() {
     }
 
     setSuccessMessage("下書きとして保存しました。");
+    setStatusUpdateTarget(
+      selectedTarget.source === "saved" ? selectedTarget : null,
+    );
+  };
+
+  const handleUpdateTargetStatus = async (status: string) => {
+    if (!statusUpdateTarget?.id) return;
+
+    setIsUpdatingStatus(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const tableName =
+      statusUpdateTarget.type === "job" ? "saved_jobs" : "saved_properties";
+    const { error } = await supabase
+      .from(tableName)
+      .update({ status })
+      .eq("id", statusUpdateTarget.id)
+      .eq("user_id", userId);
+
+    setIsUpdatingStatus(false);
+
+    if (error) {
+      setErrorMessage(`ステータス更新に失敗しました。${error.message}`);
+      return;
+    }
+
+    setSuccessMessage(`ステータスを「${status}」に更新しました。`);
+    setStatusUpdateTarget(null);
   };
 
   return (
@@ -522,6 +556,7 @@ function ApplicationsPageContent() {
                       );
                       setSelectedTargetId("");
                       setDraft("");
+                      setStatusUpdateTarget(null);
                       setErrorMessage("");
                       setSuccessMessage("");
                     }}
@@ -561,6 +596,7 @@ function ApplicationsPageContent() {
                         onClick={() => {
                           setTargetSource(option.value);
                           setDraft("");
+                          setStatusUpdateTarget(null);
                           setErrorMessage("");
                           setSuccessMessage("");
                         }}
@@ -661,6 +697,7 @@ function ApplicationsPageContent() {
                     onClick={() => {
                       setDocumentType(option.value);
                       setDraft("");
+                      setStatusUpdateTarget(null);
                       setErrorMessage("");
                       setSuccessMessage("");
                     }}
@@ -741,6 +778,69 @@ function ApplicationsPageContent() {
                 <p className="rounded-lg bg-green-50 p-3 text-sm font-bold text-green-700">
                   {successMessage}
                 </p>
+              ) : null}
+
+              {statusUpdateTarget ? (
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                  <p className="font-bold text-gray-900">
+                    対象の進捗も更新しますか？
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-gray-800">
+                    {statusUpdateTarget.title}
+                  </p>
+
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    {statusUpdateTarget.type === "job" ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateTargetStatus("応募済み")}
+                          disabled={isUpdatingStatus}
+                          className={`w-full rounded-lg px-4 py-3 font-bold disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${getStatusBadgeClassName(
+                            "応募済み",
+                          )}`}
+                        >
+                          応募済みにする
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateTargetStatus("返信待ち")}
+                          disabled={isUpdatingStatus}
+                          className={`w-full rounded-lg px-4 py-3 font-bold disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${getStatusBadgeClassName(
+                            "返信待ち",
+                          )}`}
+                        >
+                          返信待ちにする
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleUpdateTargetStatus("問い合わせ済み")
+                          }
+                          disabled={isUpdatingStatus}
+                          className={`w-full rounded-lg px-4 py-3 font-bold disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${getStatusBadgeClassName(
+                            "問い合わせ済み",
+                          )}`}
+                        >
+                          問い合わせ済みにする
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateTargetStatus("返信待ち")}
+                          disabled={isUpdatingStatus}
+                          className={`w-full rounded-lg px-4 py-3 font-bold disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${getStatusBadgeClassName(
+                            "返信待ち",
+                          )}`}
+                        >
+                          返信待ちにする
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               ) : null}
 
               <label className="block">

@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import {
+  getStatusBadgeClassName,
+  jobStatusOptions,
+} from "@/lib/applicationStatus";
 import { Job } from "./types";
 
 type Props = {
@@ -23,6 +27,26 @@ function buildApplicationHref(job: Job, documentType: string) {
 }
 
 export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
+  const handleStatusChange = async (job: Job, status: string) => {
+    if (!userId) {
+      alert("ログインしてください");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("saved_jobs")
+      .update({ status })
+      .eq("id", job.id)
+      .eq("user_id", userId);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    onRefresh();
+  };
+
   const handleDelete = async (id: string) => {
     if (!userId) {
       alert("ログインしてください");
@@ -57,9 +81,27 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
           <div className="min-w-0 space-y-1">
             <h2 className="break-words text-xl font-bold">{job.title}</h2>
 
-            <p className="text-sm font-medium text-gray-700">
-              ステータス: {job.status || "-"}
-            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <span
+                className={`w-fit rounded-full px-3 py-1 text-sm font-bold ${getStatusBadgeClassName(
+                  job.status,
+                )}`}
+              >
+                {job.status || "気になる"}
+              </span>
+
+              <select
+                value={job.status || "気になる"}
+                onChange={(event) => handleStatusChange(job, event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-900 sm:w-auto"
+              >
+                {jobStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <p className="text-sm font-medium text-gray-700">
               時給: {job.hourly_rate ? `$${job.hourly_rate}` : "未設定"}

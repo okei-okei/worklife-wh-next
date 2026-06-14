@@ -22,15 +22,11 @@ type PublicJob = {
   longitude: number | null;
 };
 
-function buildApplicationHref(job: PublicJob, documentType: string) {
-  const params = new URLSearchParams({
-    target_type: "job",
-    target_source: "public",
-    target_id: job.id,
-    document_type: documentType,
-  });
-
-  return `/mypage/applications?${params.toString()}`;
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("column") ||
+      error?.message?.includes("schema cache"),
+  );
 }
 
 export default function JobsPage() {
@@ -68,16 +64,12 @@ export default function JobsPage() {
     fetchJobs();
   }, []);
 
-  const handleSaveJob = async (job: PublicJob) => {
-    setMessage("");
-    setSavingJobId(job.id);
-
+  const ensureSavedJob = async (job: PublicJob) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setSavingJobId(null);
       router.push("/login");
       return;
     }
@@ -93,37 +85,113 @@ export default function JobsPage() {
 
     if (existingError) {
       console.error(existingError);
-      setMessage("保存状況の確認に失敗しました。時間をおいて再度お試しください。");
-      setSavingJobId(null);
-      return;
+      throw new Error(
+        "保存状況の確認に失敗しました。時間をおいて再度お試しください。",
+      );
     }
 
     if (existingJob) {
-      setMessage("すでに保存済みです。");
-      setSavingJobId(null);
-      return;
+      return { id: existingJob.id as string, alreadySaved: true };
     }
 
-    const { error } = await supabase.from("saved_jobs").insert({
+    const extendedPayload = {
       user_id: user.id,
       title: job.title,
+      company: job.company,
       url: saveUrl,
+      apply_url: job.apply_url,
       hourly_rate: job.hourly_rate,
       work_hours: job.work_hours,
       status: "気になる",
       address: job.address || job.city || "",
       latitude: job.latitude,
       longitude: job.longitude,
-    });
+      source_type: "public",
+      public_job_id: job.id,
+    };
 
-    if (error) {
-      console.error(error);
-      setMessage("保存に失敗しました。時間をおいて再度お試しください。");
-    } else {
-      setMessage("マイページの保存リストに追加しました。");
+    const { data: insertedJob, error } = await supabase
+      .from("saved_jobs")
+      .insert(extendedPayload)
+      .select("id")
+      .single();
+
+    if (!error) {
+      return { id: insertedJob.id as string, alreadySaved: false };
     }
 
-    setSavingJobId(null);
+    if (!isMissingColumnError(error)) {
+      console.error(error);
+      throw new Error("保存に失敗しました。時間をおいて再度お試しください。");
+    }
+
+    const { data: fallbackJob, error: fallbackError } = await supabase
+      .from("saved_jobs")
+      .insert({
+        user_id: user.id,
+        title: job.title,
+        url: saveUrl,
+        hourly_rate: job.hourly_rate,
+        work_hours: job.work_hours,
+        status: "気になる",
+        address: job.address || job.city || "",
+        latitude: job.latitude,
+        longitude: job.longitude,
+      })
+      .select("id")
+      .single();
+
+    if (fallbackError) {
+      console.error(fallbackError);
+      throw new Error("保存に失敗しました。時間をおいて再度お試しください。");
+    }
+
+    return { id: fallbackJob.id as string, alreadySaved: false };
+  };
+
+  const handleSaveJob = async (job: PublicJob) => {
+    setMessage("");
+    setSavingJobId(job.id);
+
+    try {
+      const result = await ensureSavedJob(job);
+
+      if (!result) return;
+
+      setMessage(
+        result.alreadySaved
+          ? "すでに保存済みです。"
+          : "マイページの保存リストに追加しました。",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "保存に失敗しました。時間をおいて再度お試しください。",
+      );
+    } finally {
+      setSavingJobId(null);
+    }
+  };
+
+  const handleApplyJob = async (job: PublicJob) => {
+    setMessage("");
+    setSavingJobId(job.id);
+
+    try {
+      const result = await ensureSavedJob(job);
+
+      if (!result) return;
+
+      router.push(`/mypage/job-application?saved_job_id=${result.id}`);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "応募準備に失敗しました。時間をおいて再度お試しください。",
+      );
+      setSavingJobId(null);
+    }
   };
 
   const formatHourlyRate = (hourlyRate: number | null) => {
@@ -241,19 +309,13 @@ export default function JobsPage() {
                     {savingJobId === job.id ? "保存中..." : "保存する"}
                   </button>
 
-                  <Link
-                    href={buildApplicationHref(job, "application_email")}
-                    className="w-full rounded-lg bg-green-600 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
+                  <button
+                    onClick={() => handleApplyJob(job)}
+                    disabled={savingJobId === job.id}
+                    className="w-full rounded-lg bg-green-600 px-4 py-3 font-bold text-white disabled:bg-gray-300 sm:w-auto sm:py-2"
                   >
-                    応募メールを作る
-                  </Link>
-
-                  <Link
-                    href={buildApplicationHref(job, "cover_letter")}
-                    className="w-full rounded-lg bg-purple-600 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
-                  >
-                    カバーレターを作る
-                  </Link>
+                    {savingJobId === job.id ? "準備中..." : "応募する"}
+                  </button>
 
                   {job.apply_url && (
                     <a

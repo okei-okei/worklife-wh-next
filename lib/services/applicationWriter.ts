@@ -13,6 +13,9 @@ export type ApplicationTarget = {
   description?: string | null;
   hourlyRate?: number | null;
   workHours?: number | null;
+  desiredMoveInDate?: string | null;
+  plannedStayDuration?: string | null;
+  selfIntroductionMemo?: string | null;
 };
 
 export type ApplicationJob = ApplicationTarget;
@@ -323,6 +326,19 @@ export function generatePropertyInquiryEmail(input: OptionalResumeWriterInput) {
   const phone = valueOrPlaceholder(input.resume?.phone, "[Your Phone Number]");
   const target = input.target;
   const locationLine = target.location || target.address;
+  const introduction = valueOrPlaceholder(
+    target.selfIntroductionMemo || input.resume?.self_introduction,
+    "I am currently looking for a suitable place to live in New Zealand.",
+  );
+  const currentSituation = target.description?.trim()
+    ? `\nCurrent situation:\n${target.description.trim()}\n`
+    : "";
+  const moveInLine = target.desiredMoveInDate
+    ? ` My preferred move-in date is ${target.desiredMoveInDate}.`
+    : "";
+  const durationLine = target.plannedStayDuration
+    ? ` I am planning to stay for ${target.plannedStayDuration}.`
+    : "";
 
   return `Subject: Enquiry about ${target.title}
 
@@ -330,7 +346,11 @@ Dear Property Manager,
 
 I am writing to enquire about ${target.title}${locationLine ? ` in ${locationLine}` : ""}.
 
-I am interested in this property and would like to ask whether it is still available. If possible, I would also appreciate the opportunity to arrange a viewing or receive more details about the room, rent, bond, move-in date, and any house rules.
+${introduction}
+${currentSituation}
+I am interested in this property and would like to ask whether it is still available.${moveInLine}${durationLine}
+
+If possible, I would appreciate the opportunity to arrange a viewing or receive more details about the room, rent, bond, move-in date, and any house rules.
 
 Please let me know the next steps for applying or arranging a viewing.
 

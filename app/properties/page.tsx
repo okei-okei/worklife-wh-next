@@ -18,15 +18,11 @@ type PublicProperty = {
   longitude: number | null;
 };
 
-function buildInquiryHref(property: PublicProperty) {
-  const params = new URLSearchParams({
-    target_type: "property",
-    target_source: "public",
-    target_id: property.id,
-    document_type: "property_inquiry",
-  });
-
-  return `/mypage/applications?${params.toString()}`;
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("column") ||
+      error?.message?.includes("schema cache"),
+  );
 }
 
 export default function PropertiesPage() {
@@ -64,16 +60,12 @@ export default function PropertiesPage() {
     fetchProperties();
   }, []);
 
-  const handleSaveProperty = async (property: PublicProperty) => {
-    setMessage("");
-    setSavingPropertyId(property.id);
-
+  const ensureSavedProperty = async (property: PublicProperty) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setSavingPropertyId(null);
       router.push("/login");
       return;
     }
@@ -89,37 +81,112 @@ export default function PropertiesPage() {
 
     if (existingError) {
       console.error(existingError);
-      setMessage("保存状況の確認に失敗しました。時間をおいて再度お試しください。");
-      setSavingPropertyId(null);
-      return;
+      throw new Error(
+        "保存状況の確認に失敗しました。時間をおいて再度お試しください。",
+      );
     }
 
     if (existingProperty) {
-      setMessage("すでに保存済みです。");
-      setSavingPropertyId(null);
-      return;
+      return { id: existingProperty.id as string, alreadySaved: true };
     }
 
-    const { error } = await supabase.from("saved_properties").insert({
+    const extendedPayload = {
       user_id: user.id,
       title: property.title,
       url: saveUrl,
+      inquiry_url: property.url,
       location: property.area || property.city || "",
       address: property.address || property.area || property.city || "",
       rent_weekly: property.rent_weekly,
       status: "気になる",
       latitude: property.latitude,
       longitude: property.longitude,
-    });
+      source_type: "public",
+      public_property_id: property.id,
+    };
 
-    if (error) {
-      console.error(error);
-      setMessage("保存に失敗しました。時間をおいて再度お試しください。");
-    } else {
-      setMessage("マイページの保存リストに追加しました。");
+    const { data: insertedProperty, error } = await supabase
+      .from("saved_properties")
+      .insert(extendedPayload)
+      .select("id")
+      .single();
+
+    if (!error) {
+      return { id: insertedProperty.id as string, alreadySaved: false };
     }
 
-    setSavingPropertyId(null);
+    if (!isMissingColumnError(error)) {
+      console.error(error);
+      throw new Error("保存に失敗しました。時間をおいて再度お試しください。");
+    }
+
+    const { data: fallbackProperty, error: fallbackError } = await supabase
+      .from("saved_properties")
+      .insert({
+        user_id: user.id,
+        title: property.title,
+        url: saveUrl,
+        location: property.area || property.city || "",
+        address: property.address || property.area || property.city || "",
+        rent_weekly: property.rent_weekly,
+        status: "気になる",
+        latitude: property.latitude,
+        longitude: property.longitude,
+      })
+      .select("id")
+      .single();
+
+    if (fallbackError) {
+      console.error(fallbackError);
+      throw new Error("保存に失敗しました。時間をおいて再度お試しください。");
+    }
+
+    return { id: fallbackProperty.id as string, alreadySaved: false };
+  };
+
+  const handleSaveProperty = async (property: PublicProperty) => {
+    setMessage("");
+    setSavingPropertyId(property.id);
+
+    try {
+      const result = await ensureSavedProperty(property);
+
+      if (!result) return;
+
+      setMessage(
+        result.alreadySaved
+          ? "すでに保存済みです。"
+          : "マイページの保存リストに追加しました。",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "保存に失敗しました。時間をおいて再度お試しください。",
+      );
+    } finally {
+      setSavingPropertyId(null);
+    }
+  };
+
+  const handleInquiryProperty = async (property: PublicProperty) => {
+    setMessage("");
+    setSavingPropertyId(property.id);
+
+    try {
+      const result = await ensureSavedProperty(property);
+
+      if (!result) return;
+
+      router.push(`/mypage/property-inquiry?saved_property_id=${result.id}`);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "問い合わせ準備に失敗しました。時間をおいて再度お試しください。",
+      );
+      setSavingPropertyId(null);
+    }
   };
 
   const formatRent = (rentWeekly: number | null) => {
@@ -217,12 +284,15 @@ export default function PropertiesPage() {
                     {savingPropertyId === property.id ? "保存中..." : "保存する"}
                   </button>
 
-                  <Link
-                    href={buildInquiryHref(property)}
-                    className="w-full rounded-lg bg-green-600 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
+                  <button
+                    onClick={() => handleInquiryProperty(property)}
+                    disabled={savingPropertyId === property.id}
+                    className="w-full rounded-lg bg-green-600 px-4 py-3 font-bold text-white disabled:bg-gray-300 sm:w-auto sm:py-2"
                   >
-                    問い合わせメールを作る
-                  </Link>
+                    {savingPropertyId === property.id
+                      ? "準備中..."
+                      : "問い合わせる"}
+                  </button>
 
                   {property.url && (
                     <a

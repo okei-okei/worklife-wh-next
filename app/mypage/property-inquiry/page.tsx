@@ -1,50 +1,514 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import {
+  generatePropertyInquiryEmail,
+  type ApplicationTarget,
+} from "@/lib/services/applicationWriter";
+import { supabase } from "@/lib/supabase";
 
-const propertyLinks = [
-  {
-    href: "/mypage/applications?target_type=property&target_source=saved&document_type=property_inquiry",
-    title: "保存済み物件から問い合わせメールを作る",
-    description: "マイページに保存した物件を選んで、問い合わせメールを作成します。",
-  },
-  {
-    href: "/mypage/applications?target_type=property&target_source=public&document_type=property_inquiry",
-    title: "公開物件から作る",
-    description: "WorkLife WH内の公開物件を選んで問い合わせメールを作成します。",
-  },
-  {
-    href: "/mypage/applications?target_type=property&target_source=manual&document_type=property_inquiry",
-    title: "外部物件URL・手入力から作る",
-    description: "Trade Meなど外部サイトの物件名やURLを入力して作成します。",
-  },
-];
+type SourceMode = "saved" | "manual";
 
-export default function PropertyInquiryPage() {
+type SavedProperty = {
+  id: string;
+  title: string;
+  url: string | null;
+  location: string | null;
+  address: string | null;
+  rent_weekly: number | null;
+  status: string | null;
+};
+
+const emptyManualProperty = {
+  title: "",
+  url: "",
+  location: "",
+  address: "",
+  rentWeekly: "",
+  desiredMoveInDate: "",
+  plannedStayDuration: "",
+  selfIntroductionMemo: "",
+};
+
+function formatRent(value: number | null) {
+  if (value === null) return "未設定";
+
+  return `$${value}/週`;
+}
+
+function PropertyInquiryPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const propertyIdFromQuery = searchParams.get("saved_property_id") || "";
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [properties, setProperties] = useState<SavedProperty[]>([]);
+  const [selectedPropertyId, setSelectedPropertyId] =
+    useState(propertyIdFromQuery);
+  const [sourceMode, setSourceMode] = useState<SourceMode>("saved");
+  const [manualProperty, setManualProperty] = useState(emptyManualProperty);
+  const [savedDetails, setSavedDetails] = useState({
+    desiredMoveInDate: "",
+    plannedStayDuration: "",
+    selfIntroductionMemo: "",
+  });
+  const [draft, setDraft] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("saved_properties")
+        .select("id,title,url,location,address,rent_weekly,status")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!isMounted) return;
+
+      if (error) {
+        setErrorMessage(error.message);
+        setProperties([]);
+      } else {
+        const savedProperties = data || [];
+        setProperties(savedProperties);
+
+        if (!propertyIdFromQuery && savedProperties[0]?.id) {
+          setSelectedPropertyId(savedProperties[0].id);
+        }
+      }
+
+      setIsLoading(false);
+    };
+
+    const timer = window.setTimeout(loadData, 0);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(timer);
+    };
+  }, [propertyIdFromQuery, router]);
+
+  const selectedProperty = useMemo(() => {
+    return (
+      properties.find((property) => property.id === selectedPropertyId) || null
+    );
+  }, [properties, selectedPropertyId]);
+
+  const activeTarget = useMemo<ApplicationTarget | null>(() => {
+    if (sourceMode === "saved") {
+      if (!selectedProperty) return null;
+
+      return {
+        type: "property",
+        title: selectedProperty.title,
+        url: selectedProperty.url,
+        location: selectedProperty.location,
+        address: selectedProperty.address,
+        desiredMoveInDate: savedDetails.desiredMoveInDate,
+        plannedStayDuration: savedDetails.plannedStayDuration,
+        selfIntroductionMemo: savedDetails.selfIntroductionMemo,
+      };
+    }
+
+    return {
+      type: "property",
+      title: manualProperty.title,
+      url: manualProperty.url,
+      location: manualProperty.location,
+      address: manualProperty.address,
+      desiredMoveInDate: manualProperty.desiredMoveInDate,
+      plannedStayDuration: manualProperty.plannedStayDuration,
+      selfIntroductionMemo: manualProperty.selfIntroductionMemo,
+    };
+  }, [manualProperty, savedDetails, selectedProperty, sourceMode]);
+
+  const targetUrl = activeTarget?.url?.trim() || "";
+
+  const handleGenerate = () => {
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    if (!activeTarget?.title?.trim()) {
+      setErrorMessage("物件名を入力または選択してください。");
+      return;
+    }
+
+    const content = generatePropertyInquiryEmail({
+      target: activeTarget,
+      resume: null,
+    });
+
+    setDraft(content);
+    setSuccessMessage("問い合わせメールの下書きを作成しました。");
+  };
+
+  const handleCopy = async () => {
+    if (!draft.trim()) {
+      setErrorMessage("コピーする本文がありません。先に文書を作成してください。");
+      return;
+    }
+
+    await navigator.clipboard.writeText(draft);
+    setSuccessMessage("本文をコピーしました。");
+    setErrorMessage("");
+  };
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
+        <div className="mx-auto max-w-5xl rounded-2xl bg-white p-4 font-bold shadow md:p-6">
+          読み込み中...
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-5xl space-y-6">
         <section>
           <p className="mb-2 text-sm font-bold text-blue-700">WorkLife WH</p>
-          <h1 className="text-2xl font-bold md:text-4xl">
+          <h1 className="break-words text-2xl font-bold md:text-4xl">
             物件問い合わせ支援
           </h1>
           <p className="mt-2 max-w-3xl text-base font-medium leading-7 text-gray-800">
-            保存済み物件や外部物件URLをもとに、問い合わせメールを作成できます。
+            保存済み物件、または外部物件URL・手入力情報をもとに、英語の問い合わせメールを作成できます。
           </p>
         </section>
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {propertyLinks.map((item) => (
-            <Link key={item.href} href={item.href} className="block min-w-0">
-              <div className="min-h-full rounded-2xl bg-white p-4 shadow hover:shadow-lg md:p-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {item.title}
-                </h2>
-                <p className="mt-2 text-base font-medium leading-7 text-gray-800">
-                  {item.description}
-                </p>
-              </div>
-            </Link>
-          ))}
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <h2 className="text-xl font-bold text-gray-900">1. 物件を選ぶ</h2>
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setSourceMode("saved")}
+              className={`w-full rounded-lg px-4 py-3 font-bold ${
+                sourceMode === "saved"
+                  ? "bg-blue-700 text-white"
+                  : "bg-gray-100 text-gray-900"
+              }`}
+            >
+              保存済み物件から選ぶ
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceMode("manual")}
+              className={`w-full rounded-lg px-4 py-3 font-bold ${
+                sourceMode === "manual"
+                  ? "bg-blue-700 text-white"
+                  : "bg-gray-100 text-gray-900"
+              }`}
+            >
+              外部物件URL・手入力で作成
+            </button>
+          </div>
+
+          {sourceMode === "saved" ? (
+            <div className="mt-4 space-y-4">
+              {properties.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-gray-900">
+                  <p className="font-bold">まず物件を保存してください。</p>
+                  <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
+                    公開物件から保存するか、マイページの保存物件で外部物件を登録すると、ここから問い合わせメールを作成できます。
+                  </p>
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <Link
+                      href="/properties"
+                      className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+                    >
+                      公開物件を見る
+                    </Link>
+                    <Link
+                      href="/mypage/properties"
+                      className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+                    >
+                      保存物件を管理
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <label className="block">
+                    <span className="text-sm font-bold text-gray-900">
+                      保存済み物件
+                    </span>
+                    <select
+                      value={selectedPropertyId}
+                      onChange={(event) =>
+                        setSelectedPropertyId(event.target.value)
+                      }
+                      className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                    >
+                      {properties.map((property) => (
+                        <option key={property.id} value={property.id}>
+                          {property.title}
+                          {property.location ? ` / ${property.location}` : ""}
+                          {property.rent_weekly
+                            ? ` / $${property.rent_weekly}/週`
+                            : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {selectedProperty && (
+                    <div className="rounded-xl bg-gray-50 p-4">
+                      <h3 className="break-words text-lg font-bold text-gray-900">
+                        {selectedProperty.title}
+                      </h3>
+                      <div className="mt-2 grid grid-cols-1 gap-2 text-sm font-medium text-gray-800 sm:grid-cols-2">
+                        <p>
+                          エリア: {selectedProperty.location || "未設定"}
+                        </p>
+                        <p>
+                          家賃: {formatRent(selectedProperty.rent_weekly)}
+                        </p>
+                        <p className="sm:col-span-2">
+                          住所: {selectedProperty.address || "未設定"}
+                        </p>
+                        {selectedProperty.url && (
+                          <a
+                            href={selectedProperty.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="break-all font-bold text-blue-700 sm:col-span-2"
+                          >
+                            {selectedProperty.url}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className="text-sm font-bold text-gray-900">物件名</span>
+                <input
+                  value={manualProperty.title}
+                  onChange={(event) =>
+                    setManualProperty({
+                      ...manualProperty,
+                      title: event.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                  placeholder="Room in Auckland CBD"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-bold text-gray-900">家賃</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={manualProperty.rentWeekly}
+                  onChange={(event) =>
+                    setManualProperty({
+                      ...manualProperty,
+                      rentWeekly: event.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                  placeholder="250"
+                />
+              </label>
+              <label className="block md:col-span-2">
+                <span className="text-sm font-bold text-gray-900">
+                  物件URL
+                </span>
+                <input
+                  value={manualProperty.url}
+                  onChange={(event) =>
+                    setManualProperty({
+                      ...manualProperty,
+                      url: event.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                  placeholder="https://..."
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-bold text-gray-900">エリア</span>
+                <input
+                  value={manualProperty.location}
+                  onChange={(event) =>
+                    setManualProperty({
+                      ...manualProperty,
+                      location: event.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                  placeholder="Auckland CBD"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-bold text-gray-900">住所</span>
+                <input
+                  value={manualProperty.address}
+                  onChange={(event) =>
+                    setManualProperty({
+                      ...manualProperty,
+                      address: event.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                  placeholder="Street, city"
+                />
+              </label>
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <h2 className="text-xl font-bold text-gray-900">2. 補足情報</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                入居希望日
+              </span>
+              <input
+                type="date"
+                value={
+                  sourceMode === "saved"
+                    ? savedDetails.desiredMoveInDate
+                    : manualProperty.desiredMoveInDate
+                }
+                onChange={(event) =>
+                  sourceMode === "saved"
+                    ? setSavedDetails({
+                        ...savedDetails,
+                        desiredMoveInDate: event.target.value,
+                      })
+                    : setManualProperty({
+                        ...manualProperty,
+                        desiredMoveInDate: event.target.value,
+                      })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                滞在予定期間
+              </span>
+              <input
+                value={
+                  sourceMode === "saved"
+                    ? savedDetails.plannedStayDuration
+                    : manualProperty.plannedStayDuration
+                }
+                onChange={(event) =>
+                  sourceMode === "saved"
+                    ? setSavedDetails({
+                        ...savedDetails,
+                        plannedStayDuration: event.target.value,
+                      })
+                    : setManualProperty({
+                        ...manualProperty,
+                        plannedStayDuration: event.target.value,
+                      })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="3 months"
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">
+                自己紹介メモ
+              </span>
+              <textarea
+                value={
+                  sourceMode === "saved"
+                    ? savedDetails.selfIntroductionMemo
+                    : manualProperty.selfIntroductionMemo
+                }
+                onChange={(event) =>
+                  sourceMode === "saved"
+                    ? setSavedDetails({
+                        ...savedDetails,
+                        selfIntroductionMemo: event.target.value,
+                      })
+                    : setManualProperty({
+                        ...manualProperty,
+                        selfIntroductionMemo: event.target.value,
+                      })
+                }
+                className="mt-2 min-h-28 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="I am tidy, quiet, and currently looking for a room while staying in New Zealand on a working holiday."
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl font-bold text-gray-900">3. 作成・編集</h2>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleGenerate}
+                className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
+              >
+                問い合わせメールを作成
+              </button>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="w-full rounded-lg bg-gray-700 px-4 py-3 font-bold text-white sm:w-auto"
+              >
+                コピー
+              </button>
+              {targetUrl && (
+                <a
+                  href={targetUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full rounded-lg bg-green-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+                >
+                  物件ページを開く
+                </a>
+              )}
+            </div>
+          </div>
+
+          {errorMessage && (
+            <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">
+              {errorMessage}
+            </p>
+          )}
+          {successMessage && (
+            <p className="mt-4 rounded-lg bg-green-50 p-3 text-sm font-bold text-green-700">
+              {successMessage}
+            </p>
+          )}
+
+          <textarea
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            className="mt-4 min-h-96 w-full rounded-lg border border-gray-300 p-4 font-mono text-sm leading-6 text-gray-900"
+            placeholder="ここに問い合わせメールの下書きが表示されます。"
+          />
         </section>
 
         <div className="flex justify-end">
@@ -52,10 +516,26 @@ export default function PropertyInquiryPage() {
             href="/mypage"
             className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
           >
-            ← マイページホームへ戻る
+            マイページホームへ戻る
           </Link>
         </div>
       </div>
     </main>
+  );
+}
+
+export default function PropertyInquiryPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
+          <div className="mx-auto max-w-5xl rounded-2xl bg-white p-4 font-bold shadow md:p-6">
+            読み込み中...
+          </div>
+        </main>
+      }
+    >
+      <PropertyInquiryPageContent />
+    </Suspense>
   );
 }

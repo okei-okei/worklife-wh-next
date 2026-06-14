@@ -17,13 +17,10 @@ type Props = {
 
 function buildInquiryHref(property: Property) {
   const params = new URLSearchParams({
-    target_type: "property",
-    target_source: "saved",
-    target_id: property.id,
-    document_type: "property_inquiry",
+    saved_property_id: property.id,
   });
 
-  return `/mypage/applications?${params.toString()}`;
+  return `/mypage/property-inquiry?${params.toString()}`;
 }
 
 export default function PropertyList({
@@ -140,7 +137,7 @@ export default function PropertyList({
               href={buildInquiryHref(p)}
               className="w-full rounded-lg bg-green-600 px-4 py-3 text-center font-bold text-white sm:py-2"
             >
-              問い合わせメール
+              問い合わせる
             </Link>
 
             <button

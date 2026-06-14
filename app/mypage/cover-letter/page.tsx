@@ -25,10 +25,20 @@ type SavedProperty = {
   address: string | null;
 };
 
+type ResumeFile = {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_url: string | null;
+  signed_url?: string | null;
+};
+
 type ApplicationDocumentTarget = ApplicationTarget & {
   id: string;
   type: ApplicationTargetType;
 };
+
+const resumeBucketName = "resumes";
 
 export default function CoverLetterPage() {
   const router = useRouter();
@@ -37,6 +47,9 @@ export default function CoverLetterPage() {
   const [jobs, setJobs] = useState<SavedJob[]>([]);
   const [properties, setProperties] = useState<SavedProperty[]>([]);
   const [resume, setResume] = useState<ApplicationResume | null>(null);
+  const [latestResumeFile, setLatestResumeFile] = useState<ResumeFile | null>(
+    null,
+  );
   const [selectedJobId, setSelectedJobId] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState("");
   const [coverLetterDraft, setCoverLetterDraft] = useState("");
@@ -89,7 +102,12 @@ export default function CoverLetterPage() {
 
     setUserId(user.id);
 
-    const [jobsResponse, propertiesResponse, resumeResponse] =
+    const [
+      jobsResponse,
+      propertiesResponse,
+      resumeResponse,
+      latestResumeFileResponse,
+    ] =
       await Promise.all([
         supabase
           .from("saved_jobs")
@@ -108,6 +126,13 @@ export default function CoverLetterPage() {
           )
           .eq("user_id", user.id)
           .maybeSingle<ApplicationResume>(),
+        supabase
+          .from("resume_files")
+          .select("id, file_name, file_path, file_url")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle<ResumeFile>(),
       ]);
 
     if (jobsResponse.error) {
@@ -134,11 +159,31 @@ export default function CoverLetterPage() {
       return;
     }
 
+    if (latestResumeFileResponse.error) {
+      setErrorMessage(
+        `履歴書PDFの読み込みに失敗しました。${latestResumeFileResponse.error.message}`,
+      );
+      setIsLoading(false);
+      return;
+    }
+
     const loadedJobs = (jobsResponse.data || []) as SavedJob[];
     const loadedProperties = (propertiesResponse.data || []) as SavedProperty[];
     setJobs(loadedJobs);
     setProperties(loadedProperties);
     setResume(resumeResponse.data || null);
+    if (latestResumeFileResponse.data) {
+      const { data } = await supabase.storage
+        .from(resumeBucketName)
+        .createSignedUrl(latestResumeFileResponse.data.file_path, 60 * 60);
+
+      setLatestResumeFile({
+        ...latestResumeFileResponse.data,
+        signed_url: data?.signedUrl || latestResumeFileResponse.data.file_url,
+      });
+    } else {
+      setLatestResumeFile(null);
+    }
     setSelectedJobId((current) => current || loadedJobs[0]?.id || "");
     setSelectedPropertyId(
       (current) => current || loadedProperties[0]?.id || "",
@@ -344,17 +389,41 @@ export default function CoverLetterPage() {
                 )}
               </label>
 
-              <div className="rounded-xl bg-blue-50 p-4 text-sm font-bold text-blue-800">
-                {resume ? (
-                  <p>
-                    履歴書情報を読み込み済み:{" "}
-                    {resume.full_name || resume.email || "名前未設定"}
-                  </p>
-                ) : (
-                  <p>
-                    履歴書情報が未登録です。先に履歴書管理から保存してください。
-                  </p>
-                )}
+              <div className="space-y-3 rounded-xl bg-blue-50 p-4 text-sm font-bold text-blue-800">
+                <div>
+                  {resume ? (
+                    <p>
+                      履歴書情報を読み込み済み:{" "}
+                      {resume.full_name || resume.email || "名前未設定"}
+                    </p>
+                  ) : (
+                    <p>
+                      履歴書情報が未登録です。先に履歴書管理から保存してください。
+                    </p>
+                  )}
+                </div>
+
+                <div className="rounded-lg bg-white/70 p-3 text-gray-900">
+                  {latestResumeFile ? (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="break-words">
+                        最新PDF: {latestResumeFile.file_name}
+                      </p>
+                      {latestResumeFile.signed_url ? (
+                        <a
+                          href={latestResumeFile.signed_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full rounded-lg border border-blue-200 px-3 py-2 text-center text-blue-700 sm:w-auto"
+                        >
+                          PDFを開く
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p>履歴書PDFは未登録です。</p>
+                  )}
+                </div>
               </div>
             </div>
 

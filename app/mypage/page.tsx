@@ -94,6 +94,18 @@ export default function MyPage() {
             </div>
           </Link>
 
+          <Link href="/mypage/applications" className="block min-w-0">
+            <div className="min-w-0 cursor-pointer rounded-2xl border-2 border-blue-200 bg-blue-50 p-4 shadow hover:shadow-lg md:p-6">
+              <h2 className="mb-2 text-xl font-bold text-gray-900 md:text-2xl">
+                応募支援
+              </h2>
+
+              <p className="text-base font-medium leading-7 text-gray-800">
+                求人応募・物件問い合わせの文書をまとめて作成できます。
+              </p>
+            </div>
+          </Link>
+
           <Link href="/mypage/apply-email" className="block min-w-0">
             <div className="min-w-0 cursor-pointer rounded-2xl bg-white p-4 shadow hover:shadow-lg md:p-6">
               <h2 className="mb-2 text-xl font-bold text-gray-900 md:text-2xl">

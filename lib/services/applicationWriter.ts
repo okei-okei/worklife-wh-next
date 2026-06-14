@@ -8,6 +8,8 @@ export type ApplicationTarget = {
   url?: string | null;
   location?: string | null;
   address?: string | null;
+  company?: string | null;
+  ownerName?: string | null;
 };
 
 export type ApplicationJob = ApplicationTarget;
@@ -29,6 +31,11 @@ type ApplicationWriterInput = {
   target?: ApplicationTarget;
   job?: ApplicationJob;
   resume: ApplicationResume;
+};
+
+type OptionalResumeWriterInput = {
+  target: ApplicationTarget;
+  resume?: ApplicationResume | null;
 };
 
 type NormalizedApplicationWriterInput = {
@@ -60,6 +67,15 @@ function normalizeInput(
   return {
     target: input.target || input.job || { title: "[Target]", type: "job" },
     resume: input.resume,
+  };
+}
+
+function normalizeOptionalResumeInput(
+  input: OptionalResumeWriterInput,
+): NormalizedApplicationWriterInput {
+  return {
+    target: input.target,
+    resume: input.resume || {},
   };
 }
 
@@ -254,4 +270,53 @@ export function generateApplicationEmail(input: ApplicationWriterInput) {
 
 export function generateCoverLetter(input: ApplicationWriterInput) {
   return getApplicationWriter().generateCoverLetter(normalizeInput(input));
+}
+
+export function generateJobApplicationEmail(input: OptionalResumeWriterInput) {
+  return getApplicationWriter().generateApplicationEmail(
+    normalizeOptionalResumeInput({
+      ...input,
+      target: {
+        ...input.target,
+        type: "job",
+      },
+    }),
+  );
+}
+
+export function generateJobCoverLetter(input: OptionalResumeWriterInput) {
+  return getApplicationWriter().generateCoverLetter(
+    normalizeOptionalResumeInput({
+      ...input,
+      target: {
+        ...input.target,
+        type: "job",
+      },
+    }),
+  );
+}
+
+export function generatePropertyInquiryEmail(input: OptionalResumeWriterInput) {
+  const fullName = valueOrPlaceholder(input.resume?.full_name, "[Your Name]");
+  const email = valueOrPlaceholder(input.resume?.email, "[Your Email]");
+  const phone = valueOrPlaceholder(input.resume?.phone, "[Your Phone Number]");
+  const target = input.target;
+  const locationLine = target.location || target.address;
+
+  return `Subject: Enquiry about ${target.title}
+
+Dear Property Manager,
+
+I am writing to enquire about ${target.title}${locationLine ? ` in ${locationLine}` : ""}.
+
+I am interested in this property and would like to ask whether it is still available. If possible, I would also appreciate the opportunity to arrange a viewing or receive more details about the room, rent, bond, move-in date, and any house rules.
+
+Please let me know the next steps for applying or arranging a viewing.
+
+Thank you for your time. I look forward to hearing from you.
+
+Kind regards,
+${fullName}
+${email}
+${phone}`;
 }

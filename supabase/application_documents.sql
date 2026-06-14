@@ -1,11 +1,13 @@
 create table if not exists public.application_documents (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
+  target_source text not null default 'saved' check (target_source in ('saved', 'public', 'manual')),
   target_type text not null check (target_type in ('job', 'property')),
-  target_id uuid not null,
-  document_type text not null check (document_type in ('email', 'cover_letter')),
+  target_id uuid null,
+  document_type text not null check (document_type in ('email', 'cover_letter', 'application_email', 'property_inquiry')),
   title text,
   content text not null,
+  status text not null default 'draft',
   file_path text,
   file_url text,
   created_at timestamptz default now(),
@@ -22,10 +24,10 @@ comment on column public.application_documents.file_path is
   'Private Supabase Storage path for a generated PDF version of the application document.';
 
 create index if not exists application_documents_user_target_idx
-  on public.application_documents (user_id, target_type, target_id);
+  on public.application_documents (user_id, target_source, target_type, target_id);
 
 create index if not exists application_documents_user_document_idx
-  on public.application_documents (user_id, document_type, created_at desc);
+  on public.application_documents (user_id, document_type, status, created_at desc);
 
 create index if not exists application_documents_user_file_path_idx
   on public.application_documents (user_id, file_path)

@@ -401,9 +401,6 @@ export default function PlannerPage() {
     setRouteStatusMessage("");
   };
 
-  const routeProviderLabel =
-    process.env.NEXT_PUBLIC_ROUTE_PROVIDER || "osrm";
-
   return (
     <main className="min-h-screen overflow-x-hidden bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl min-w-0">
@@ -460,10 +457,6 @@ export default function PlannerPage() {
               <p className="mt-1 text-sm font-semibold text-gray-800">
                 直線距離ではなく、推定経路距離と推定移動時間で比較します。
               </p>
-            </div>
-
-            <div className="text-sm font-bold text-gray-800">
-              Provider: {routeProviderLabel}
             </div>
           </div>
 

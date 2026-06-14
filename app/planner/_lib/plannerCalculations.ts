@@ -137,7 +137,6 @@ export function calculatePlannerResults({
         distance,
         travelMin,
         travelMode,
-        routeProvider: routeInfo?.provider || "fallback",
         routeCoordinates: routeInfo?.coordinates || [],
         routeMessage: routeInfo?.message,
         isRouteFallback: routeInfo?.isFallback ?? !routeInfo,

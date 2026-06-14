@@ -1,7 +1,6 @@
 import type {
   RouteCoordinates,
   RouteMode,
-  RouteProvider,
 } from "@/lib/services/routeService";
 
 export type Job = {
@@ -27,7 +26,6 @@ export type ScoreResult = {
   distance: number | null;
   travelMin: number | null;
   travelMode: RouteMode;
-  routeProvider: RouteProvider;
   routeCoordinates: RouteCoordinates[];
   routeMessage?: string;
   isRouteFallback: boolean;

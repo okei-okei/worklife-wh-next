@@ -33,6 +33,9 @@ export type RouteInfo = {
 
 const DEFAULT_ROUTE_PROVIDER: RouteProvider = "osrm";
 
+// Provider selection is centralized here so the planner UI can keep calling
+// getRouteInfo() without knowing whether routes come from a free MVP provider
+// or, after commercialization, Google Maps Routes/Directions.
 function getConfiguredRouteProvider(): RouteProvider {
   const provider = process.env.NEXT_PUBLIC_ROUTE_PROVIDER;
 
@@ -98,7 +101,7 @@ export function getTransitUnsupportedRouteInfo({
     origin,
     destination,
     mode: "transit",
-    message: "公共交通はGoogle Maps連携後に対応予定です。",
+    message: "公共交通ルートはGoogle Maps連携後に対応予定です。",
   });
 }
 
@@ -123,6 +126,8 @@ export async function getRouteInfo({
   }
 
   if (mode === "transit") {
+    // Transit routing is planned only for the future Google provider. Free MVP
+    // providers used here do not cover reliable public-transport routing.
     return getTransitUnsupportedRouteInfo({ origin, destination });
   }
 

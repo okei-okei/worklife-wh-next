@@ -77,7 +77,7 @@ export function RecommendedPlanCard({ result }: RecommendedPlanCardProps) {
       </div>
 
       <div className="mt-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-800">
-        経路: {result.travelMode} / provider: {result.routeProvider}
+        経路: {result.travelMode}
         {result.isRouteFallback ? " / フォールバック表示" : ""}
         {result.routeMessage ? ` / ${result.routeMessage}` : ""}
       </div>

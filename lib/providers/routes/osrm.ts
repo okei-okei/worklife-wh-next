@@ -48,9 +48,10 @@ export async function getOsrmRouteInfo({
   const coordinates = `${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}`;
   const url = `https://router.project-osrm.org/route/v1/${profile}/${coordinates}?overview=full&geometries=geojson`;
 
-  // OSRM public demo server is useful for MVP checks, but it is not intended
-  // for production traffic. Move this call behind app/api/routes/route.ts or
-  // a paid/self-hosted routing service before launch.
+  // Free routing APIs are for the MVP phase only. The OSRM public demo server
+  // is useful for early checks, but it is not intended for production traffic.
+  // Move this call behind app/api/routes/route.ts or a paid/self-hosted routing
+  // service before launch.
   const response = await fetch(url, {
     headers: {
       accept: "application/json",

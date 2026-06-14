@@ -73,6 +73,16 @@ export default function MyPage() {
             </div>
           </Link>
 
+          <Link href="/mypage/checklist">
+            <div className="bg-white p-6 rounded-2xl shadow hover:shadow-lg cursor-pointer">
+              <h2 className="text-2xl font-bold mb-2">
+                住居決定後チェックリスト
+              </h2>
+
+              <p>入居後に必要な手続きを管理できます。</p>
+            </div>
+          </Link>
+
           <div className="bg-white p-6 rounded-2xl shadow">
             <h2 className="text-2xl font-bold mb-2">履歴書管理</h2>
 

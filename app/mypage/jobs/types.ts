@@ -1,5 +1,6 @@
 export type Job = {
   id: string;
+  user_id?: string;
   title: string;
   url: string;
   hourly_rate: number | null;

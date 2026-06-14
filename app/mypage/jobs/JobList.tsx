@@ -2,45 +2,29 @@
 
 import { supabase } from "@/lib/supabase";
 import { Job } from "./types";
-import { geocodeAddress } from "@/lib/geocoder";
 
 type Props = {
   jobs: Job[];
+  userId: string | null;
   onRefresh: () => void;
   onEdit: (job: Job) => void;
 };
 
-export default function JobList({ jobs, onRefresh, onEdit }: Props) {
+export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
   const handleDelete = async (id: string) => {
+    if (!userId) {
+      alert("ログインしてください");
+      return;
+    }
+
     const confirmed = window.confirm("この求人を削除しますか？");
     if (!confirmed) return;
 
-    const { error } = await supabase.from("saved_jobs").delete().eq("id", id);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    onRefresh();
-  };
-
-  // 🔥 Re-geocode existing job (fix missing latitude/longitude)
-  const handleReGeocode = async (job: Job) => {
-    if (!job.address) {
-      alert("住所がないためジオコードできません");
-      return;
-    }
-
-    const geo = await geocodeAddress(job.address);
-
     const { error } = await supabase
       .from("saved_jobs")
-      .update({
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-      })
-      .eq("id", job.id);
+      .delete()
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (error) {
       alert(error.message);

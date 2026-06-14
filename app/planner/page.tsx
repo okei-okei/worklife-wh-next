@@ -1,251 +1,320 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { supabase } from "@/lib/supabase";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-
-import dynamic from "next/dynamic";
-
-const MapView = dynamic(() => import("@/components/MapView"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-[500px] flex items-center justify-center bg-white rounded-2xl shadow">
-      地図を読み込み中...
-    </div>
-  ),
-});
-
+import { PlannerInputPanel } from "./_components/PlannerInputPanel";
+import { PlannerMapSection } from "./_components/PlannerMapSection";
+import { PlanRankingList } from "./_components/PlanRankingList";
+import { RecommendedPlanCard } from "./_components/RecommendedPlanCard";
+import { usePlannerSavedItems } from "./_hooks/usePlannerSavedItems";
+import { usePlannerSettings } from "./_hooks/usePlannerSettings";
 import {
-  calculateDistanceKm,
-  estimateTravelTimeMinutes,
-} from "@/lib/services/distanceService";
-
-type Job = {
-  id: string;
-  title: string;
-  hourly_rate: number | null;
-  work_hours: number | null;
-  latitude: number | null;
-  longitude: number | null;
-};
-
-type Property = {
-  id: string;
-  title: string;
-  rent_weekly: number | null;
-  latitude: number | null;
-  longitude: number | null;
-};
-
-type ScoreResult = {
-  job: Job;
-  property: Property;
-  distance: number | null;
-  travelMin: number | null;
-  monthlyIncome: number;
-  monthlyRent: number;
-  score: number;
-};
+  calculateMonthlyLivingCost,
+  calculatePlannerResults,
+} from "./_lib/plannerCalculations";
+import {
+  getHighlightedLine,
+  getJobPoints,
+  getPropertyPoints,
+  getResultLines,
+} from "./_lib/mapHelpers";
+import type { PlannerInputConfig } from "./_lib/types";
 
 export default function PlannerPage() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [results, setResults] = useState<ScoreResult[]>([]);
-
-  const loadData = async () => {
-    const { data: jobsData } = await supabase.from("saved_jobs").select("*");
-
-    const { data: propData } = await supabase
-      .from("saved_properties")
-      .select("*");
-
-    if (jobsData) setJobs(jobsData);
-    if (propData) setProperties(propData);
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    if (!jobs.length || !properties.length) return;
-
-    const scored: ScoreResult[] = [];
-
-    for (const job of jobs) {
-      for (const property of properties) {
-        const distance = calculateDistanceKm(
-          {
-            latitude: job.latitude,
-            longitude: job.longitude,
-          },
-          {
-            latitude: property.latitude,
-            longitude: property.longitude,
-          },
-        );
-
-        const travel = estimateTravelTimeMinutes(distance);
-
-        const monthlyIncome =
-          (job.hourly_rate || 0) * (job.work_hours || 0) * 4.33;
-
-        const monthlyRent = (property.rent_weekly || 0) * 4.33;
-
-        const baseSavings = monthlyIncome - monthlyRent;
-
-        const commutePenalty = (travel?.drive || 0) * 2;
-
-        const score = baseSavings - commutePenalty;
-
-        scored.push({
-          job,
-          property,
-          distance,
-          travelMin: travel?.drive || null,
-          monthlyIncome,
-          monthlyRent,
-          score,
-        });
-      }
-    }
-
-    scored.sort((a, b) => b.score - a.score);
-
-    setResults(scored.slice(0, 10));
-  }, [jobs, properties]);
-
-  // =========================
-  // 地図用データ
-  // =========================
-
-  const jobPoints = useMemo(
-    () =>
-      jobs
-        .filter((j) => j.latitude && j.longitude)
-        .map((j) => ({
-          id: j.id,
-          lat: j.latitude!,
-          lng: j.longitude!,
-          label: j.title,
-        })),
-    [jobs],
+  const [maxWeeklyRent, setMaxWeeklyRent] = useState("");
+  const [maxCommuteMinutes, setMaxCommuteMinutes] = useState("");
+  const [minHourlyRate, setMinHourlyRate] = useState("");
+  const [selectedResultKey, setSelectedResultKey] = useState<string | null>(
+    null,
   );
 
+  const {
+    currentUserId,
+    jobs,
+    properties,
+    lastUpdatedAt,
+    isRefreshing,
+    refresh,
+  } = usePlannerSavedItems();
+
+  const {
+    monthlyFoodCost,
+    setMonthlyFoodCost,
+    monthlyTransportCost,
+    setMonthlyTransportCost,
+    monthlyPhoneCost,
+    setMonthlyPhoneCost,
+    monthlyOtherCost,
+    setMonthlyOtherCost,
+    plannedStayMonths,
+    setPlannedStayMonths,
+    settingsSaveStatus,
+  } = usePlannerSettings(currentUserId);
+
+  const monthlyLivingCost = calculateMonthlyLivingCost({
+    monthlyFoodCost,
+    monthlyTransportCost,
+    monthlyPhoneCost,
+    monthlyOtherCost,
+  });
+
+  const results = useMemo(() => {
+    return calculatePlannerResults({
+      jobs,
+      properties,
+      maxWeeklyRent,
+      maxCommuteMinutes,
+      minHourlyRate,
+      monthlyFoodCost,
+      monthlyTransportCost,
+      monthlyPhoneCost,
+      monthlyOtherCost,
+    });
+  }, [
+    jobs,
+    properties,
+    maxWeeklyRent,
+    maxCommuteMinutes,
+    minHourlyRate,
+    monthlyFoodCost,
+    monthlyTransportCost,
+    monthlyPhoneCost,
+    monthlyOtherCost,
+  ]);
+
+  const activeFilterCount = [
+    maxWeeklyRent,
+    maxCommuteMinutes,
+    minHourlyRate,
+  ].filter((value) => value.trim() !== "").length;
+
+  const selectedResult = useMemo(() => {
+    if (!selectedResultKey) return results[0];
+
+    return (
+      results.find(
+        (result) =>
+          `${result.job.id}-${result.property.id}` === selectedResultKey,
+      ) || results[0]
+    );
+  }, [results, selectedResultKey]);
+
+  const topResult = results[0];
+  const stayMonths = Math.max(Number(plannedStayMonths || 0), 0);
+
+  const filterSummary = activeFilterCount
+    ? `${activeFilterCount}件の条件を適用中`
+    : "すべての候補を表示中";
+
+  const emptyMessage = activeFilterCount
+    ? "条件に合う組み合わせがありません"
+    : "データを追加すると最適プランが表示されます";
+
+  const plannerSettingsStatusLabel =
+    settingsSaveStatus === "loading"
+      ? "保存内容を読込中"
+      : settingsSaveStatus === "saving"
+        ? "保存中..."
+        : settingsSaveStatus === "local"
+          ? "この端末に保存中"
+          : "アカウントに保存済み";
+
+  const settingsStatusClassName =
+    settingsSaveStatus === "local"
+      ? "text-sm font-bold text-orange-600"
+      : "text-sm font-bold text-green-700";
+
+  const lastUpdatedLabel = lastUpdatedAt
+    ? lastUpdatedAt.toLocaleTimeString("ja-JP", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : "未取得";
+
+  const jobPoints = useMemo(() => getJobPoints(jobs), [jobs]);
   const propertyPoints = useMemo(
-    () =>
-      properties
-        .filter((p) => p.latitude && p.longitude)
-        .map((p) => ({
-          id: p.id,
-          lat: p.latitude!,
-          lng: p.longitude!,
-          label: p.title,
-        })),
+    () => getPropertyPoints(properties),
     [properties],
   );
+  const lines = useMemo(() => getResultLines(results), [results]);
+  const highlightedLine = useMemo(
+    () => getHighlightedLine(selectedResult),
+    [selectedResult],
+  );
 
-  const lines = useMemo(() => {
-    const arr: any[] = [];
+  const matchedJobIds = useMemo(() => {
+    return new Set(results.map((result) => result.job.id));
+  }, [results]);
 
-    for (const job of jobs) {
-      for (const property of properties) {
-        if (
-          job.latitude &&
-          job.longitude &&
-          property.latitude &&
-          property.longitude
-        ) {
-          arr.push({
-            from: {
-              lat: job.latitude,
-              lng: job.longitude,
-            },
-            to: {
-              lat: property.latitude,
-              lng: property.longitude,
-            },
-          });
-        }
-      }
-    }
+  const matchedPropertyIds = useMemo(() => {
+    return new Set(results.map((result) => result.property.id));
+  }, [results]);
 
-    return arr;
-  }, [jobs, properties]);
+  const visibleJobPoints = useMemo(() => {
+    if (!activeFilterCount || !results.length) return jobPoints;
+
+    return jobPoints.filter((job) => matchedJobIds.has(job.id));
+  }, [activeFilterCount, jobPoints, matchedJobIds, results.length]);
+
+  const visiblePropertyPoints = useMemo(() => {
+    if (!activeFilterCount || !results.length) return propertyPoints;
+
+    return propertyPoints.filter((property) =>
+      matchedPropertyIds.has(property.id),
+    );
+  }, [
+    activeFilterCount,
+    matchedPropertyIds,
+    propertyPoints,
+    results.length,
+  ]);
+
+  const filterInputs: PlannerInputConfig[] = [
+    {
+      id: "max-rent",
+      label: "週家賃上限",
+      prefix: "$",
+      suffix: "/ week",
+      value: maxWeeklyRent,
+      placeholder: "300",
+      onChange: setMaxWeeklyRent,
+    },
+    {
+      id: "max-commute",
+      label: "通勤時間上限",
+      suffix: "分",
+      value: maxCommuteMinutes,
+      placeholder: "30",
+      onChange: setMaxCommuteMinutes,
+    },
+    {
+      id: "min-hourly",
+      label: "最低時給",
+      prefix: "$",
+      suffix: "/ hour",
+      value: minHourlyRate,
+      placeholder: "25",
+      onChange: setMinHourlyRate,
+    },
+  ];
+
+  const livingCostInputs: PlannerInputConfig[] = [
+    {
+      id: "food-cost",
+      label: "食費",
+      prefix: "$",
+      suffix: "/ month",
+      value: monthlyFoodCost,
+      onChange: setMonthlyFoodCost,
+    },
+    {
+      id: "phone-cost",
+      label: "通信費",
+      prefix: "$",
+      suffix: "/ month",
+      value: monthlyPhoneCost,
+      onChange: setMonthlyPhoneCost,
+    },
+    {
+      id: "transport-cost",
+      label: "交通費",
+      prefix: "$",
+      suffix: "/ month",
+      value: monthlyTransportCost,
+      onChange: setMonthlyTransportCost,
+    },
+    {
+      id: "other-cost",
+      label: "その他",
+      prefix: "$",
+      suffix: "/ month",
+      value: monthlyOtherCost,
+      onChange: setMonthlyOtherCost,
+    },
+    {
+      id: "stay-months",
+      label: "滞在予定",
+      suffix: "か月",
+      value: plannedStayMonths,
+      onChange: setPlannedStayMonths,
+    },
+  ];
+
+  const resetFilters = () => {
+    setMaxWeeklyRent("");
+    setMaxCommuteMinutes("");
+    setMinHourlyRate("");
+  };
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* ヘッダー */}
-        <div className="flex justify-between items-center mb-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 flex items-center justify-between">
           <h1 className="text-4xl font-bold">ライフプランナー（最適化AI）</h1>
 
           <Link
             href="/mypage"
-            className="bg-gray-500 text-white px-4 py-2 rounded-lg"
+            className="rounded-lg bg-gray-500 px-4 py-2 text-white"
           >
             ← マイページ
           </Link>
         </div>
 
-        {/* 地図セクション */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">地図ビュー（仕事 × 住居）</h2>
-
-          <button
-            onClick={loadData}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-          >
-            最新情報に更新
-          </button>
-        </div>
-
-        {/* ⭐ここが重要（抜けていた部分） */}
-        <div className="bg-white p-4 rounded-2xl shadow mb-6">
-          <MapView jobs={jobPoints} properties={propertyPoints} lines={lines} />
-        </div>
-
-        {/* ランキング */}
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold">最適プラン TOP10</h2>
-
-          {results.map((r, i) => (
-            <div
-              key={`${r.job.id}-${r.property.id}`}
-              className="bg-white p-6 rounded-2xl shadow"
+        <PlannerInputPanel
+          title="条件フィルター"
+          summary={filterSummary}
+          inputs={filterInputs}
+          action={
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={!activeFilterCount}
             >
-              <div className="flex justify-between">
-                <div>
-                  <h3 className="text-xl font-bold">
-                    #{i + 1} {r.job.title} × {r.property.title}
-                  </h3>
+              リセット
+            </button>
+          }
+        />
 
-                  <p>月収: ${r.monthlyIncome.toFixed(0)}</p>
-                  <p>家賃: ${r.monthlyRent.toFixed(0)}</p>
-
-                  <p>
-                    通勤距離:{" "}
-                    {r.distance ? `${r.distance.toFixed(2)} km` : "不明"}
-                  </p>
-
-                  <p>通勤時間: {r.travelMin ? `${r.travelMin} 分` : "不明"}</p>
-
-                  <p className="font-bold text-green-600">
-                    スコア: {r.score.toFixed(0)}
-                  </p>
-                </div>
-
-                <div className="text-right text-sm text-gray-500">最適候補</div>
+        <PlannerInputPanel
+          title="生活費シミュレーション"
+          inputs={livingCostInputs}
+          columnsClassName="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
+          action={
+            <>
+              <div className="text-sm font-bold text-blue-700">
+                月間生活費: ${monthlyLivingCost.toFixed(0)}
               </div>
-            </div>
-          ))}
 
-          {results.length === 0 && (
-            <div className="bg-white p-6 rounded-2xl text-center text-gray-500">
-              データを追加すると最適プランが表示されます
-            </div>
-          )}
-        </div>
+              <div className={settingsStatusClassName}>
+                {plannerSettingsStatusLabel}
+              </div>
+            </>
+          }
+        />
+
+        {topResult ? <RecommendedPlanCard result={topResult} /> : null}
+
+        <PlannerMapSection
+          jobs={visibleJobPoints}
+          properties={visiblePropertyPoints}
+          lines={lines}
+          selectedResult={selectedResult}
+          highlightedLine={highlightedLine}
+          isRefreshing={isRefreshing}
+          lastUpdatedLabel={lastUpdatedLabel}
+          canRefresh={Boolean(currentUserId)}
+          onRefresh={refresh}
+        />
+
+        <PlanRankingList
+          results={results}
+          selectedResult={selectedResult}
+          stayMonths={stayMonths}
+          emptyMessage={emptyMessage}
+          onSelectResult={setSelectedResultKey}
+        />
       </div>
     </main>
   );

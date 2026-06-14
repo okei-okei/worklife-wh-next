@@ -1,21 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import JobForm from "./JobForm";
 import JobList from "./JobList";
 import EditJobModal from "./EditJobModal";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Job } from "./types";
 
 export default function JobsPage() {
+  const router = useRouter();
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    setCurrentUserId(user.id);
+
     const { data, error } = await supabase
       .from("saved_jobs")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -24,11 +40,15 @@ export default function JobsPage() {
     }
 
     setJobs([...data]);
-  };
+  }, [router]);
 
   useEffect(() => {
-    fetchJobs();
-  }, []);
+    const timer = window.setTimeout(() => {
+      fetchJobs();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [fetchJobs]);
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
@@ -48,6 +68,7 @@ export default function JobsPage() {
 
         <JobList
           jobs={jobs}
+          userId={currentUserId}
           onRefresh={() => {
             fetchJobs();
           }}
@@ -56,6 +77,7 @@ export default function JobsPage() {
 
         <EditJobModal
           job={editingJob}
+          userId={currentUserId}
           onClose={() => setEditingJob(null)}
           onUpdated={async () => {
             await fetchJobs();

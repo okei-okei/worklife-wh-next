@@ -2,48 +2,34 @@
 
 import { supabase } from "@/lib/supabase";
 import { Property } from "./types";
-import { geocodeAddress } from "@/lib/geocoder";
 
 type Props = {
   properties: Property[];
+  userId: string | null;
   onRefresh: () => void;
   onEdit: (property: Property) => void;
 };
 
-export default function PropertyList({ properties, onRefresh, onEdit }: Props) {
+export default function PropertyList({
+  properties,
+  userId,
+  onRefresh,
+  onEdit,
+}: Props) {
   const handleDelete = async (id: string) => {
+    if (!userId) {
+      alert("ログインしてください");
+      return;
+    }
+
     const confirmed = window.confirm("この物件を削除しますか？");
     if (!confirmed) return;
 
     const { error } = await supabase
       .from("saved_properties")
       .delete()
-      .eq("id", id);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    onRefresh();
-  };
-
-  // 🔥 既存データ救済用（ジオコード再取得）
-  const handleReGeocode = async (property: Property) => {
-    if (!property.address) {
-      alert("住所がありません");
-      return;
-    }
-
-    const geo = await geocodeAddress(property.address);
-
-    const { error } = await supabase
-      .from("saved_properties")
-      .update({
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-      })
-      .eq("id", property.id);
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (error) {
       alert(error.message);
@@ -77,6 +63,7 @@ export default function PropertyList({ properties, onRefresh, onEdit }: Props) {
             <a
               href={p.url}
               target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 text-sm break-all"
             >
               {p.url}

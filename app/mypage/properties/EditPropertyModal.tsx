@@ -7,12 +7,14 @@ import { geocodeAddress } from "@/lib/geocoder";
 
 type Props = {
   property: Property | null;
+  userId: string | null;
   onClose: () => void;
   onUpdated: () => void;
 };
 
 export default function EditPropertyModal({
   property,
+  userId,
   onClose,
   onUpdated,
 }: Props) {
@@ -25,16 +27,25 @@ export default function EditPropertyModal({
   useEffect(() => {
     if (!property) return;
 
-    setTitle(property.title || "");
-    setUrl(property.url || "");
-    setLocation(property.location || "Auckland CBD");
-    setAddress(property.address || "");
-    setRent(property.rent_weekly?.toString() || "");
+    const timer = window.setTimeout(() => {
+      setTitle(property.title || "");
+      setUrl(property.url || "");
+      setLocation(property.location || "Auckland CBD");
+      setAddress(property.address || "");
+      setRent(property.rent_weekly?.toString() || "");
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [property]);
 
   if (!property) return null;
 
   const handleUpdate = async () => {
+    if (!userId) {
+      alert("ログインしてください");
+      return;
+    }
+
     const confirmed = window.confirm("更新しますか？");
     if (!confirmed) return;
 
@@ -59,7 +70,8 @@ export default function EditPropertyModal({
         latitude,
         longitude,
       })
-      .eq("id", property.id);
+      .eq("id", property.id)
+      .eq("user_id", userId);
 
     if (error) {
       alert(error.message);

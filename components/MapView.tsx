@@ -20,6 +20,16 @@ const propertyIcon = new L.Icon({
   iconSize: [32, 32],
 });
 
+const highlightedJobIcon = new L.Icon({
+  iconUrl: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
+  iconSize: [40, 40],
+});
+
+const highlightedPropertyIcon = new L.Icon({
+  iconUrl: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+  iconSize: [40, 40],
+});
+
 type Point = {
   id: string;
   lat: number;
@@ -27,22 +37,34 @@ type Point = {
   label: string;
 };
 
+type Line = {
+  from: {
+    lat: number;
+    lng: number;
+  };
+  to: {
+    lat: number;
+    lng: number;
+  };
+};
+
 type Props = {
   jobs: Point[];
   properties: Point[];
-  lines?: {
-    from: {
-      lat: number;
-      lng: number;
-    };
-    to: {
-      lat: number;
-      lng: number;
-    };
-  }[];
+  lines?: Line[];
+  highlightedJobId?: string;
+  highlightedPropertyId?: string;
+  highlightedLine?: Line | null;
 };
 
-export default function MapView({ jobs, properties, lines = [] }: Props) {
+export default function MapView({
+  jobs,
+  properties,
+  lines = [],
+  highlightedJobId,
+  highlightedPropertyId,
+  highlightedLine,
+}: Props) {
   const center = jobs[0]
     ? [jobs[0].lat, jobs[0].lng]
     : properties[0]
@@ -51,7 +73,7 @@ export default function MapView({ jobs, properties, lines = [] }: Props) {
 
   return (
     <MapContainer
-      key={`${jobs.length}-${properties.length}`}
+      key={`${jobs.length}-${properties.length}-${highlightedJobId}-${highlightedPropertyId}`}
       center={center as [number, number]}
       zoom={12}
       style={{
@@ -68,9 +90,12 @@ export default function MapView({ jobs, properties, lines = [] }: Props) {
         <Marker
           key={`${job.id}-${job.lat}-${job.lng}`}
           position={[job.lat, job.lng]}
-          icon={jobIcon}
+          icon={job.id === highlightedJobId ? highlightedJobIcon : jobIcon}
         >
-          <Popup>💼 {job.label}</Popup>
+          <Popup>
+            {job.id === highlightedJobId ? "おすすめの仕事: " : "仕事: "}
+            {job.label}
+          </Popup>
         </Marker>
       ))}
 
@@ -78,9 +103,16 @@ export default function MapView({ jobs, properties, lines = [] }: Props) {
         <Marker
           key={`${property.id}-${property.lat}-${property.lng}`}
           position={[property.lat, property.lng]}
-          icon={propertyIcon}
+          icon={
+            property.id === highlightedPropertyId
+              ? highlightedPropertyIcon
+              : propertyIcon
+          }
         >
-          <Popup>🏠 {property.label}</Popup>
+          <Popup>
+            {property.id === highlightedPropertyId ? "おすすめの物件: " : "物件: "}
+            {property.label}
+          </Popup>
         </Marker>
       ))}
 
@@ -91,8 +123,27 @@ export default function MapView({ jobs, properties, lines = [] }: Props) {
             [line.from.lat, line.from.lng],
             [line.to.lat, line.to.lng],
           ]}
+          pathOptions={{
+            color: "#94a3b8",
+            weight: 2,
+            opacity: 0.45,
+          }}
         />
       ))}
+
+      {highlightedLine && (
+        <Polyline
+          positions={[
+            [highlightedLine.from.lat, highlightedLine.from.lng],
+            [highlightedLine.to.lat, highlightedLine.to.lng],
+          ]}
+          pathOptions={{
+            color: "#f97316",
+            weight: 7,
+            opacity: 0.95,
+          }}
+        />
+      )}
     </MapContainer>
   );
 }

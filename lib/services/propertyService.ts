@@ -10,10 +10,11 @@ type SavePropertyParams = {
   address: string;
 };
 
-export async function fetchProperties() {
+export async function fetchProperties(userId: string) {
   const { data, error } = await supabase
     .from("saved_properties")
     .select("*")
+    .eq("user_id", userId)
     .order("created_at", {
       ascending: false,
     });
@@ -51,11 +52,12 @@ export async function saveProperty({
   }
 }
 
-export async function deleteProperty(id: string) {
+export async function deleteProperty(id: string, userId: string) {
   const { error } = await supabase
     .from("saved_properties")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", userId);
 
   if (error) {
     throw error;

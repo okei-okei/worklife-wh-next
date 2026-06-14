@@ -11,10 +11,11 @@ type SaveJobParams = {
   address: string;
 };
 
-export async function fetchJobs() {
+export async function fetchJobs(userId: string) {
   const { data, error } = await supabase
     .from("saved_jobs")
     .select("*")
+    .eq("user_id", userId)
     .order("created_at", {
       ascending: false,
     });
@@ -54,8 +55,12 @@ export async function saveJob({
   }
 }
 
-export async function deleteJob(id: string) {
-  const { error } = await supabase.from("saved_jobs").delete().eq("id", id);
+export async function deleteJob(id: string, userId: string) {
+  const { error } = await supabase
+    .from("saved_jobs")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
 
   if (error) {
     throw error;

@@ -7,11 +7,17 @@ import { geocodeAddress } from "@/lib/geocoder";
 
 type Props = {
   job: Job | null;
+  userId: string | null;
   onClose: () => void;
   onUpdated: () => void;
 };
 
-export default function EditJobModal({ job, onClose, onUpdated }: Props) {
+export default function EditJobModal({
+  job,
+  userId,
+  onClose,
+  onUpdated,
+}: Props) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
@@ -22,17 +28,26 @@ export default function EditJobModal({ job, onClose, onUpdated }: Props) {
   useEffect(() => {
     if (!job) return;
 
-    setTitle(job.title || "");
-    setUrl(job.url || "");
-    setHourlyRate(job.hourly_rate?.toString() || "");
-    setWorkHours(job.work_hours?.toString() || "");
-    setStatus(job.status || "気になる");
-    setAddress(job.address || "");
+    const timer = window.setTimeout(() => {
+      setTitle(job.title || "");
+      setUrl(job.url || "");
+      setHourlyRate(job.hourly_rate?.toString() || "");
+      setWorkHours(job.work_hours?.toString() || "");
+      setStatus(job.status || "気になる");
+      setAddress(job.address || "");
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [job]);
 
   if (!job) return null;
 
   const handleUpdate = async () => {
+    if (!userId) {
+      alert("ログインしてください");
+      return;
+    }
+
     const confirmed = window.confirm("更新しますか？");
     if (!confirmed) return;
 
@@ -48,7 +63,7 @@ export default function EditJobModal({ job, onClose, onUpdated }: Props) {
       }
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("saved_jobs")
       .update({
         title,
@@ -61,10 +76,8 @@ export default function EditJobModal({ job, onClose, onUpdated }: Props) {
         longitude,
       })
       .eq("id", job.id)
+      .eq("user_id", userId)
       .select();
-
-    console.log("update result", data);
-    console.log("update error", error);
 
     if (error) {
       alert(error.message);

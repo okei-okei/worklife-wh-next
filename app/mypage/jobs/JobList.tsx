@@ -39,25 +39,25 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
       {jobs.map((job) => (
         <div
           key={job.id}
-          className="bg-white p-6 rounded-2xl shadow flex justify-between"
+          className="flex flex-col justify-between gap-4 rounded-2xl bg-white p-4 text-gray-900 shadow sm:flex-row md:p-6"
         >
           {/* LEFT SIDE */}
-          <div className="space-y-1">
-            <h2 className="text-xl font-bold">{job.title}</h2>
+          <div className="min-w-0 space-y-1">
+            <h2 className="break-words text-xl font-bold">{job.title}</h2>
 
-            <p className="text-sm text-gray-600">
+            <p className="text-sm font-medium text-gray-700">
               ステータス: {job.status || "-"}
             </p>
 
-            <p className="text-sm text-gray-600">
+            <p className="text-sm font-medium text-gray-700">
               時給: {job.hourly_rate ? `$${job.hourly_rate}` : "未設定"}
             </p>
 
-            <p className="text-sm text-gray-600">
+            <p className="text-sm font-medium text-gray-700">
               週時間: {job.work_hours ?? "未設定"}
             </p>
 
-            <p className="text-sm text-gray-600">
+            <p className="text-sm font-medium text-gray-700">
               住所: {job.address || "未設定"}
             </p>
 
@@ -65,13 +65,13 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               href={job.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 break-all text-sm"
+              className="break-all text-sm font-bold text-blue-700"
             >
               {job.url}
             </a>
 
             {/* Debug: coordinate status */}
-            <p className="text-xs text-gray-400">
+            <p className="text-xs font-semibold text-gray-700">
               {job.latitude && job.longitude
                 ? `📍 Geocoded`
                 : `⚠️ No coordinates`}
@@ -79,11 +79,11 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
           </div>
 
           {/* RIGHT SIDE ACTIONS */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 sm:w-28">
             {/* EDIT */}
             <button
               onClick={() => onEdit(job)}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg"
+              className="w-full rounded-lg bg-gray-700 px-4 py-3 font-bold text-white sm:py-2"
             >
               編集
             </button>
@@ -91,7 +91,7 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
             {/* DELETE */}
             <button
               onClick={() => handleDelete(job.id)}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg"
+              className="w-full rounded-lg bg-red-600 px-4 py-3 font-bold text-white sm:py-2"
             >
               削除
             </button>
@@ -100,7 +100,7 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
       ))}
 
       {jobs.length === 0 && (
-        <div className="bg-white p-6 rounded-2xl text-center text-gray-500">
+        <div className="rounded-2xl bg-white p-4 text-center font-medium text-gray-700 md:p-6">
           求人がまだありません
         </div>
       )}

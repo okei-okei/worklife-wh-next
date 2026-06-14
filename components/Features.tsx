@@ -15,21 +15,20 @@ const features = [
 
 export default function Features() {
   return (
-    <section className="py-20 px-8 bg-gray-100">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+    <section className="bg-gray-100 px-4 py-12 md:px-8 md:py-20">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-3 md:gap-8">
         {features.map((feature) => (
           <div
             key={feature.title}
-            className="
-              bg-white
-              p-8
-              rounded-2xl
-              shadow-lg
-            "
+            className="min-w-0 rounded-2xl bg-white p-4 text-gray-900 shadow-lg md:p-8"
           >
-            <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
+            <h3 className="mb-3 whitespace-normal break-words text-xl font-bold text-gray-900 md:mb-4 md:text-2xl">
+              {feature.title}
+            </h3>
 
-            <p className="text-gray-600">{feature.description}</p>
+            <p className="text-base font-medium leading-7 text-gray-800">
+              {feature.description}
+            </p>
           </div>
         ))}
       </div>

@@ -248,14 +248,16 @@ export default function PlannerPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-4xl font-bold">ライフプランナー（最適化AI）</h1>
+    <main className="min-h-screen overflow-x-hidden bg-gray-100 p-4 text-gray-900 md:p-6">
+      <div className="mx-auto max-w-6xl min-w-0">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="min-w-0 whitespace-normal break-words text-2xl font-bold md:text-4xl">
+            ライフプランナー（最適化AI）
+          </h1>
 
           <Link
             href="/mypage"
-            className="rounded-lg bg-gray-500 px-4 py-2 text-white"
+            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
           >
             ← マイページ
           </Link>
@@ -269,7 +271,7 @@ export default function PlannerPage() {
             <button
               type="button"
               onClick={resetFilters}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-800 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
               disabled={!activeFilterCount}
             >
               リセット
@@ -282,7 +284,7 @@ export default function PlannerPage() {
           inputs={livingCostInputs}
           columnsClassName="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
           action={
-            <>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
               <div className="text-sm font-bold text-blue-700">
                 月間生活費: ${monthlyLivingCost.toFixed(0)}
               </div>
@@ -290,7 +292,7 @@ export default function PlannerPage() {
               <div className={settingsStatusClassName}>
                 {plannerSettingsStatusLabel}
               </div>
-            </>
+            </div>
           }
         />
 

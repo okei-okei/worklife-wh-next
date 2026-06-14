@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import type { PlannerInputConfig } from "../_lib/types";
 
@@ -18,14 +18,16 @@ export function PlannerInputPanel({
   columnsClassName = "grid gap-4 md:grid-cols-3",
 }: PlannerInputPanelProps) {
   return (
-    <div className="mb-6 rounded-2xl bg-white p-5 shadow">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-bold">{title}</h2>
+    <div className="mb-6 min-w-0 rounded-2xl bg-white p-4 text-gray-900 shadow md:p-6">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="min-w-0 whitespace-normal break-words text-xl font-bold md:text-2xl">
+          {title}
+        </h2>
 
         {(summary || action) && (
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
             {summary ? (
-              <span className="text-sm font-medium text-gray-600">
+              <span className="text-sm font-bold text-gray-800">
                 {summary}
               </span>
             ) : null}
@@ -38,13 +40,13 @@ export function PlannerInputPanel({
       <div className={columnsClassName}>
         {inputs.map((input) => (
           <label key={input.id} className="block">
-            <span className="mb-2 block text-sm font-bold text-gray-700">
+            <span className="mb-2 block text-sm font-bold text-gray-900">
               {input.label}
             </span>
 
             <div className="flex h-12 items-center rounded-lg border border-gray-300 bg-white px-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
               {input.prefix ? (
-                <span className="mr-2 text-sm font-bold text-gray-500">
+                <span className="mr-2 text-sm font-bold text-gray-700">
                   {input.prefix}
                 </span>
               ) : null}
@@ -57,11 +59,11 @@ export function PlannerInputPanel({
                 value={input.value}
                 onChange={(event) => input.onChange(event.target.value)}
                 placeholder={input.placeholder}
-                className="min-w-0 flex-1 border-none bg-transparent text-base font-bold outline-none placeholder:text-gray-300"
+                className="min-w-0 flex-1 border-none bg-transparent text-base font-bold text-gray-900 outline-none placeholder:text-gray-600"
               />
 
               {input.suffix ? (
-                <span className="ml-2 whitespace-nowrap text-sm font-bold text-gray-500">
+                <span className="ml-2 whitespace-nowrap text-sm font-bold text-gray-700">
                   {input.suffix}
                 </span>
               ) : null}

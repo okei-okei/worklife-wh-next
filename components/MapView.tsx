@@ -72,78 +72,82 @@ export default function MapView({
       : [-36.8485, 174.7633];
 
   return (
-    <MapContainer
-      key={`${jobs.length}-${properties.length}-${highlightedJobId}-${highlightedPropertyId}`}
-      center={center as [number, number]}
-      zoom={12}
-      style={{
-        height: "500px",
-        width: "100%",
-      }}
-    >
-      <TileLayer
-        attribution="&copy; OpenStreetMap"
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-
-      {jobs.map((job) => (
-        <Marker
-          key={`${job.id}-${job.lat}-${job.lng}`}
-          position={[job.lat, job.lng]}
-          icon={job.id === highlightedJobId ? highlightedJobIcon : jobIcon}
-        >
-          <Popup>
-            {job.id === highlightedJobId ? "おすすめの仕事: " : "仕事: "}
-            {job.label}
-          </Popup>
-        </Marker>
-      ))}
-
-      {properties.map((property) => (
-        <Marker
-          key={`${property.id}-${property.lat}-${property.lng}`}
-          position={[property.lat, property.lng]}
-          icon={
-            property.id === highlightedPropertyId
-              ? highlightedPropertyIcon
-              : propertyIcon
-          }
-        >
-          <Popup>
-            {property.id === highlightedPropertyId ? "おすすめの物件: " : "物件: "}
-            {property.label}
-          </Popup>
-        </Marker>
-      ))}
-
-      {lines.map((line, i) => (
-        <Polyline
-          key={i}
-          positions={[
-            [line.from.lat, line.from.lng],
-            [line.to.lat, line.to.lng],
-          ]}
-          pathOptions={{
-            color: "#94a3b8",
-            weight: 2,
-            opacity: 0.45,
-          }}
+    <div className="h-[350px] w-full min-w-0 overflow-hidden rounded-xl md:h-[500px]">
+      <MapContainer
+        key={`${jobs.length}-${properties.length}-${highlightedJobId}-${highlightedPropertyId}`}
+        center={center as [number, number]}
+        zoom={12}
+        style={{
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        <TileLayer
+          attribution="&copy; OpenStreetMap"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-      ))}
 
-      {highlightedLine && (
-        <Polyline
-          positions={[
-            [highlightedLine.from.lat, highlightedLine.from.lng],
-            [highlightedLine.to.lat, highlightedLine.to.lng],
-          ]}
-          pathOptions={{
-            color: "#f97316",
-            weight: 7,
-            opacity: 0.95,
-          }}
-        />
-      )}
-    </MapContainer>
+        {jobs.map((job) => (
+          <Marker
+            key={`${job.id}-${job.lat}-${job.lng}`}
+            position={[job.lat, job.lng]}
+            icon={job.id === highlightedJobId ? highlightedJobIcon : jobIcon}
+          >
+            <Popup>
+              {job.id === highlightedJobId ? "おすすめの仕事: " : "仕事: "}
+              {job.label}
+            </Popup>
+          </Marker>
+        ))}
+
+        {properties.map((property) => (
+          <Marker
+            key={`${property.id}-${property.lat}-${property.lng}`}
+            position={[property.lat, property.lng]}
+            icon={
+              property.id === highlightedPropertyId
+                ? highlightedPropertyIcon
+                : propertyIcon
+            }
+          >
+            <Popup>
+              {property.id === highlightedPropertyId
+                ? "おすすめの物件: "
+                : "物件: "}
+              {property.label}
+            </Popup>
+          </Marker>
+        ))}
+
+        {lines.map((line, i) => (
+          <Polyline
+            key={i}
+            positions={[
+              [line.from.lat, line.from.lng],
+              [line.to.lat, line.to.lng],
+            ]}
+            pathOptions={{
+              color: "#94a3b8",
+              weight: 2,
+              opacity: 0.45,
+            }}
+          />
+        ))}
+
+        {highlightedLine && (
+          <Polyline
+            positions={[
+              [highlightedLine.from.lat, highlightedLine.from.lng],
+              [highlightedLine.to.lat, highlightedLine.to.lng],
+            ]}
+            pathOptions={{
+              color: "#f97316",
+              weight: 7,
+              opacity: 0.95,
+            }}
+          />
+        )}
+      </MapContainer>
+    </div>
   );
 }

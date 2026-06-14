@@ -15,7 +15,7 @@ type CalculatePlannerResultsParams = {
   monthlyTransportCost: string;
   monthlyPhoneCost: string;
   monthlyOtherCost: string;
-  routeMode?: RouteMode;
+  travelMode?: RouteMode;
   routeInfoByKey?: Record<string, RouteInfo>;
 };
 
@@ -61,7 +61,7 @@ export function calculatePlannerResults({
   monthlyTransportCost,
   monthlyPhoneCost,
   monthlyOtherCost,
-  routeMode = "driving",
+  travelMode = "driving",
   routeInfoByKey = {},
 }: CalculatePlannerResultsParams): ScoreResult[] {
   if (!jobs.length || !properties.length) return [];
@@ -101,9 +101,9 @@ export function calculatePlannerResults({
 
       const fallbackTravel = estimateTravelTimeMinutes(fallbackDistance);
       const fallbackTravelMin =
-        routeMode === "walking"
+        travelMode === "walking"
           ? fallbackTravel?.walk || null
-          : routeMode === "driving"
+          : travelMode === "driving"
             ? fallbackTravel?.drive || null
             : null;
       const distance = routeInfo?.distanceKm ?? fallbackDistance;
@@ -136,7 +136,7 @@ export function calculatePlannerResults({
         property,
         distance,
         travelMin,
-        routeMode,
+        travelMode,
         routeProvider: routeInfo?.provider || "fallback",
         routeCoordinates: routeInfo?.coordinates || [],
         routeMessage: routeInfo?.message,

@@ -105,7 +105,7 @@ export function PlanRankingList({
                     スコア: {result.score.toFixed(0)}
                   </p>
                   <p>
-                    経路: {result.routeMode} / {result.routeProvider}
+                    経路: {result.travelMode} / {result.routeProvider}
                     {result.isRouteFallback ? " / フォールバック" : ""}
                   </p>
                 </div>

@@ -73,11 +73,11 @@ export function RecommendedPlanCard({ result }: RecommendedPlanCardProps) {
         <p>月収総額: {formatCurrency(result.monthlyGrossIncome)}</p>
         <p>月家賃: {formatCurrency(result.monthlyRent)}</p>
         <p>月生活費: {formatCurrency(result.monthlyLivingCost)}</p>
-        <p>スコア: {result.score.toFixed(0)}</p>
+        <p>移動手段: {result.travelMode}</p>
       </div>
 
       <div className="mt-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-800">
-        経路: {result.routeMode} / provider: {result.routeProvider}
+        経路: {result.travelMode} / provider: {result.routeProvider}
         {result.isRouteFallback ? " / フォールバック表示" : ""}
         {result.routeMessage ? ` / ${result.routeMessage}` : ""}
       </div>

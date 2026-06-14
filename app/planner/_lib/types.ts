@@ -26,7 +26,7 @@ export type ScoreResult = {
   property: Property;
   distance: number | null;
   travelMin: number | null;
-  routeMode: RouteMode;
+  travelMode: RouteMode;
   routeProvider: RouteProvider;
   routeCoordinates: RouteCoordinates[];
   routeMessage?: string;

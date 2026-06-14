@@ -26,20 +26,20 @@ import {
   type RouteMode,
 } from "@/lib/services/routeService";
 
-const routeModeOptions: Array<{
+const travelModeOptions: Array<{
   value: RouteMode;
   label: string;
   description: string;
 }> = [
   {
-    value: "driving",
-    label: "車",
-    description: "道路経路の推定距離・時間",
-  },
-  {
     value: "walking",
     label: "徒歩",
     description: "徒歩経路の推定距離・時間",
+  },
+  {
+    value: "driving",
+    label: "車",
+    description: "道路経路の推定距離・時間",
   },
   {
     value: "transit",
@@ -55,7 +55,7 @@ export default function PlannerPage() {
   const [selectedResultKey, setSelectedResultKey] = useState<string | null>(
     null,
   );
-  const [routeMode, setRouteMode] = useState<RouteMode>("driving");
+  const [travelMode, setTravelMode] = useState<RouteMode>("driving");
   const [routeInfoByKey, setRouteInfoByKey] = useState<
     Record<string, RouteInfo>
   >({});
@@ -103,7 +103,7 @@ export default function PlannerPage() {
       monthlyTransportCost,
       monthlyPhoneCost,
       monthlyOtherCost,
-      routeMode,
+      travelMode,
     });
   }, [
     jobs,
@@ -115,14 +115,14 @@ export default function PlannerPage() {
     monthlyTransportCost,
     monthlyPhoneCost,
     monthlyOtherCost,
-    routeMode,
+    travelMode,
   ]);
 
   useEffect(() => {
     let isActive = true;
 
     const loadRouteInfo = async () => {
-      if (routeMode === "transit") {
+      if (travelMode === "transit") {
         setIsLoadingRoutes(false);
         setRouteStatusMessage("公共交通はGoogle Maps連携後に対応予定です。");
         return;
@@ -168,7 +168,7 @@ export default function PlannerPage() {
               latitude: result.property.latitude,
               longitude: result.property.longitude,
             },
-            mode: routeMode,
+            mode: travelMode,
           });
 
           return [key, routeInfo] as const;
@@ -199,7 +199,7 @@ export default function PlannerPage() {
     return () => {
       isActive = false;
     };
-  }, [fallbackResults, routeInfoByKey, routeMode]);
+  }, [fallbackResults, routeInfoByKey, travelMode]);
 
   const results = useMemo(() => {
     return calculatePlannerResults({
@@ -212,7 +212,7 @@ export default function PlannerPage() {
       monthlyTransportCost,
       monthlyPhoneCost,
       monthlyOtherCost,
-      routeMode,
+      travelMode,
       routeInfoByKey,
     });
   }, [
@@ -225,7 +225,7 @@ export default function PlannerPage() {
     monthlyTransportCost,
     monthlyPhoneCost,
     monthlyOtherCost,
-    routeMode,
+    travelMode,
     routeInfoByKey,
   ]);
 
@@ -394,8 +394,8 @@ export default function PlannerPage() {
     setMinHourlyRate("");
   };
 
-  const handleRouteModeChange = (mode: RouteMode) => {
-    setRouteMode(mode);
+  const handleTravelModeChange = (mode: RouteMode) => {
+    setTravelMode(mode);
     setRouteInfoByKey({});
     setSelectedResultKey(null);
     setRouteStatusMessage("");
@@ -468,13 +468,13 @@ export default function PlannerPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            {routeModeOptions.map((option) => (
+            {travelModeOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"
-                onClick={() => handleRouteModeChange(option.value)}
+                onClick={() => handleTravelModeChange(option.value)}
                 className={
-                  routeMode === option.value
+                  travelMode === option.value
                     ? "rounded-xl border-2 border-blue-600 bg-blue-50 p-4 text-left text-gray-900"
                     : "rounded-xl border border-gray-300 bg-white p-4 text-left text-gray-900"
                 }
@@ -490,7 +490,7 @@ export default function PlannerPage() {
           {routeStatusMessage ? (
             <p
               className={
-                routeMode === "transit"
+                travelMode === "transit"
                   ? "mt-4 rounded-xl bg-orange-50 p-3 text-sm font-bold text-orange-700"
                   : "mt-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-700"
               }

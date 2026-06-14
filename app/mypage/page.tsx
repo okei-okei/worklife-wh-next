@@ -89,15 +89,17 @@ export default function MyPage() {
             </div>
           </Link>
 
-          <div className="min-w-0 rounded-2xl bg-white p-4 shadow md:p-6">
-            <h2 className="mb-2 text-xl font-bold text-gray-900 md:text-2xl">
-              履歴書管理
-            </h2>
+          <Link href="/mypage/resume" className="block min-w-0">
+            <div className="min-w-0 cursor-pointer rounded-2xl bg-white p-4 shadow hover:shadow-lg md:p-6">
+              <h2 className="mb-2 text-xl font-bold text-gray-900 md:text-2xl">
+                履歴書管理
+              </h2>
 
-            <p className="text-base font-medium leading-7 text-gray-800">
-              英文履歴書を保存できます。
-            </p>
-          </div>
+              <p className="text-base font-medium leading-7 text-gray-800">
+                英文履歴書を保存できます。
+              </p>
+            </div>
+          </Link>
 
           <div className="min-w-0 rounded-2xl bg-white p-4 shadow md:p-6">
             <h2 className="mb-2 text-xl font-bold text-gray-900 md:text-2xl">

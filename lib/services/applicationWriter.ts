@@ -13,6 +13,7 @@ export type ApplicationTarget = {
   description?: string | null;
   hourlyRate?: number | null;
   workHours?: number | null;
+  rentWeekly?: number | null;
   desiredMoveInDate?: string | null;
   plannedStayDuration?: string | null;
   selfIntroductionMemo?: string | null;
@@ -33,6 +34,35 @@ export type ApplicationResume = {
   self_introduction?: string | null;
 };
 
+export type JobApplicationDetails = {
+  fullName?: string;
+  currentCity?: string;
+  visaType?: string;
+  availableFrom?: string;
+  availability?: string;
+  englishLevel?: string;
+  relevantExperience?: string;
+  skills?: string;
+  selfPromotion?: string;
+  motivation?: string;
+  attachResume?: boolean;
+  interviewAvailability?: string;
+  additionalMessage?: string;
+};
+
+export type PropertyInquiryDetails = {
+  fullName?: string;
+  currentCity?: string;
+  desiredMoveInDate?: string;
+  plannedStayDuration?: string;
+  occupants?: string;
+  occupation?: string;
+  selfIntroduction?: string;
+  viewingAvailability?: string;
+  questions?: string;
+  additionalMessage?: string;
+};
+
 type ApplicationWriterInput = {
   target?: ApplicationTarget;
   job?: ApplicationJob;
@@ -42,6 +72,8 @@ type ApplicationWriterInput = {
 type OptionalResumeWriterInput = {
   target: ApplicationTarget;
   resume?: ApplicationResume | null;
+  jobDetails?: JobApplicationDetails;
+  propertyDetails?: PropertyInquiryDetails;
 };
 
 type NormalizedApplicationWriterInput = {
@@ -61,10 +93,26 @@ function valueOrPlaceholder(
   return value?.trim() ? value.trim() : placeholder;
 }
 
+function optionalLine(label: string, value: string | null | undefined) {
+  if (!value?.trim()) return "";
+
+  return `${label}: ${value.trim()}`;
+}
+
+function joinOptionalLines(lines: string[]) {
+  return lines.filter(Boolean).join("\n");
+}
+
 function formatAvailableFrom(value: string | null | undefined) {
   if (!value) return "as soon as possible";
 
   return value;
+}
+
+function formatMoney(value: number | null | undefined) {
+  if (value === null || value === undefined) return "";
+
+  return `$${value}`;
 }
 
 function normalizeInput(
@@ -76,12 +124,56 @@ function normalizeInput(
   };
 }
 
-function normalizeOptionalResumeInput(
-  input: OptionalResumeWriterInput,
-): NormalizedApplicationWriterInput {
+function mergeJobDetails(
+  resume: ApplicationResume | null | undefined,
+  details: JobApplicationDetails | undefined,
+): Required<JobApplicationDetails> {
   return {
-    target: input.target,
-    resume: input.resume || {},
+    fullName: valueOrPlaceholder(details?.fullName, resume?.full_name || ""),
+    currentCity: valueOrPlaceholder(
+      details?.currentCity,
+      resume?.current_city || "",
+    ),
+    visaType: valueOrPlaceholder(details?.visaType, resume?.visa_type || ""),
+    availableFrom: valueOrPlaceholder(
+      details?.availableFrom,
+      resume?.available_from || "",
+    ),
+    availability: valueOrPlaceholder(details?.availability, ""),
+    englishLevel: valueOrPlaceholder(
+      details?.englishLevel,
+      resume?.english_level || "",
+    ),
+    relevantExperience: valueOrPlaceholder(
+      details?.relevantExperience,
+      resume?.work_experience || "",
+    ),
+    skills: valueOrPlaceholder(details?.skills, resume?.skills || ""),
+    selfPromotion: valueOrPlaceholder(
+      details?.selfPromotion,
+      resume?.self_introduction || "",
+    ),
+    motivation: valueOrPlaceholder(details?.motivation, ""),
+    attachResume: details?.attachResume ?? true,
+    interviewAvailability: valueOrPlaceholder(details?.interviewAvailability, ""),
+    additionalMessage: valueOrPlaceholder(details?.additionalMessage, ""),
+  };
+}
+
+function mergePropertyDetails(
+  details: PropertyInquiryDetails | undefined,
+): Required<PropertyInquiryDetails> {
+  return {
+    fullName: valueOrPlaceholder(details?.fullName, ""),
+    currentCity: valueOrPlaceholder(details?.currentCity, ""),
+    desiredMoveInDate: valueOrPlaceholder(details?.desiredMoveInDate, ""),
+    plannedStayDuration: valueOrPlaceholder(details?.plannedStayDuration, ""),
+    occupants: valueOrPlaceholder(details?.occupants, ""),
+    occupation: valueOrPlaceholder(details?.occupation, ""),
+    selfIntroduction: valueOrPlaceholder(details?.selfIntroduction, ""),
+    viewingAvailability: valueOrPlaceholder(details?.viewingAvailability, ""),
+    questions: valueOrPlaceholder(details?.questions, ""),
+    additionalMessage: valueOrPlaceholder(details?.additionalMessage, ""),
   };
 }
 
@@ -95,169 +187,184 @@ function getConfiguredApplicationWriterProvider(): ApplicationWriterProvider {
   return "template";
 }
 
-const templateApplicationWriter: ApplicationWriter = {
-  generateApplicationEmail({ target, resume }) {
-    const fullName = valueOrPlaceholder(resume.full_name, "[Your Name]");
-    const email = valueOrPlaceholder(resume.email, "[Your Email]");
-    const phone = valueOrPlaceholder(resume.phone, "[Your Phone Number]");
-    const visaType = valueOrPlaceholder(resume.visa_type, "a valid visa");
-    const availableFrom = formatAvailableFrom(resume.available_from);
-    const introduction = valueOrPlaceholder(
-      resume.self_introduction,
-      "I am currently in New Zealand on a working holiday and I am looking for a suitable opportunity.",
-    );
-    const experience = valueOrPlaceholder(
-      resume.work_experience,
-      "I have relevant experience and I am confident I can communicate clearly and act responsibly.",
-    );
-    const skills = valueOrPlaceholder(
-      resume.skills,
-      "I have strong communication skills, a positive attitude, and I am willing to learn quickly.",
-    );
-    const englishLevel = valueOrPlaceholder(
-      resume.english_level,
-      "conversational English",
-    );
-    const companyLine = target.company ? ` at ${target.company}` : "";
-    const roleMemo = target.description?.trim()
-      ? `\nI understand that the role involves: ${target.description.trim()}\n`
-      : "";
-    const conditionLine =
-      target.hourlyRate || target.workHours
-        ? `\nI also understand the listed conditions as ${target.hourlyRate ? `$${target.hourlyRate} per hour` : "the listed hourly rate"}${target.workHours ? ` and around ${target.workHours} hours per week` : ""}.\n`
-        : "";
+function buildJobConditionText(target: ApplicationTarget) {
+  const lines = joinOptionalLines([
+    optionalLine("Location", target.location || target.address),
+    optionalLine("Hourly rate", formatMoney(target.hourlyRate)),
+    optionalLine(
+      "Weekly hours",
+      target.workHours ? `${target.workHours} hours` : "",
+    ),
+    optionalLine("Job notes", target.description),
+  ]);
 
-    if (target.type === "property") {
-      const locationLine = target.location || target.address;
+  return lines ? `\nJob details I reviewed:\n${lines}\n` : "";
+}
 
-      return `Subject: Enquiry about ${target.title}
+function buildJobApplicationEmailTemplate(
+  target: ApplicationTarget,
+  resume: ApplicationResume | null | undefined,
+  details: JobApplicationDetails | undefined,
+) {
+  const input = mergeJobDetails(resume, details);
+  const fullName = valueOrPlaceholder(input.fullName, "[Your Name]");
+  const companyLine = target.company ? ` at ${target.company}` : "";
+  const currentCityLine = input.currentCity
+    ? ` I am currently based in ${input.currentCity}.`
+    : "";
+  const availabilityLine = input.availability
+    ? ` I am available to work ${input.availability}.`
+    : "";
+  const resumeLine = input.attachResume
+    ? "I have attached my resume for your review."
+    : "I can provide my resume or any further information if needed.";
+  const motivationLine = input.motivation
+    ? `\nI am interested in this role because ${input.motivation}\n`
+    : "";
+  const interviewLine = input.interviewAvailability
+    ? `I am available for an interview ${input.interviewAvailability}.`
+    : "I am flexible with interview times.";
+  const additionalLine = input.additionalMessage
+    ? `\nAdditional information:\n${input.additionalMessage}\n`
+    : "";
 
-Dear Property Manager,
-
-I am writing to enquire about ${target.title}${locationLine ? ` in ${locationLine}` : ""}.
-
-${introduction}
-
-I currently hold ${visaType}, and I am available from ${availableFrom}. My English level is ${englishLevel}.
-
-A little about me:
-${experience}
-
-My key strengths include:
-${skills}
-
-I would be grateful for the opportunity to arrange a viewing or discuss the next steps. I can provide any further information if needed.
-
-Thank you for your time and consideration.
-
-Kind regards,
-${fullName}
-${email}
-${phone}`;
-    }
-
-    return `Subject: Application for ${target.title}
+  return `Subject: Application for ${target.title}
 
 Dear Hiring Manager,
 
 I am writing to apply for the ${target.title} position${companyLine}.
 
-${introduction}
-${roleMemo}${conditionLine}
+${input.selfPromotion || "I am reliable, motivated, and eager to contribute to your team."}${currentCityLine}
+${motivationLine}${buildJobConditionText(target)}
+I currently hold ${input.visaType || "a valid visa"}, and I am available to start from ${formatAvailableFrom(input.availableFrom)}.${availabilityLine} My English level is ${input.englishLevel || "conversational"}.
 
-I currently hold ${visaType}, and I am available to start from ${availableFrom}. My English level is ${englishLevel}.
-
-My experience includes:
-${experience}
+My relevant experience includes:
+${input.relevantExperience || "I have practical experience and I am confident I can learn quickly and work responsibly."}
 
 My key skills include:
-${skills}
+${input.skills || "communication, teamwork, reliability, and a positive attitude."}
 
-I have attached my resume for your review.
+${resumeLine}
 
-I would be grateful for the opportunity to discuss my application in an interview. I am flexible with interview times and can provide any further information if needed.
-
+${interviewLine} I would appreciate the opportunity to discuss my application and learn more about the role.
+${additionalLine}
 Thank you for your time and consideration.
 
 Kind regards,
-${fullName}
-${email}
-${phone}`;
-  },
+${fullName}`;
+}
 
-  generateCoverLetter({ target, resume }) {
-    const fullName = valueOrPlaceholder(resume.full_name, "[Your Name]");
-    const email = valueOrPlaceholder(resume.email, "[Your Email]");
-    const phone = valueOrPlaceholder(resume.phone, "[Your Phone Number]");
-    const visaType = valueOrPlaceholder(resume.visa_type, "a valid visa");
-    const availableFrom = formatAvailableFrom(resume.available_from);
-    const introduction = valueOrPlaceholder(
-      resume.self_introduction,
-      "I am motivated, reliable, and excited to build my life in New Zealand.",
-    );
-    const experience = valueOrPlaceholder(
-      resume.work_experience,
-      "I have relevant experience that has helped me build practical skills, reliability, and a strong sense of responsibility.",
-    );
-    const skills = valueOrPlaceholder(
-      resume.skills,
-      "My strengths include communication, teamwork, adaptability, and a willingness to learn quickly.",
-    );
-    const companyLine = target.company ? ` at ${target.company}` : "";
-    const roleMemo = target.description?.trim()
-      ? `\nFrom the job information, I understand that the role involves: ${target.description.trim()}\n`
-      : "";
+function buildJobCoverLetterTemplate(
+  target: ApplicationTarget,
+  resume: ApplicationResume | null | undefined,
+  details: JobApplicationDetails | undefined,
+) {
+  const input = mergeJobDetails(resume, details);
+  const fullName = valueOrPlaceholder(input.fullName, "[Your Name]");
+  const companyLine = target.company ? ` at ${target.company}` : "";
+  const currentCityLine = input.currentCity
+    ? ` I am currently based in ${input.currentCity}.`
+    : "";
+  const resumeLine = input.attachResume
+    ? "I have attached my resume for your review."
+    : "I can provide my resume or additional information upon request.";
+  const motivationLine = input.motivation
+    ? `\nWhat interests me about this role is ${input.motivation}\n`
+    : "";
+  const additionalLine = input.additionalMessage
+    ? `\nI would also like to add:\n${input.additionalMessage}\n`
+    : "";
 
-    if (target.type === "property") {
-      return `Dear Property Manager,
-
-I am writing to express my interest in ${target.title}.
-
-${introduction}
-
-I am currently looking for a comfortable and responsible living arrangement in New Zealand. I currently hold ${visaType}, and I am available from ${availableFrom}.
-
-My background includes:
-${experience}
-
-My strengths as a tenant include:
-${skills}
-
-I would appreciate the opportunity to arrange a viewing or discuss the application process. I can provide further details or references if required.
-
-Thank you for considering my enquiry. I look forward to hearing from you.
-
-Kind regards,
-${fullName}
-${email}
-${phone}`;
-    }
-
-    return `Dear Hiring Manager,
+  return `Dear Hiring Manager,
 
 I am writing to express my interest in the ${target.title} position${companyLine}.
 
-${introduction}
-${roleMemo}
+${input.selfPromotion || "I am a motivated and reliable applicant who is ready to work hard and learn quickly."}${currentCityLine}
+${motivationLine}${buildJobConditionText(target)}
+I currently hold ${input.visaType || "a valid visa"} and I am able to work legally in New Zealand. I am available to start from ${formatAvailableFrom(input.availableFrom)}${input.availability ? ` and I can work ${input.availability}` : ""}.
 
-Through my previous experience, I have developed skills that I believe would be valuable for this role. My relevant experience includes:
-${experience}
+My relevant experience includes:
+${input.relevantExperience || "I have experience that has helped me build responsibility, teamwork, and practical workplace skills."}
 
-My key strengths include:
-${skills}
+My key strengths and skills include:
+${input.skills || "clear communication, punctuality, adaptability, and a willingness to learn."}
 
-I currently hold ${visaType}, and I am able to work legally in New Zealand. I am available to start from ${availableFrom}.
+${resumeLine}
 
-I have attached my resume for your review.
-
-I would welcome the opportunity to discuss how my experience and attitude could contribute to your team. I am available for an interview at your convenience.
-
+${input.interviewAvailability ? `I am available for an interview ${input.interviewAvailability}.` : "I would welcome the opportunity to discuss my application in an interview."}
+${additionalLine}
 Thank you for considering my application. I look forward to hearing from you.
 
 Kind regards,
-${fullName}
-${email}
-${phone}`;
+${fullName}`;
+}
+
+function buildPropertyInquiryEmailTemplate(
+  target: ApplicationTarget,
+  details: PropertyInquiryDetails | undefined,
+) {
+  const input = mergePropertyDetails(details);
+  const fullName = valueOrPlaceholder(input.fullName, "[Your Name]");
+  const propertyLocation = target.location || target.address;
+  const ownerName = target.ownerName || "Property Manager";
+  const rentLine = target.rentWeekly
+    ? ` I understand the rent is around $${target.rentWeekly} per week.`
+    : "";
+  const moveInLine = input.desiredMoveInDate
+    ? ` My preferred move-in date is ${input.desiredMoveInDate}.`
+    : "";
+  const stayLine = input.plannedStayDuration
+    ? ` I am planning to stay for ${input.plannedStayDuration}.`
+    : "";
+  const occupantsLine = input.occupants
+    ? ` The number of occupants would be ${input.occupants}.`
+    : "";
+  const occupationLine = input.occupation
+    ? ` My current work or study situation is: ${input.occupation}.`
+    : "";
+  const viewingLine = input.viewingAvailability
+    ? ` I am available for a viewing ${input.viewingAvailability}.`
+    : " I would appreciate the opportunity to arrange a viewing.";
+  const questionsLine = input.questions
+    ? `\nI would also like to ask:\n${input.questions}\n`
+    : "";
+  const additionalLine = input.additionalMessage
+    ? `\nAdditional information:\n${input.additionalMessage}\n`
+    : "";
+
+  return `Subject: Enquiry about ${target.title}
+
+Dear ${ownerName},
+
+I am writing to enquire about ${target.title}${propertyLocation ? ` in ${propertyLocation}` : ""}.
+
+${input.selfIntroduction || "I am currently looking for a suitable place to live in New Zealand."} ${input.currentCity ? `I am currently based in ${input.currentCity}.` : ""}
+
+I would like to ask whether this property is still available.${rentLine}${moveInLine}${stayLine}${occupantsLine}${occupationLine}
+
+${viewingLine} Please let me know if there are any suitable times or any next steps for applying.
+${questionsLine}${additionalLine}
+Thank you for your time. I look forward to hearing from you.
+
+Kind regards,
+${fullName}`;
+}
+
+const templateApplicationWriter: ApplicationWriter = {
+  generateApplicationEmail({ target, resume }) {
+    if (target.type === "property") {
+      return buildPropertyInquiryEmailTemplate(target, {
+        fullName: resume.full_name || "",
+        currentCity: resume.current_city || "",
+        selfIntroduction: resume.self_introduction || "",
+      });
+    }
+
+    return buildJobApplicationEmailTemplate(target, resume, undefined);
+  },
+
+  generateCoverLetter({ target, resume }) {
+    return buildJobCoverLetterTemplate(target, resume, undefined);
   },
 };
 
@@ -297,67 +404,42 @@ export function generateCoverLetter(input: ApplicationWriterInput) {
 }
 
 export function generateJobApplicationEmail(input: OptionalResumeWriterInput) {
-  return getApplicationWriter().generateApplicationEmail(
-    normalizeOptionalResumeInput({
-      ...input,
-      target: {
-        ...input.target,
-        type: "job",
-      },
-    }),
+  return buildJobApplicationEmailTemplate(
+    {
+      ...input.target,
+      type: "job",
+    },
+    input.resume,
+    input.jobDetails,
   );
 }
 
 export function generateJobCoverLetter(input: OptionalResumeWriterInput) {
-  return getApplicationWriter().generateCoverLetter(
-    normalizeOptionalResumeInput({
-      ...input,
-      target: {
-        ...input.target,
-        type: "job",
-      },
-    }),
+  return buildJobCoverLetterTemplate(
+    {
+      ...input.target,
+      type: "job",
+    },
+    input.resume,
+    input.jobDetails,
   );
 }
 
 export function generatePropertyInquiryEmail(input: OptionalResumeWriterInput) {
-  const fullName = valueOrPlaceholder(input.resume?.full_name, "[Your Name]");
-  const email = valueOrPlaceholder(input.resume?.email, "[Your Email]");
-  const phone = valueOrPlaceholder(input.resume?.phone, "[Your Phone Number]");
-  const target = input.target;
-  const locationLine = target.location || target.address;
-  const introduction = valueOrPlaceholder(
-    target.selfIntroductionMemo || input.resume?.self_introduction,
-    "I am currently looking for a suitable place to live in New Zealand.",
+  return buildPropertyInquiryEmailTemplate(
+    {
+      ...input.target,
+      type: "property",
+    },
+    input.propertyDetails || {
+      fullName: input.resume?.full_name || "",
+      currentCity: input.resume?.current_city || "",
+      selfIntroduction:
+        input.target.selfIntroductionMemo ||
+        input.resume?.self_introduction ||
+        "",
+      desiredMoveInDate: input.target.desiredMoveInDate || "",
+      plannedStayDuration: input.target.plannedStayDuration || "",
+    },
   );
-  const currentSituation = target.description?.trim()
-    ? `\nCurrent situation:\n${target.description.trim()}\n`
-    : "";
-  const moveInLine = target.desiredMoveInDate
-    ? ` My preferred move-in date is ${target.desiredMoveInDate}.`
-    : "";
-  const durationLine = target.plannedStayDuration
-    ? ` I am planning to stay for ${target.plannedStayDuration}.`
-    : "";
-
-  return `Subject: Enquiry about ${target.title}
-
-Dear Property Manager,
-
-I am writing to enquire about ${target.title}${locationLine ? ` in ${locationLine}` : ""}.
-
-${introduction}
-${currentSituation}
-I am interested in this property and would like to ask whether it is still available.${moveInLine}${durationLine}
-
-If possible, I would appreciate the opportunity to arrange a viewing or receive more details about the room, rent, bond, move-in date, and any house rules.
-
-Please let me know the next steps for applying or arranging a viewing.
-
-Thank you for your time. I look forward to hearing from you.
-
-Kind regards,
-${fullName}
-${email}
-${phone}`;
 }

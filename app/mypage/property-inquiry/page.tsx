@@ -6,6 +6,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import {
   generatePropertyInquiryEmail,
   type ApplicationTarget,
+  type PropertyInquiryDetails,
 } from "@/lib/services/applicationWriter";
 import { supabase } from "@/lib/supabase";
 
@@ -26,10 +27,21 @@ const emptyManualProperty = {
   url: "",
   location: "",
   address: "",
+  ownerName: "",
   rentWeekly: "",
+};
+
+const emptyPropertyDetails: PropertyInquiryDetails = {
+  fullName: "",
+  currentCity: "",
   desiredMoveInDate: "",
   plannedStayDuration: "",
-  selfIntroductionMemo: "",
+  occupants: "",
+  occupation: "",
+  selfIntroduction: "",
+  viewingAvailability: "",
+  questions: "",
+  additionalMessage: "",
 };
 
 function formatRent(value: number | null) {
@@ -49,11 +61,8 @@ function PropertyInquiryPageContent() {
     useState(propertyIdFromQuery);
   const [sourceMode, setSourceMode] = useState<SourceMode>("saved");
   const [manualProperty, setManualProperty] = useState(emptyManualProperty);
-  const [savedDetails, setSavedDetails] = useState({
-    desiredMoveInDate: "",
-    plannedStayDuration: "",
-    selfIntroductionMemo: "",
-  });
+  const [propertyDetails, setPropertyDetails] =
+    useState<PropertyInquiryDetails>(emptyPropertyDetails);
   const [draft, setDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -121,9 +130,7 @@ function PropertyInquiryPageContent() {
         url: selectedProperty.url,
         location: selectedProperty.location,
         address: selectedProperty.address,
-        desiredMoveInDate: savedDetails.desiredMoveInDate,
-        plannedStayDuration: savedDetails.plannedStayDuration,
-        selfIntroductionMemo: savedDetails.selfIntroductionMemo,
+        rentWeekly: selectedProperty.rent_weekly,
       };
     }
 
@@ -133,11 +140,12 @@ function PropertyInquiryPageContent() {
       url: manualProperty.url,
       location: manualProperty.location,
       address: manualProperty.address,
-      desiredMoveInDate: manualProperty.desiredMoveInDate,
-      plannedStayDuration: manualProperty.plannedStayDuration,
-      selfIntroductionMemo: manualProperty.selfIntroductionMemo,
+      ownerName: manualProperty.ownerName,
+      rentWeekly: manualProperty.rentWeekly
+        ? Number(manualProperty.rentWeekly)
+        : null,
     };
-  }, [manualProperty, savedDetails, selectedProperty, sourceMode]);
+  }, [manualProperty, selectedProperty, sourceMode]);
 
   const targetUrl = activeTarget?.url?.trim() || "";
 
@@ -150,9 +158,15 @@ function PropertyInquiryPageContent() {
       return;
     }
 
+    if (!propertyDetails.fullName?.trim()) {
+      setErrorMessage("氏名を入力してください。");
+      return;
+    }
+
     const content = generatePropertyInquiryEmail({
       target: activeTarget,
       resume: null,
+      propertyDetails,
     });
 
     setDraft(content);
@@ -332,6 +346,22 @@ function PropertyInquiryPageContent() {
                   placeholder="250"
                 />
               </label>
+              <label className="block">
+                <span className="text-sm font-bold text-gray-900">
+                  管理者・オーナー名
+                </span>
+                <input
+                  value={manualProperty.ownerName}
+                  onChange={(event) =>
+                    setManualProperty({
+                      ...manualProperty,
+                      ownerName: event.target.value,
+                    })
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                  placeholder="例: Property Manager"
+                />
+              </label>
               <label className="block md:col-span-2">
                 <span className="text-sm font-bold text-gray-900">
                   物件URL
@@ -381,29 +411,53 @@ function PropertyInquiryPageContent() {
         </section>
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <h2 className="text-xl font-bold text-gray-900">2. 補足情報</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            2. 問い合わせ内容を入力する
+          </h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
+            日本語で入力してください。出力は英語の問い合わせメールとして整えます。
+          </p>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">氏名</span>
+              <input
+                value={propertyDetails.fullName || ""}
+                onChange={(event) =>
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    fullName: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: Kei Tanaka"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">現在地</span>
+              <input
+                value={propertyDetails.currentCity || ""}
+                onChange={(event) =>
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    currentCity: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: Auckland"
+              />
+            </label>
             <label className="block">
               <span className="text-sm font-bold text-gray-900">
                 入居希望日
               </span>
               <input
                 type="date"
-                value={
-                  sourceMode === "saved"
-                    ? savedDetails.desiredMoveInDate
-                    : manualProperty.desiredMoveInDate
-                }
+                value={propertyDetails.desiredMoveInDate || ""}
                 onChange={(event) =>
-                  sourceMode === "saved"
-                    ? setSavedDetails({
-                        ...savedDetails,
-                        desiredMoveInDate: event.target.value,
-                      })
-                    : setManualProperty({
-                        ...manualProperty,
-                        desiredMoveInDate: event.target.value,
-                      })
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    desiredMoveInDate: event.target.value,
+                  })
                 }
                 className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
               />
@@ -413,49 +467,107 @@ function PropertyInquiryPageContent() {
                 滞在予定期間
               </span>
               <input
-                value={
-                  sourceMode === "saved"
-                    ? savedDetails.plannedStayDuration
-                    : manualProperty.plannedStayDuration
-                }
+                value={propertyDetails.plannedStayDuration || ""}
                 onChange={(event) =>
-                  sourceMode === "saved"
-                    ? setSavedDetails({
-                        ...savedDetails,
-                        plannedStayDuration: event.target.value,
-                      })
-                    : setManualProperty({
-                        ...manualProperty,
-                        plannedStayDuration: event.target.value,
-                      })
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    plannedStayDuration: event.target.value,
+                  })
                 }
                 className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="3 months"
+                placeholder="例: 3か月以上"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">入居人数</span>
+              <input
+                value={propertyDetails.occupants || ""}
+                onChange={(event) =>
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    occupants: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 1人"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                職業・学校など
+              </span>
+              <input
+                value={propertyDetails.occupation || ""}
+                onChange={(event) =>
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    occupation: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: ワーホリで仕事を探している / 語学学校に通学中"
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">自己紹介</span>
+              <textarea
+                value={propertyDetails.selfIntroduction || ""}
+                onChange={(event) =>
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    selfIntroduction: event.target.value,
+                  })
+                }
+                className="mt-2 min-h-28 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: きれい好きで静かに暮らします。ワーホリでニュージーランドに滞在中です。"
               />
             </label>
             <label className="block md:col-span-2">
               <span className="text-sm font-bold text-gray-900">
-                自己紹介メモ
+                内見可能日時
+              </span>
+              <input
+                value={propertyDetails.viewingAvailability || ""}
+                onChange={(event) =>
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    viewingAvailability: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 平日夕方、土日は終日可能"
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">
+                質問したいこと
               </span>
               <textarea
-                value={
-                  sourceMode === "saved"
-                    ? savedDetails.selfIntroductionMemo
-                    : manualProperty.selfIntroductionMemo
-                }
+                value={propertyDetails.questions || ""}
                 onChange={(event) =>
-                  sourceMode === "saved"
-                    ? setSavedDetails({
-                        ...savedDetails,
-                        selfIntroductionMemo: event.target.value,
-                      })
-                    : setManualProperty({
-                        ...manualProperty,
-                        selfIntroductionMemo: event.target.value,
-                      })
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    questions: event.target.value,
+                  })
                 }
-                className="mt-2 min-h-28 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="I am tidy, quiet, and currently looking for a room while staying in New Zealand on a working holiday."
+                className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: ボンドはいくらですか？光熱費は家賃に含まれますか？"
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">
+                追加で伝えたいこと
+              </span>
+              <textarea
+                value={propertyDetails.additionalMessage || ""}
+                onChange={(event) =>
+                  setPropertyDetails({
+                    ...propertyDetails,
+                    additionalMessage: event.target.value,
+                  })
+                }
+                className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: すぐに返信できます。必要であれば身分証明書も提示できます。"
               />
             </label>
           </div>

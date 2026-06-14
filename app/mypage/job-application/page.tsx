@@ -8,6 +8,7 @@ import {
   generateJobCoverLetter,
   type ApplicationResume,
   type ApplicationTarget,
+  type JobApplicationDetails,
 } from "@/lib/services/applicationWriter";
 import { supabase } from "@/lib/supabase";
 
@@ -36,9 +37,26 @@ const emptyManualJob = {
   title: "",
   company: "",
   url: "",
+  location: "",
   description: "",
   hourlyRate: "",
   workHours: "",
+};
+
+const emptyJobDetails: JobApplicationDetails = {
+  fullName: "",
+  currentCity: "",
+  visaType: "",
+  availableFrom: "",
+  availability: "",
+  englishLevel: "",
+  relevantExperience: "",
+  skills: "",
+  selfPromotion: "",
+  motivation: "",
+  attachResume: true,
+  interviewAvailability: "",
+  additionalMessage: "",
 };
 
 function formatMoney(value: number | null) {
@@ -63,6 +81,8 @@ function JobApplicationPageContent() {
     null,
   );
   const [manualJob, setManualJob] = useState(emptyManualJob);
+  const [jobDetails, setJobDetails] =
+    useState<JobApplicationDetails>(emptyJobDetails);
   const [draft, setDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -126,6 +146,20 @@ function JobApplicationPageContent() {
         setErrorMessage(resumeResult.error.message);
       } else {
         setResume(resumeResult.data);
+
+        if (resumeResult.data) {
+          setJobDetails({
+            ...emptyJobDetails,
+            fullName: resumeResult.data.full_name || "",
+            currentCity: resumeResult.data.current_city || "",
+            visaType: resumeResult.data.visa_type || "",
+            availableFrom: resumeResult.data.available_from || "",
+            englishLevel: resumeResult.data.english_level || "",
+            relevantExperience: resumeResult.data.work_experience || "",
+            skills: resumeResult.data.skills || "",
+            selfPromotion: resumeResult.data.self_introduction || "",
+          });
+        }
       }
 
       if (resumeFileResult.error) {
@@ -168,6 +202,7 @@ function JobApplicationPageContent() {
         type: "job",
         title: selectedJob.title,
         url: selectedJob.url,
+        location: selectedJob.address,
         address: selectedJob.address,
         hourlyRate: selectedJob.hourly_rate,
         workHours: selectedJob.work_hours,
@@ -179,6 +214,7 @@ function JobApplicationPageContent() {
       title: manualJob.title,
       company: manualJob.company,
       url: manualJob.url,
+      location: manualJob.location,
       description: manualJob.description,
       hourlyRate: manualJob.hourlyRate ? Number(manualJob.hourlyRate) : null,
       workHours: manualJob.workHours ? Number(manualJob.workHours) : null,
@@ -196,10 +232,8 @@ function JobApplicationPageContent() {
       return;
     }
 
-    if (!resume) {
-      setErrorMessage(
-        "履歴書情報が未登録です。先に履歴書管理ページで基本情報を保存してください。",
-      );
+    if (!jobDetails.fullName?.trim()) {
+      setErrorMessage("氏名を入力してください。");
       return;
     }
 
@@ -208,10 +242,12 @@ function JobApplicationPageContent() {
         ? generateJobApplicationEmail({
             target: activeTarget,
             resume,
+            jobDetails,
           })
         : generateJobCoverLetter({
             target: activeTarget,
             resume,
+            jobDetails,
           });
 
     setDraft(content);
@@ -377,6 +413,17 @@ function JobApplicationPageContent() {
                   placeholder="Company name"
                 />
               </label>
+              <label className="block">
+                <span className="text-sm font-bold text-gray-900">勤務地</span>
+                <input
+                  value={manualJob.location}
+                  onChange={(event) =>
+                    setManualJob({ ...manualJob, location: event.target.value })
+                  }
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                  placeholder="例: Auckland CBD"
+                />
+              </label>
               <label className="block md:col-span-2">
                 <span className="text-sm font-bold text-gray-900">
                   求人URL
@@ -446,7 +493,206 @@ function JobApplicationPageContent() {
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <h2 className="text-xl font-bold text-gray-900">
-            2. 作成する文書を選ぶ
+            2. 応募者情報を入力する
+          </h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
+            日本語で入力してください。出力は英語の応募文として整えます。履歴書情報がある項目は初期値として反映しています。
+          </p>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">氏名</span>
+              <input
+                value={jobDetails.fullName || ""}
+                onChange={(event) =>
+                  setJobDetails({ ...jobDetails, fullName: event.target.value })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: Kei Tanaka"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">現在地</span>
+              <input
+                value={jobDetails.currentCity || ""}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    currentCity: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: Auckland"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                ビザの種類
+              </span>
+              <input
+                value={jobDetails.visaType || ""}
+                onChange={(event) =>
+                  setJobDetails({ ...jobDetails, visaType: event.target.value })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: Working Holiday Visa"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                勤務開始可能日
+              </span>
+              <input
+                type="date"
+                value={jobDetails.availableFrom || ""}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    availableFrom: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                働ける曜日・時間帯
+              </span>
+              <input
+                value={jobDetails.availability || ""}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    availability: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 平日夕方と週末、週30時間程度"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                英語レベル
+              </span>
+              <input
+                value={jobDetails.englishLevel || ""}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    englishLevel: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 日常会話レベル"
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">
+                関連経験
+              </span>
+              <textarea
+                value={jobDetails.relevantExperience || ""}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    relevantExperience: event.target.value,
+                  })
+                }
+                className="mt-2 min-h-28 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 日本で2年間カフェ接客を経験。レジ、清掃、簡単な調理を担当。"
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">スキル</span>
+              <textarea
+                value={jobDetails.skills || ""}
+                onChange={(event) =>
+                  setJobDetails({ ...jobDetails, skills: event.target.value })
+                }
+                className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 接客、チームワーク、時間厳守、基本的な英会話"
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">自己PR</span>
+              <textarea
+                value={jobDetails.selfPromotion || ""}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    selfPromotion: event.target.value,
+                  })
+                }
+                className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 明るく責任感があり、新しい仕事も早く覚えるタイプです。"
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">応募理由</span>
+              <textarea
+                value={jobDetails.motivation || ""}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    motivation: event.target.value,
+                  })
+                }
+                className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 接客経験を活かしながら、英語環境で働きたいため。"
+              />
+            </label>
+            <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:col-span-2">
+              <input
+                type="checkbox"
+                checked={jobDetails.attachResume ?? true}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    attachResume: event.target.checked,
+                  })
+                }
+                className="h-5 w-5"
+              />
+              履歴書を添付する
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">
+                面接可能日時
+              </span>
+              <input
+                value={jobDetails.interviewAvailability || ""}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    interviewAvailability: event.target.value,
+                  })
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 平日午後、週末は終日可能"
+              />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-bold text-gray-900">
+                追加で伝えたいこと
+              </span>
+              <textarea
+                value={jobDetails.additionalMessage || ""}
+                onChange={(event) =>
+                  setJobDetails({
+                    ...jobDetails,
+                    additionalMessage: event.target.value,
+                  })
+                }
+                className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: すぐに面接可能です。必要であればリファレンスも提出できます。"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <h2 className="text-xl font-bold text-gray-900">
+            3. 作成する文書を選ぶ
           </h2>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
@@ -475,7 +721,7 @@ function JobApplicationPageContent() {
         </section>
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <h2 className="text-xl font-bold text-gray-900">3. 履歴書情報</h2>
+          <h2 className="text-xl font-bold text-gray-900">4. 履歴書情報</h2>
           {resume ? (
             <div className="mt-4 space-y-2 text-sm font-medium leading-6 text-gray-800">
               <p>
@@ -506,7 +752,7 @@ function JobApplicationPageContent() {
             </div>
           ) : (
             <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm font-medium leading-6 text-amber-900">
-              履歴書情報が未登録です。応募文に自己紹介や経験を反映するため、先に履歴書管理ページで基本情報を保存してください。
+              履歴書情報が未登録です。上のフォームに直接入力して作成できますが、履歴書管理ページに保存しておくと次回から初期値として使えます。
               <div className="mt-3">
                 <Link
                   href="/mypage/resume"
@@ -522,7 +768,7 @@ function JobApplicationPageContent() {
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-xl font-bold text-gray-900">
-              4. 作成・編集
+              5. 作成・編集
             </h2>
             <div className="flex flex-col gap-2 sm:flex-row">
               <button

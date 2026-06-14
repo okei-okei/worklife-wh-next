@@ -101,7 +101,7 @@ export default function AdminPage() {
 
   if (isCheckingAuth) {
     return (
-      <main className="min-h-screen bg-gray-100 p-6">
+      <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
         <div className="mx-auto max-w-6xl rounded-2xl bg-white p-6 shadow">
           <p className="font-bold text-gray-700">管理者権限を確認中...</p>
         </div>
@@ -114,7 +114,7 @@ export default function AdminPage() {
       <main className="min-h-screen bg-gray-100 p-6">
         <div className="mx-auto max-w-3xl space-y-4 rounded-2xl bg-white p-6 shadow">
           <h1 className="text-3xl font-bold">権限がありません</h1>
-          <p className="leading-7 text-gray-600">
+          <p className="leading-7 text-gray-800">
             このページはWorkLife WHの運営者のみアクセスできます。
           </p>
           <Link
@@ -129,7 +129,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
+    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
         <div>
           <div>
@@ -137,7 +137,7 @@ export default function AdminPage() {
               WorkLife WH Admin
             </p>
             <h1 className="text-4xl font-bold">管理者ダッシュボード</h1>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-gray-800">
               サービスの利用状況と提携導線の反応を確認できます。
             </p>
           </div>
@@ -147,7 +147,7 @@ export default function AdminPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold">掲載申請の審査</h2>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-gray-800">
                 pending の求人・物件申請を確認し、承認または却下できます。
               </p>
             </div>
@@ -171,11 +171,11 @@ export default function AdminPage() {
         <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {metricLabels.map((metric) => (
             <div key={metric.key} className="rounded-2xl bg-white p-5 shadow">
-              <p className="text-sm font-bold text-gray-500">{metric.label}</p>
+              <p className="text-sm font-bold text-gray-700">{metric.label}</p>
               <p className="mt-2 text-4xl font-bold text-gray-900">
                 {metrics ? metrics[metric.key].toLocaleString() : "-"}
               </p>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-gray-800">
                 {metric.description}
               </p>
             </div>
@@ -187,7 +187,7 @@ export default function AdminPage() {
             <h2 className="text-2xl font-bold">
               lead_clicks カテゴリ別クリック数
             </h2>
-            <p className="text-sm font-medium text-gray-500">
+            <p className="text-sm font-medium text-gray-700">
               提携サービス導線のクリック傾向
             </p>
           </div>
@@ -209,13 +209,13 @@ export default function AdminPage() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">
+            <p className="text-gray-800">
               まだリードクリックは記録されていません。
             </p>
           )}
         </section>
 
-        <div className="flex justify-center">
+        <div className="flex justify-end">
           <Link
             href="/mypage"
             className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"

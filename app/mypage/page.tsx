@@ -126,7 +126,7 @@ export default function MyPage() {
           </Link>
         </div>
 
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex justify-end">
           <button
             onClick={handleLogout}
             className="w-full rounded-lg bg-red-600 px-4 py-3 font-bold text-white sm:w-auto"

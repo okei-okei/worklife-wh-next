@@ -509,7 +509,7 @@ export default function PlannerPage() {
           onSelectResult={setSelectedResultKey}
         />
 
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex justify-end">
           <Link
             href="/mypage"
             className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"

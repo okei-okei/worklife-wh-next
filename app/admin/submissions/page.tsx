@@ -115,7 +115,7 @@ export default function AdminSubmissionsPage() {
 
   if (isCheckingAuth) {
     return (
-      <main className="min-h-screen bg-gray-100 p-6">
+      <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
         <div className="mx-auto max-w-6xl rounded-2xl bg-white p-6 shadow">
           <p className="font-bold text-gray-700">管理者権限を確認中...</p>
         </div>
@@ -128,7 +128,7 @@ export default function AdminSubmissionsPage() {
       <main className="min-h-screen bg-gray-100 p-6">
         <div className="mx-auto max-w-3xl space-y-4 rounded-2xl bg-white p-6 shadow">
           <h1 className="text-3xl font-bold">権限がありません</h1>
-          <p className="leading-7 text-gray-600">
+          <p className="leading-7 text-gray-800">
             このページはWorkLife WHの運営者のみアクセスできます。
           </p>
           <Link
@@ -143,7 +143,7 @@ export default function AdminSubmissionsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
+    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -151,7 +151,7 @@ export default function AdminSubmissionsPage() {
               WorkLife WH Admin
             </p>
             <h1 className="text-4xl font-bold">掲載申請の審査</h1>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-gray-800">
               pending の求人・物件掲載申請を承認または却下できます。
             </p>
           </div>
@@ -187,9 +187,9 @@ export default function AdminSubmissionsPage() {
           </div>
 
           {isLoading ? (
-            <p className="text-gray-600">読み込み中...</p>
+            <p className="text-gray-800">読み込み中...</p>
           ) : submissions.length === 0 ? (
-            <p className="text-gray-600">審査待ちの申請はありません。</p>
+            <p className="text-gray-800">審査待ちの申請はありません。</p>
           ) : (
             <div className="space-y-4">
               {submissions.map((submission) => (
@@ -210,7 +210,7 @@ export default function AdminSubmissionsPage() {
                       <h3 className="text-2xl font-bold">
                         {submission.title}
                       </h3>
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-gray-700">
                         申請日:{" "}
                         {new Date(submission.created_at).toLocaleString(
                           "ja-JP",
@@ -240,21 +240,21 @@ export default function AdminSubmissionsPage() {
 
                   <dl className="grid gap-3 text-sm md:grid-cols-2">
                     <div>
-                      <dt className="font-bold text-gray-500">掲載者名</dt>
+                      <dt className="font-bold text-gray-700">掲載者名</dt>
                       <dd>{submission.company_or_owner || "-"}</dd>
                     </div>
                     <div>
-                      <dt className="font-bold text-gray-500">メール</dt>
+                      <dt className="font-bold text-gray-700">メール</dt>
                       <dd>{submission.email || "-"}</dd>
                     </div>
                     <div className="md:col-span-2">
-                      <dt className="font-bold text-gray-500">説明</dt>
+                      <dt className="font-bold text-gray-700">説明</dt>
                       <dd className="whitespace-pre-wrap leading-7">
                         {submission.description || "-"}
                       </dd>
                     </div>
                     <div className="md:col-span-2">
-                      <dt className="font-bold text-gray-500">URL</dt>
+                      <dt className="font-bold text-gray-700">URL</dt>
                       <dd>
                         {submission.url ? (
                           <a
@@ -277,7 +277,7 @@ export default function AdminSubmissionsPage() {
           )}
         </section>
 
-        <div className="flex justify-center">
+        <div className="flex justify-end">
           <Link
             href="/mypage"
             className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"

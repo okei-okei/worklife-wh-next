@@ -80,7 +80,7 @@ export default function JobsPage() {
           }}
         />
 
-        <div className="flex justify-center">
+        <div className="flex justify-end">
           <Link
             href="/mypage"
             className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"

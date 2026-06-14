@@ -22,6 +22,17 @@ type PublicJob = {
   longitude: number | null;
 };
 
+function buildApplicationHref(job: PublicJob, documentType: string) {
+  const params = new URLSearchParams({
+    target_type: "job",
+    target_source: "public",
+    target_id: job.id,
+    document_type: documentType,
+  });
+
+  return `/mypage/applications?${params.toString()}`;
+}
+
 export default function JobsPage() {
   const router = useRouter();
   const [jobs, setJobs] = useState<PublicJob[]>([]);
@@ -229,6 +240,20 @@ export default function JobsPage() {
                   >
                     {savingJobId === job.id ? "保存中..." : "保存する"}
                   </button>
+
+                  <Link
+                    href={buildApplicationHref(job, "application_email")}
+                    className="w-full rounded-lg bg-green-600 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
+                  >
+                    応募メールを作る
+                  </Link>
+
+                  <Link
+                    href={buildApplicationHref(job, "cover_letter")}
+                    className="w-full rounded-lg bg-purple-600 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
+                  >
+                    カバーレターを作る
+                  </Link>
 
                   {job.apply_url && (
                     <a

@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   generateJobApplicationEmail,
@@ -119,13 +119,44 @@ function getDocumentTypeLabel(documentType: DocumentType) {
   return "問い合わせメール";
 }
 
-export default function ApplicationsPage() {
+function parseTargetType(value: string | null): TargetType {
+  return value === "property" ? "property" : "job";
+}
+
+function parseTargetSource(value: string | null): TargetSource {
+  if (value === "public" || value === "manual") return value;
+
+  return "saved";
+}
+
+function parseDocumentType(
+  value: string | null,
+  targetType: TargetType,
+): DocumentType {
+  if (targetType === "property") return "property_inquiry";
+  if (value === "cover_letter") return "cover_letter";
+
+  return "application_email";
+}
+
+function ApplicationsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTargetType = parseTargetType(searchParams.get("target_type"));
+  const initialTargetSource = parseTargetSource(
+    searchParams.get("target_source"),
+  );
+  const initialDocumentType = parseDocumentType(
+    searchParams.get("document_type"),
+    initialTargetType,
+  );
   const [userId, setUserId] = useState("");
-  const [targetType, setTargetType] = useState<TargetType>("job");
-  const [targetSource, setTargetSource] = useState<TargetSource>("saved");
+  const [targetType, setTargetType] =
+    useState<TargetType>(initialTargetType);
+  const [targetSource, setTargetSource] =
+    useState<TargetSource>(initialTargetSource);
   const [documentType, setDocumentType] =
-    useState<DocumentType>("application_email");
+    useState<DocumentType>(initialDocumentType);
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [savedProperties, setSavedProperties] = useState<SavedProperty[]>([]);
   const [publicJobs, setPublicJobs] = useState<PublicJob[]>([]);
@@ -136,7 +167,9 @@ export default function ApplicationsPage() {
   const [latestResumeFile, setLatestResumeFile] = useState<ResumeFile | null>(
     null,
   );
-  const [selectedTargetId, setSelectedTargetId] = useState("");
+  const [selectedTargetId, setSelectedTargetId] = useState(
+    searchParams.get("target_id") || "",
+  );
   const [manualTitle, setManualTitle] = useState("");
   const [manualUrl, setManualUrl] = useState("");
   const [manualAddress, setManualAddress] = useState("");
@@ -736,5 +769,21 @@ export default function ApplicationsPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ApplicationsPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
+          <div className="mx-auto max-w-6xl rounded-2xl bg-white p-4 shadow md:p-6">
+            <p className="font-medium text-gray-800">読み込み中...</p>
+          </div>
+        </main>
+      }
+    >
+      <ApplicationsPageContent />
+    </Suspense>
   );
 }

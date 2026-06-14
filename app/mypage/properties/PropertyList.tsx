@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Property } from "./types";
 
@@ -9,6 +10,17 @@ type Props = {
   onRefresh: () => void;
   onEdit: (property: Property) => void;
 };
+
+function buildInquiryHref(property: Property) {
+  const params = new URLSearchParams({
+    target_type: "property",
+    target_source: "saved",
+    target_id: property.id,
+    document_type: "property_inquiry",
+  });
+
+  return `/mypage/applications?${params.toString()}`;
+}
 
 export default function PropertyList({
   properties,
@@ -77,7 +89,14 @@ export default function PropertyList({
           </div>
 
           {/* ACTIONS */}
-          <div className="flex flex-col gap-2 sm:w-28">
+          <div className="flex flex-col gap-2 sm:w-48">
+            <Link
+              href={buildInquiryHref(p)}
+              className="w-full rounded-lg bg-green-600 px-4 py-3 text-center font-bold text-white sm:py-2"
+            >
+              問い合わせメール
+            </Link>
+
             <button
               onClick={() => onEdit(p)}
               className="w-full rounded-lg bg-gray-700 px-4 py-3 font-bold text-white sm:py-2"

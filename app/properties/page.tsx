@@ -18,6 +18,17 @@ type PublicProperty = {
   longitude: number | null;
 };
 
+function buildInquiryHref(property: PublicProperty) {
+  const params = new URLSearchParams({
+    target_type: "property",
+    target_source: "public",
+    target_id: property.id,
+    document_type: "property_inquiry",
+  });
+
+  return `/mypage/applications?${params.toString()}`;
+}
+
 export default function PropertiesPage() {
   const router = useRouter();
   const [properties, setProperties] = useState<PublicProperty[]>([]);
@@ -204,6 +215,13 @@ export default function PropertiesPage() {
                   >
                     {savingPropertyId === property.id ? "保存中..." : "保存する"}
                   </button>
+
+                  <Link
+                    href={buildInquiryHref(property)}
+                    className="w-full rounded-lg bg-green-600 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
+                  >
+                    問い合わせメールを作る
+                  </Link>
 
                   {property.url && (
                     <a

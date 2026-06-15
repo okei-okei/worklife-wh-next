@@ -57,7 +57,7 @@ export function LeadPartnerButton({
         type="button"
         onClick={handleClick}
         disabled={isRecording}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+        className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 sm:w-auto"
       >
         {isRecording ? "記録中..." : "詳細を見る"}
       </button>

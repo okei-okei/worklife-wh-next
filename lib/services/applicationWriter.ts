@@ -30,8 +30,18 @@ export type ApplicationResume = {
   available_from?: string | null;
   work_experience?: string | null;
   skills?: string | null;
+  skills_list?: string[] | null;
+  experience_items?: ExperienceItem[] | null;
   english_level?: string | null;
   self_introduction?: string | null;
+};
+
+export type ExperienceItem = {
+  company?: string;
+  role?: string;
+  period?: string;
+  description?: string;
+  achievement?: string;
 };
 
 export type JobApplicationDetails = {
@@ -42,7 +52,9 @@ export type JobApplicationDetails = {
   availability?: string;
   englishLevel?: string;
   relevantExperience?: string;
+  experienceItems?: ExperienceItem[];
   skills?: string;
+  skillsList?: string[];
   selfPromotion?: string;
   motivation?: string;
   attachResume?: boolean;
@@ -152,7 +164,13 @@ function mergeJobDetails(
       details?.relevantExperience,
       resume?.work_experience || "",
     ),
+    experienceItems:
+      details?.experienceItems?.length
+        ? details.experienceItems
+        : resume?.experience_items || [],
     skills: valueOrPlaceholder(details?.skills, resume?.skills || ""),
+    skillsList:
+      details?.skillsList?.length ? details.skillsList : resume?.skills_list || [],
     selfPromotion: valueOrPlaceholder(
       details?.selfPromotion,
       resume?.self_introduction || "",
@@ -164,6 +182,44 @@ function mergeJobDetails(
     currentLatitude: details?.currentLatitude ?? null,
     currentLongitude: details?.currentLongitude ?? null,
   };
+}
+
+function formatExperienceItems(items: ExperienceItem[] | undefined) {
+  if (!items?.length) return "";
+
+  return items
+    .filter((item) => {
+      return (
+        item.company?.trim() ||
+        item.role?.trim() ||
+        item.period?.trim() ||
+        item.description?.trim() ||
+        item.achievement?.trim()
+      );
+    })
+    .map((item) => {
+      const title = [item.role, item.company].filter(Boolean).join(" at ");
+      const period = item.period ? ` (${item.period})` : "";
+      const lines = [
+        title ? `- ${title}${period}` : "- Relevant experience",
+        item.description ? `  Responsibilities: ${item.description}` : "",
+        item.achievement ? `  Strengths/results: ${item.achievement}` : "",
+      ];
+
+      return lines.filter(Boolean).join("\n");
+    })
+    .join("\n");
+}
+
+function formatSkillsText(skills: string, skillsList: string[] | undefined) {
+  const tags = skillsList?.filter(Boolean).join(", ");
+  const freeText = skills?.trim();
+
+  if (tags && freeText) return `${tags}. ${freeText}`;
+  if (tags) return tags;
+  if (freeText) return freeText;
+
+  return "";
 }
 
 function mergePropertyDetails(
@@ -235,6 +291,9 @@ function buildJobApplicationEmailTemplate(
   const additionalLine = input.additionalMessage
     ? `\nAdditional information:\n${input.additionalMessage}\n`
     : "";
+  const experienceText =
+    formatExperienceItems(input.experienceItems) || input.relevantExperience;
+  const skillsText = formatSkillsText(input.skills, input.skillsList);
 
   return `Subject: Application for ${target.title}
 
@@ -247,10 +306,10 @@ ${motivationLine}${buildJobConditionText(target)}
 I currently hold ${input.visaType || "a valid visa"}, and I am available to start from ${formatAvailableFrom(input.availableFrom)}.${availabilityLine} My English level is ${input.englishLevel || "conversational"}.
 
 My relevant experience includes:
-${input.relevantExperience || "I have practical experience and I am confident I can learn quickly and work responsibly."}
+${experienceText || "I have practical experience and I am confident I can learn quickly and work responsibly."}
 
 My key skills include:
-${input.skills || "communication, teamwork, reliability, and a positive attitude."}
+${skillsText || "communication, teamwork, reliability, and a positive attitude."}
 
 ${resumeLine}
 
@@ -282,6 +341,9 @@ function buildJobCoverLetterTemplate(
   const additionalLine = input.additionalMessage
     ? `\nI would also like to add:\n${input.additionalMessage}\n`
     : "";
+  const experienceText =
+    formatExperienceItems(input.experienceItems) || input.relevantExperience;
+  const skillsText = formatSkillsText(input.skills, input.skillsList);
 
   return `Dear Hiring Manager,
 
@@ -292,10 +354,10 @@ ${motivationLine}${buildJobConditionText(target)}
 I currently hold ${input.visaType || "a valid visa"} and I am able to work legally in New Zealand. I am available to start from ${formatAvailableFrom(input.availableFrom)}${input.availability ? ` and I can work ${input.availability}` : ""}.
 
 My relevant experience includes:
-${input.relevantExperience || "I have experience that has helped me build responsibility, teamwork, and practical workplace skills."}
+${experienceText || "I have experience that has helped me build responsibility, teamwork, and practical workplace skills."}
 
 My key strengths and skills include:
-${input.skills || "clear communication, punctuality, adaptability, and a willingness to learn."}
+${skillsText || "clear communication, punctuality, adaptability, and a willingness to learn."}
 
 ${resumeLine}
 

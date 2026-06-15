@@ -1,0 +1,18 @@
+export const skillOptions = [
+  "Customer service",
+  "Communication",
+  "Teamwork",
+  "Time management",
+  "Cleaning",
+  "Food handling",
+  "Cash handling",
+  "Barista",
+  "Kitchen hand",
+  "Sales",
+  "Hospitality",
+  "Farm work",
+  "Driving",
+  "Basic computer skills",
+  "Japanese language",
+  "English communication",
+];

@@ -9,49 +9,47 @@ const mypageCards = [
   {
     href: "/mypage/jobs",
     title: "保存した求人",
-    description: "SEEKなどの求人を管理できます。",
+    description: "気になる求人を保存・管理できます。",
   },
   {
     href: "/mypage/properties",
     title: "保存した物件",
-    description: "気になる物件を管理できます。",
+    description: "気になる物件を保存・管理できます。",
   },
   {
     href: "/mypage/job-application",
     title: "求人応募支援",
-    description:
-      "保存済み求人や外部求人URLをもとに、応募メールとカバーレターを作成できます。",
-    highlight: true,
+    description: "日本語入力から英語の応募文を作れます。",
   },
   {
     href: "/mypage/property-inquiry",
     title: "物件問い合わせ支援",
-    description:
-      "保存済み物件や外部物件URLをもとに、問い合わせメールを作成できます。",
-    highlight: true,
+    description: "日本語入力から英語の問い合わせ文を作れます。",
   },
   {
     href: "/mypage/resume",
     title: "履歴書管理",
-    description: "英文履歴書とPDF履歴書を保存できます。",
+    description: "応募に使う基本情報とPDFを保存できます。",
   },
   {
     href: "/planner",
     title: "ライフプランナー",
-    description: "仕事・住まい・生活費から生活プランを比較できます。",
+    description: "仕事・住まい・生活費から収支を確認できます。",
   },
   {
     href: "/mypage/checklist",
     title: "渡航・生活チェックリスト",
-    description:
-      "渡航前、到着後、仕事探し、物件探しで必要な準備を確認できます。",
-    highlight: true,
+    description: "渡航前から生活開始までの準備を確認できます。",
   },
   {
     href: "/partners",
     title: "比較・おすすめサービス",
-    description:
-      "SIM、保険、送金、生活インフラなどをカテゴリ別に確認できます。",
+    description: "SIM、保険、送金、生活インフラを確認できます。",
+  },
+  {
+    href: "/guides/working-holiday-start",
+    title: "役立ち情報",
+    description: "ビザ、IRD、契約時の注意点を確認できます。",
   },
 ];
 
@@ -96,11 +94,7 @@ export default function MyPage() {
           {mypageCards.map((card) => (
             <Link key={card.href} href={card.href} className="block min-w-0">
               <div
-                className={`min-h-full min-w-0 cursor-pointer rounded-2xl p-4 shadow hover:shadow-lg md:p-6 ${
-                  card.highlight
-                    ? "border-2 border-blue-200 bg-blue-50"
-                    : "bg-white"
-                }`}
+                className="min-h-full min-w-0 cursor-pointer rounded-2xl bg-white p-4 shadow hover:shadow-lg md:p-6"
               >
                 <h2 className="mb-2 text-xl font-bold text-gray-900 md:text-2xl">
                   {card.title}

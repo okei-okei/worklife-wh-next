@@ -61,7 +61,7 @@ export default function JobsPage() {
   const [message, setMessage] = useState("");
   const [savingJobId, setSavingJobId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
+  const [locationFilters, setLocationFilters] = useState<string[]>([]);
   const [filterCoordinates, setFilterCoordinates] = useState<{
     latitude: number | null;
     longitude: number | null;
@@ -285,7 +285,9 @@ export default function JobsPage() {
 
   const filteredJobs = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
-    const normalizedLocation = locationFilter.trim().toLowerCase();
+    const normalizedLocations = locationFilters.map((location) =>
+      location.trim().toLowerCase(),
+    );
     const minimumHourlyRate = minHourlyRate ? Number(minHourlyRate) : null;
     const minimumWorkHours = minWorkHours ? Number(minWorkHours) : null;
 
@@ -305,19 +307,26 @@ export default function JobsPage() {
         return false;
       }
 
-      if (normalizedLocation && normalizedLocation !== "現在地") {
+      if (
+        normalizedLocations.length > 0 &&
+        !normalizedLocations.includes("現在地")
+      ) {
         const jobLocationText = [job.city, job.address]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
 
-        if (!jobLocationText.includes(normalizedLocation)) {
+        if (
+          !normalizedLocations.some((location) =>
+            jobLocationText.includes(location),
+          )
+        ) {
           return false;
         }
       }
 
       if (
-        normalizedLocation === "現在地" &&
+        normalizedLocations.includes("現在地") &&
         filterCoordinates.latitude &&
         filterCoordinates.longitude &&
         job.latitude &&
@@ -361,7 +370,7 @@ export default function JobsPage() {
     accommodationOnly,
     filterCoordinates,
     jobs,
-    locationFilter,
+    locationFilters,
     minHourlyRate,
     minWorkHours,
     searchQuery,
@@ -369,7 +378,7 @@ export default function JobsPage() {
 
   const resetFilters = () => {
     setSearchQuery("");
-    setLocationFilter("");
+    setLocationFilters([]);
     setFilterCoordinates({ latitude: null, longitude: null });
     setMinHourlyRate("");
     setMinWorkHours("");
@@ -428,8 +437,9 @@ export default function JobsPage() {
 
             <NzLocationPicker
               label="地域"
-              value={locationFilter}
-              onChange={setLocationFilter}
+              multiple
+              values={locationFilters}
+              onValuesChange={setLocationFilters}
               onCoordinatesChange={setFilterCoordinates}
             />
           </div>

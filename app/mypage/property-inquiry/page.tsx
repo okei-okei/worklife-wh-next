@@ -225,7 +225,7 @@ function PropertyInquiryPageContent() {
     setErrorMessage("");
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setErrorMessage("");
     setSuccessMessage("");
 
@@ -241,14 +241,39 @@ function PropertyInquiryPageContent() {
 
     saveDraft(false);
 
-    const content = generatePropertyInquiryEmail({
+    const fallbackContent = generatePropertyInquiryEmail({
       target: activeTarget,
       resume: null,
       propertyDetails,
     });
 
-    setDraft(content);
-    setSuccessMessage("問い合わせメールの下書きを作成しました。");
+    try {
+      const response = await fetch("/api/ai/application", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentType: "property_inquiry",
+          target: activeTarget,
+          propertyDetails,
+        }),
+      });
+      const data = (await response.json()) as {
+        content?: string | null;
+        fallback?: boolean;
+      };
+
+      setDraft(data.content || fallbackContent);
+      setSuccessMessage(
+        data.content
+          ? "AIで問い合わせメールの下書きを作成しました。"
+          : "テンプレートで問い合わせメールの下書きを作成しました。",
+      );
+    } catch {
+      setDraft(fallbackContent);
+      setSuccessMessage("テンプレートで問い合わせメールの下書きを作成しました。");
+    }
   };
 
   const handleCopy = async () => {

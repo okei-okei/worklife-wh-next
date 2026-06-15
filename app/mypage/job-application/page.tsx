@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import NzLocationPicker from "@/components/NzLocationPicker";
+import { skillOptions } from "@/lib/constants/applicationOptions";
 import {
   generateJobApplicationEmail,
   generateJobCoverLetter,
   type ApplicationResume,
   type ApplicationTarget,
+  type ExperienceItem,
   type JobApplicationDetails,
 } from "@/lib/services/applicationWriter";
 import { supabase } from "@/lib/supabase";
@@ -56,7 +58,9 @@ const emptyJobDetails: JobApplicationDetails = {
   availability: "",
   englishLevel: "",
   relevantExperience: "",
+  experienceItems: [],
   skills: "",
+  skillsList: [],
   selfPromotion: "",
   motivation: "",
   attachResume: true,
@@ -68,6 +72,13 @@ function formatMoney(value: number | null) {
   if (value === null) return "未設定";
 
   return `$${value}`;
+}
+
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("column") ||
+      error?.message?.includes("schema cache"),
+  );
 }
 
 function JobApplicationPageContent() {
@@ -92,6 +103,7 @@ function JobApplicationPageContent() {
   const [draft, setDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [customSkill, setCustomSkill] = useState("");
 
   const buildResumeDefaults = (resumeData: ApplicationResume | null) => ({
     ...emptyJobDetails,
@@ -101,7 +113,9 @@ function JobApplicationPageContent() {
     availableFrom: resumeData?.available_from || "",
     englishLevel: resumeData?.english_level || "",
     relevantExperience: resumeData?.work_experience || "",
+    experienceItems: resumeData?.experience_items || [],
     skills: resumeData?.skills || "",
+    skillsList: resumeData?.skills_list || [],
     selfPromotion: resumeData?.self_introduction || "",
   });
 
@@ -123,24 +137,33 @@ function JobApplicationPageContent() {
 
       setUserId(user.id);
 
-      const [
-        savedJobsResult,
-        resumeResult,
-        resumeFileResult,
-        draftResult,
-      ] = await Promise.all([
+      const extendedResumeResult = await supabase
+        .from("resumes")
+        .select(
+          "full_name,email,phone,current_city,visa_type,available_from,work_experience,skills,skills_list,experience_items,english_level,self_introduction",
+        )
+        .eq("user_id", user.id)
+        .maybeSingle<ApplicationResume>();
+
+      const resumeResult =
+        extendedResumeResult.error &&
+        isMissingColumnError(extendedResumeResult.error)
+          ? await supabase
+              .from("resumes")
+              .select(
+                "full_name,email,phone,current_city,visa_type,available_from,work_experience,skills,english_level,self_introduction",
+              )
+              .eq("user_id", user.id)
+              .maybeSingle<ApplicationResume>()
+          : extendedResumeResult;
+
+      const [savedJobsResult, resumeFileResult, draftResult] =
+        await Promise.all([
         supabase
           .from("saved_jobs")
           .select("id,title,url,hourly_rate,work_hours,status,address")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
-        supabase
-          .from("resumes")
-          .select(
-            "full_name,email,phone,current_city,visa_type,available_from,work_experience,skills,english_level,self_introduction",
-          )
-          .eq("user_id", user.id)
-          .maybeSingle<ApplicationResume>(),
         supabase
           .from("resume_files")
           .select("id,file_name,file_path,file_url")
@@ -298,7 +321,83 @@ function JobApplicationPageContent() {
     setErrorMessage("");
   };
 
-  const handleGenerate = () => {
+  const updateExperienceItem = (
+    index: number,
+    key: keyof ExperienceItem,
+    value: string,
+  ) => {
+    setJobDetails((current) => {
+      const nextItems = [...(current.experienceItems || [])];
+      nextItems[index] = {
+        ...nextItems[index],
+        [key]: value,
+      };
+
+      return {
+        ...current,
+        experienceItems: nextItems,
+      };
+    });
+  };
+
+  const addExperienceItem = () => {
+    setJobDetails((current) => ({
+      ...current,
+      experienceItems: [
+        ...(current.experienceItems || []),
+        {
+          company: "",
+          role: "",
+          period: "",
+          description: "",
+          achievement: "",
+        },
+      ],
+    }));
+  };
+
+  const removeExperienceItem = (index: number) => {
+    setJobDetails((current) => ({
+      ...current,
+      experienceItems: (current.experienceItems || []).filter(
+        (_item, itemIndex) => itemIndex !== index,
+      ),
+    }));
+  };
+
+  const toggleSkill = (skill: string) => {
+    setJobDetails((current) => {
+      const currentSkills = current.skillsList || [];
+      const exists = currentSkills.includes(skill);
+
+      return {
+        ...current,
+        skillsList: exists
+          ? currentSkills.filter((item) => item !== skill)
+          : [...currentSkills, skill],
+      };
+    });
+  };
+
+  const addCustomSkill = () => {
+    const skill = customSkill.trim();
+
+    if (!skill) return;
+
+    setJobDetails((current) => {
+      const currentSkills = current.skillsList || [];
+
+      return {
+        ...current,
+        skillsList: currentSkills.includes(skill)
+          ? currentSkills
+          : [...currentSkills, skill],
+      };
+    });
+    setCustomSkill("");
+  };
+
+  const handleGenerate = async () => {
     setErrorMessage("");
     setSuccessMessage("");
 
@@ -314,7 +413,7 @@ function JobApplicationPageContent() {
 
     saveDraft(false);
 
-    const content =
+    const fallbackContent =
       documentType === "application_email"
         ? generateJobApplicationEmail({
             target: activeTarget,
@@ -327,8 +426,39 @@ function JobApplicationPageContent() {
             jobDetails,
           });
 
-    setDraft(content);
-    setSuccessMessage("下書きを作成しました。内容を編集してから利用できます。");
+    try {
+      const response = await fetch("/api/ai/application", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentType:
+            documentType === "application_email"
+              ? "job_application_email"
+              : "job_cover_letter",
+          target: activeTarget,
+          resume,
+          jobDetails,
+        }),
+      });
+      const data = (await response.json()) as {
+        content?: string | null;
+        fallback?: boolean;
+      };
+
+      setDraft(data.content || fallbackContent);
+      setSuccessMessage(
+        data.content
+          ? "AIで英語の下書きを作成しました。内容を編集してから利用できます。"
+          : "テンプレートで下書きを作成しました。内容を編集してから利用できます。",
+      );
+    } catch {
+      setDraft(fallbackContent);
+      setSuccessMessage(
+        "テンプレートで下書きを作成しました。内容を編集してから利用できます。",
+      );
+    }
   };
 
   const handleCopy = async () => {
@@ -709,6 +839,107 @@ function JobApplicationPageContent() {
                 placeholder="例: 日本で2年間カフェ接客を経験。レジ、清掃、簡単な調理を担当。"
               />
             </label>
+            <section className="rounded-xl border border-gray-200 bg-gray-50 p-4 md:col-span-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="font-bold text-gray-900">経験を構造化する</h3>
+                  <p className="mt-1 text-sm font-medium leading-6 text-gray-800">
+                    複数の職歴を分けて入力すると、生成文で自然な職務経験として整理されます。
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addExperienceItem}
+                  className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
+                >
+                  経験を追加
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                {(jobDetails.experienceItems || []).map((item, index) => (
+                  <div
+                    key={index}
+                    className="rounded-xl border border-gray-200 bg-white p-4"
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h4 className="font-bold text-gray-900">
+                        経験 {index + 1}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => removeExperienceItem(index)}
+                        className="rounded-lg bg-red-50 px-3 py-2 text-sm font-bold text-red-700"
+                      >
+                        削除
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <input
+                        value={item.company || ""}
+                        onChange={(event) =>
+                          updateExperienceItem(
+                            index,
+                            "company",
+                            event.target.value,
+                          )
+                        }
+                        className="rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                        placeholder="会社名"
+                      />
+                      <input
+                        value={item.role || ""}
+                        onChange={(event) =>
+                          updateExperienceItem(
+                            index,
+                            "role",
+                            event.target.value,
+                          )
+                        }
+                        className="rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                        placeholder="役職"
+                      />
+                      <input
+                        value={item.period || ""}
+                        onChange={(event) =>
+                          updateExperienceItem(
+                            index,
+                            "period",
+                            event.target.value,
+                          )
+                        }
+                        className="rounded-lg border border-gray-300 p-3 font-medium text-gray-900 md:col-span-2"
+                        placeholder="期間"
+                      />
+                      <textarea
+                        value={item.description || ""}
+                        onChange={(event) =>
+                          updateExperienceItem(
+                            index,
+                            "description",
+                            event.target.value,
+                          )
+                        }
+                        className="min-h-20 rounded-lg border border-gray-300 p-3 font-medium text-gray-900 md:col-span-2"
+                        placeholder="業務内容"
+                      />
+                      <textarea
+                        value={item.achievement || ""}
+                        onChange={(event) =>
+                          updateExperienceItem(
+                            index,
+                            "achievement",
+                            event.target.value,
+                          )
+                        }
+                        className="min-h-20 rounded-lg border border-gray-300 p-3 font-medium text-gray-900 md:col-span-2"
+                        placeholder="実績・強み"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
             <label className="block md:col-span-2">
               <span className="text-sm font-bold text-gray-900">スキル</span>
               <textarea
@@ -720,6 +951,44 @@ function JobApplicationPageContent() {
                 placeholder="例: 接客、チームワーク、時間厳守、基本的な英会話"
               />
             </label>
+            <section className="rounded-xl border border-gray-200 bg-gray-50 p-4 md:col-span-2">
+              <h3 className="font-bold text-gray-900">キースキルを選ぶ</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {skillOptions.map((skill) => {
+                  const selected = (jobDetails.skillsList || []).includes(skill);
+
+                  return (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => toggleSkill(skill)}
+                      className={`rounded-full px-3 py-2 text-sm font-bold ${
+                        selected
+                          ? "bg-blue-700 text-white"
+                          : "bg-white text-gray-900"
+                      }`}
+                    >
+                      {skill}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <input
+                  value={customSkill}
+                  onChange={(event) => setCustomSkill(event.target.value)}
+                  className="w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                  placeholder="自分のスキルを追加"
+                />
+                <button
+                  type="button"
+                  onClick={addCustomSkill}
+                  className="w-full rounded-lg bg-gray-700 px-4 py-3 font-bold text-white sm:w-auto"
+                >
+                  追加
+                </button>
+              </div>
+            </section>
             <label className="block md:col-span-2">
               <span className="text-sm font-bold text-gray-900">自己PR</span>
               <textarea

@@ -61,7 +61,7 @@ export default function PropertiesPage() {
   const [message, setMessage] = useState("");
   const [savingPropertyId, setSavingPropertyId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
+  const [locationFilters, setLocationFilters] = useState<string[]>([]);
   const [filterCoordinates, setFilterCoordinates] = useState<{
     latitude: number | null;
     longitude: number | null;
@@ -289,7 +289,9 @@ export default function PropertiesPage() {
 
   const filteredProperties = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
-    const normalizedLocation = locationFilter.trim().toLowerCase();
+    const normalizedLocations = locationFilters.map((location) =>
+      location.trim().toLowerCase(),
+    );
     const maximumRent = maxRentWeekly ? Number(maxRentWeekly) : null;
 
     return properties.filter((property) => {
@@ -308,7 +310,10 @@ export default function PropertiesPage() {
         return false;
       }
 
-      if (normalizedLocation && normalizedLocation !== "現在地") {
+      if (
+        normalizedLocations.length > 0 &&
+        !normalizedLocations.includes("現在地")
+      ) {
         const propertyLocationText = [
           property.city,
           property.area,
@@ -318,13 +323,17 @@ export default function PropertiesPage() {
           .join(" ")
           .toLowerCase();
 
-        if (!propertyLocationText.includes(normalizedLocation)) {
+        if (
+          !normalizedLocations.some((location) =>
+            propertyLocationText.includes(location),
+          )
+        ) {
           return false;
         }
       }
 
       if (
-        normalizedLocation === "現在地" &&
+        normalizedLocations.includes("現在地") &&
         filterCoordinates.latitude &&
         filterCoordinates.longitude &&
         property.latitude &&
@@ -381,7 +390,7 @@ export default function PropertiesPage() {
     billsIncludedOnly,
     filterCoordinates,
     furnishedOnly,
-    locationFilter,
+    locationFilters,
     maxRentWeekly,
     properties,
     roomType,
@@ -390,7 +399,7 @@ export default function PropertiesPage() {
 
   const resetFilters = () => {
     setSearchQuery("");
-    setLocationFilter("");
+    setLocationFilters([]);
     setFilterCoordinates({ latitude: null, longitude: null });
     setMaxRentWeekly("");
     setRoomType("");
@@ -451,8 +460,9 @@ export default function PropertiesPage() {
 
             <NzLocationPicker
               label="地域"
-              value={locationFilter}
-              onChange={setLocationFilter}
+              multiple
+              values={locationFilters}
+              onValuesChange={setLocationFilters}
               onCoordinatesChange={setFilterCoordinates}
             />
           </div>

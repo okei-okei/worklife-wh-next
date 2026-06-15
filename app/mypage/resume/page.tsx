@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { skillOptions } from "@/lib/constants/applicationOptions";
+import type { ExperienceItem } from "@/lib/services/applicationWriter";
 import { supabase } from "@/lib/supabase";
 
 type ResumeForm = {
@@ -14,6 +16,8 @@ type ResumeForm = {
   available_from: string;
   work_experience: string;
   skills: string;
+  skills_list: string[];
+  experience_items: ExperienceItem[];
   english_level: string;
   self_introduction: string;
 };
@@ -39,6 +43,8 @@ const initialResumeForm: ResumeForm = {
   available_from: "",
   work_experience: "",
   skills: "",
+  skills_list: [],
+  experience_items: [],
   english_level: "",
   self_introduction: "",
 };
@@ -88,6 +94,13 @@ const textFields: Array<{
     placeholder: "Intermediate",
   },
 ];
+
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("column") ||
+      error?.message?.includes("schema cache"),
+  );
+}
 
 const textAreaFields: Array<{
   key: keyof ResumeForm;
@@ -143,6 +156,7 @@ export default function ResumePage() {
   const [deletingFileId, setDeletingFileId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [customSkill, setCustomSkill] = useState("");
 
   const loadResume = useCallback(async () => {
     setIsLoading(true);
@@ -159,20 +173,32 @@ export default function ResumePage() {
 
     setCurrentUserId(user.id);
 
-    const [resumeResponse, filesResponse] = await Promise.all([
-      supabase
-        .from("resumes")
-        .select(
-          "full_name, email, phone, current_city, visa_type, available_from, work_experience, skills, english_level, self_introduction",
-        )
-        .eq("user_id", user.id)
-        .maybeSingle<Partial<ResumeForm>>(),
-      supabase
+    const extendedResumeResponse = await supabase
+      .from("resumes")
+      .select(
+        "full_name, email, phone, current_city, visa_type, available_from, work_experience, skills, skills_list, experience_items, english_level, self_introduction",
+      )
+      .eq("user_id", user.id)
+      .maybeSingle<Partial<ResumeForm>>();
+
+    const resumeResponse =
+      extendedResumeResponse.error &&
+      isMissingColumnError(extendedResumeResponse.error)
+        ? await supabase
+            .from("resumes")
+            .select(
+              "full_name, email, phone, current_city, visa_type, available_from, work_experience, skills, english_level, self_introduction",
+            )
+            .eq("user_id", user.id)
+            .maybeSingle<Partial<ResumeForm>>()
+        : extendedResumeResponse;
+
+    const filesResponse =
+      await supabase
         .from("resume_files")
         .select("id, user_id, file_name, file_path, file_url, created_at")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false }),
-    ]);
+        .order("created_at", { ascending: false });
 
     if (resumeResponse.error) {
       setErrorMessage(
@@ -200,6 +226,8 @@ export default function ResumePage() {
         available_from: resumeResponse.data.available_from || "",
         work_experience: resumeResponse.data.work_experience || "",
         skills: resumeResponse.data.skills || "",
+        skills_list: resumeResponse.data.skills_list || [],
+        experience_items: resumeResponse.data.experience_items || [],
         english_level: resumeResponse.data.english_level || "",
         self_introduction: resumeResponse.data.self_introduction || "",
       });
@@ -243,6 +271,77 @@ export default function ResumePage() {
     }));
   };
 
+  const updateExperienceItem = (
+    index: number,
+    key: keyof ExperienceItem,
+    value: string,
+  ) => {
+    setForm((current) => {
+      const nextItems = [...current.experience_items];
+      nextItems[index] = {
+        ...nextItems[index],
+        [key]: value,
+      };
+
+      return {
+        ...current,
+        experience_items: nextItems,
+      };
+    });
+  };
+
+  const addExperienceItem = () => {
+    setForm((current) => ({
+      ...current,
+      experience_items: [
+        ...current.experience_items,
+        {
+          company: "",
+          role: "",
+          period: "",
+          description: "",
+          achievement: "",
+        },
+      ],
+    }));
+  };
+
+  const removeExperienceItem = (index: number) => {
+    setForm((current) => ({
+      ...current,
+      experience_items: current.experience_items.filter(
+        (_item, itemIndex) => itemIndex !== index,
+      ),
+    }));
+  };
+
+  const toggleSkill = (skill: string) => {
+    setForm((current) => {
+      const exists = current.skills_list.includes(skill);
+
+      return {
+        ...current,
+        skills_list: exists
+          ? current.skills_list.filter((item) => item !== skill)
+          : [...current.skills_list, skill],
+      };
+    });
+  };
+
+  const addCustomSkill = () => {
+    const skill = customSkill.trim();
+
+    if (!skill) return;
+
+    setForm((current) => ({
+      ...current,
+      skills_list: current.skills_list.includes(skill)
+        ? current.skills_list
+        : [...current.skills_list, skill],
+    }));
+    setCustomSkill("");
+  };
+
   const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -255,17 +354,41 @@ export default function ResumePage() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    const { error } = await supabase.from("resumes").upsert(
-      {
-        user_id: currentUserId,
-        ...form,
-        available_from: form.available_from || null,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "user_id",
-      },
-    );
+    const payload = {
+      user_id: currentUserId,
+      ...form,
+      available_from: form.available_from || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const response = await supabase.from("resumes").upsert(payload, {
+      onConflict: "user_id",
+    });
+
+    const fallbackResponse =
+      response.error && isMissingColumnError(response.error)
+        ? await supabase.from("resumes").upsert(
+            {
+              user_id: currentUserId,
+              full_name: form.full_name,
+              email: form.email,
+              phone: form.phone,
+              current_city: form.current_city,
+              visa_type: form.visa_type,
+              available_from: form.available_from || null,
+              work_experience: form.work_experience,
+              skills: form.skills,
+              english_level: form.english_level,
+              self_introduction: form.self_introduction,
+              updated_at: new Date().toISOString(),
+            },
+            {
+              onConflict: "user_id",
+            },
+          )
+        : response;
+
+    const { error } = fallbackResponse;
 
     setIsSaving(false);
 
@@ -410,7 +533,7 @@ export default function ResumePage() {
                     </span>
                     <input
                       type={field.type || "text"}
-                      value={form[field.key]}
+                      value={String(form[field.key] || "")}
                       placeholder={field.placeholder}
                       onChange={(event) =>
                         updateField(field.key, event.target.value)
@@ -428,7 +551,7 @@ export default function ResumePage() {
                       {field.label}
                     </span>
                     <textarea
-                      value={form[field.key]}
+                      value={String(form[field.key] || "")}
                       placeholder={field.placeholder}
                       onChange={(event) =>
                         updateField(field.key, event.target.value)
@@ -439,6 +562,205 @@ export default function ResumePage() {
                   </label>
                 ))}
               </div>
+
+              <section className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">
+                      関連経験
+                    </h2>
+                    <p className="mt-1 text-sm font-medium leading-6 text-gray-800">
+                      応募文で自然な英語の職務経験として使います。
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addExperienceItem}
+                    className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
+                  >
+                    経験を追加
+                  </button>
+                </div>
+
+                <div className="mt-4 space-y-4">
+                  {form.experience_items.length === 0 ? (
+                    <p className="rounded-lg bg-white p-3 text-sm font-bold text-gray-700">
+                      まだ構造化された経験はありません。
+                    </p>
+                  ) : (
+                    form.experience_items.map((item, index) => (
+                      <div
+                        key={index}
+                        className="rounded-xl border border-gray-200 bg-white p-4"
+                      >
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <h3 className="font-bold text-gray-900">
+                            経験 {index + 1}
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={() => removeExperienceItem(index)}
+                            className="rounded-lg bg-red-50 px-3 py-2 text-sm font-bold text-red-700"
+                          >
+                            削除
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                          <label className="block">
+                            <span className="text-sm font-bold text-gray-900">
+                              会社名
+                            </span>
+                            <input
+                              value={item.company || ""}
+                              onChange={(event) =>
+                                updateExperienceItem(
+                                  index,
+                                  "company",
+                                  event.target.value,
+                                )
+                              }
+                              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                              placeholder="例: ABC Cafe"
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-sm font-bold text-gray-900">
+                              役職
+                            </span>
+                            <input
+                              value={item.role || ""}
+                              onChange={(event) =>
+                                updateExperienceItem(
+                                  index,
+                                  "role",
+                                  event.target.value,
+                                )
+                              }
+                              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                              placeholder="例: Cafe staff"
+                            />
+                          </label>
+                          <label className="block md:col-span-2">
+                            <span className="text-sm font-bold text-gray-900">
+                              期間
+                            </span>
+                            <input
+                              value={item.period || ""}
+                              onChange={(event) =>
+                                updateExperienceItem(
+                                  index,
+                                  "period",
+                                  event.target.value,
+                                )
+                              }
+                              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                              placeholder="例: 2023年4月 - 2024年3月"
+                            />
+                          </label>
+                          <label className="block md:col-span-2">
+                            <span className="text-sm font-bold text-gray-900">
+                              業務内容
+                            </span>
+                            <textarea
+                              value={item.description || ""}
+                              onChange={(event) =>
+                                updateExperienceItem(
+                                  index,
+                                  "description",
+                                  event.target.value,
+                                )
+                              }
+                              rows={3}
+                              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                              placeholder="例: 接客、レジ、清掃、簡単な調理を担当"
+                            />
+                          </label>
+                          <label className="block md:col-span-2">
+                            <span className="text-sm font-bold text-gray-900">
+                              実績・強み
+                            </span>
+                            <textarea
+                              value={item.achievement || ""}
+                              onChange={(event) =>
+                                updateExperienceItem(
+                                  index,
+                                  "achievement",
+                                  event.target.value,
+                                )
+                              }
+                              rows={3}
+                              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                              placeholder="例: 忙しい時間帯でも落ち着いて対応できる"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <h2 className="text-lg font-bold text-gray-900">
+                  キースキル
+                </h2>
+                <p className="mt-1 text-sm font-medium leading-6 text-gray-800">
+                  よく使うスキルを選択できます。自分で追加もできます。
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {skillOptions.map((skill) => {
+                    const selected = form.skills_list.includes(skill);
+
+                    return (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => toggleSkill(skill)}
+                        className={`rounded-full px-3 py-2 text-sm font-bold ${
+                          selected
+                            ? "bg-blue-700 text-white"
+                            : "bg-white text-gray-900"
+                        }`}
+                      >
+                        {skill}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    value={customSkill}
+                    onChange={(event) => setCustomSkill(event.target.value)}
+                    className="w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                    placeholder="自分のスキルを追加"
+                  />
+                  <button
+                    type="button"
+                    onClick={addCustomSkill}
+                    className="w-full rounded-lg bg-gray-700 px-4 py-3 font-bold text-white sm:w-auto"
+                  >
+                    追加
+                  </button>
+                </div>
+
+                {form.skills_list.length > 0 ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {form.skills_list.map((skill) => (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => toggleSkill(skill)}
+                        className="rounded-full bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700"
+                      >
+                        {skill} ×
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
 
               <button
                 type="submit"

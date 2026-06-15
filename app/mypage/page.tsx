@@ -40,6 +40,19 @@ const mypageCards = [
     title: "ライフプランナー",
     description: "仕事・住まい・生活費から生活プランを比較できます。",
   },
+  {
+    href: "/mypage/checklist",
+    title: "渡航・生活チェックリスト",
+    description:
+      "渡航前、到着後、仕事探し、物件探しで必要な準備を確認できます。",
+    highlight: true,
+  },
+  {
+    href: "/partners",
+    title: "比較・おすすめサービス",
+    description:
+      "SIM、保険、送金、生活インフラなどをカテゴリ別に確認できます。",
+  },
 ];
 
 export default function MyPage() {

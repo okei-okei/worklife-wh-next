@@ -21,6 +21,10 @@ type PublicProperty = {
   available_from?: string | null;
   furnished?: boolean | null;
   bills_included?: boolean | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  parking_spaces?: number | null;
+  pets_allowed?: boolean | null;
 };
 
 function isMissingColumnError(error: { message?: string } | null) {
@@ -66,11 +70,16 @@ export default function PropertiesPage() {
     latitude: number | null;
     longitude: number | null;
   }>({ latitude: null, longitude: null });
+  const [minRentWeekly, setMinRentWeekly] = useState("");
   const [maxRentWeekly, setMaxRentWeekly] = useState("");
-  const [roomType, setRoomType] = useState("");
+  const [minBedrooms, setMinBedrooms] = useState("");
+  const [maxBedrooms, setMaxBedrooms] = useState("");
+  const [minBathrooms, setMinBathrooms] = useState("");
+  const [maxBathrooms, setMaxBathrooms] = useState("");
+  const [minParkingSpaces, setMinParkingSpaces] = useState("");
+  const [maxParkingSpaces, setMaxParkingSpaces] = useState("");
   const [availableFrom, setAvailableFrom] = useState("");
-  const [furnishedOnly, setFurnishedOnly] = useState(false);
-  const [billsIncludedOnly, setBillsIncludedOnly] = useState(false);
+  const [petsAllowedOnly, setPetsAllowedOnly] = useState(false);
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     inquiry?: (property: PublicProperty) => void;
@@ -81,15 +90,28 @@ export default function PropertiesPage() {
     const fetchProperties = async () => {
       setIsLoading(true);
 
-      const { data, error } = await supabase
+      const extendedResult = await supabase
         .from("public_properties")
         .select(
-          "id, title, city, area, address, rent_weekly, description, url, latitude, longitude",
+          "id, title, city, area, address, rent_weekly, description, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, available_from",
         )
         .eq("is_active", true)
         .order("created_at", {
           ascending: false,
         });
+
+      const { data, error } =
+        extendedResult.error && isMissingColumnError(extendedResult.error)
+          ? await supabase
+              .from("public_properties")
+              .select(
+                "id, title, city, area, address, rent_weekly, description, url, latitude, longitude",
+              )
+              .eq("is_active", true)
+              .order("created_at", {
+                ascending: false,
+              })
+          : extendedResult;
 
       if (error) {
         console.error(error);
@@ -292,7 +314,18 @@ export default function PropertiesPage() {
     const normalizedLocations = locationFilters.map((location) =>
       location.trim().toLowerCase(),
     );
+    const minimumRent = minRentWeekly ? Number(minRentWeekly) : null;
     const maximumRent = maxRentWeekly ? Number(maxRentWeekly) : null;
+    const minimumBedrooms = minBedrooms ? Number(minBedrooms) : null;
+    const maximumBedrooms = maxBedrooms ? Number(maxBedrooms) : null;
+    const minimumBathrooms = minBathrooms ? Number(minBathrooms) : null;
+    const maximumBathrooms = maxBathrooms ? Number(maxBathrooms) : null;
+    const minimumParkingSpaces = minParkingSpaces
+      ? Number(minParkingSpaces)
+      : null;
+    const maximumParkingSpaces = maxParkingSpaces
+      ? Number(maxParkingSpaces)
+      : null;
 
     return properties.filter((property) => {
       const searchableText = [
@@ -323,11 +356,16 @@ export default function PropertiesPage() {
           .join(" ")
           .toLowerCase();
 
-        if (
-          !normalizedLocations.some((location) =>
-            propertyLocationText.includes(location),
-          )
-        ) {
+        const matchesLocation = normalizedLocations.some((location) => {
+          const parts = location
+            .split("/")
+            .map((part) => part.trim())
+            .filter(Boolean);
+
+          return parts.some((part) => propertyLocationText.includes(part));
+        });
+
+        if (!matchesLocation) {
           return false;
         }
       }
@@ -354,6 +392,13 @@ export default function PropertiesPage() {
       }
 
       if (
+        minimumRent !== null &&
+        (property.rent_weekly === null || property.rent_weekly < minimumRent)
+      ) {
+        return false;
+      }
+
+      if (
         maximumRent !== null &&
         (property.rent_weekly === null || property.rent_weekly > maximumRent)
       ) {
@@ -361,25 +406,67 @@ export default function PropertiesPage() {
       }
 
       if (
-        roomType.trim() &&
-        !property.room_type?.toLowerCase().includes(roomType.trim().toLowerCase())
+        minimumBedrooms !== null &&
+        (property.bedrooms === null ||
+          property.bedrooms === undefined ||
+          property.bedrooms < minimumBedrooms)
       ) {
         return false;
       }
 
       if (
-        availableFrom &&
-        property.available_from &&
-        property.available_from > availableFrom
+        maximumBedrooms !== null &&
+        (property.bedrooms === null ||
+          property.bedrooms === undefined ||
+          property.bedrooms > maximumBedrooms)
       ) {
         return false;
       }
 
-      if (furnishedOnly && !property.furnished) {
+      if (
+        minimumBathrooms !== null &&
+        (property.bathrooms === null ||
+          property.bathrooms === undefined ||
+          property.bathrooms < minimumBathrooms)
+      ) {
         return false;
       }
 
-      if (billsIncludedOnly && !property.bills_included) {
+      if (
+        maximumBathrooms !== null &&
+        (property.bathrooms === null ||
+          property.bathrooms === undefined ||
+          property.bathrooms > maximumBathrooms)
+      ) {
+        return false;
+      }
+
+      if (
+        minimumParkingSpaces !== null &&
+        (property.parking_spaces === null ||
+          property.parking_spaces === undefined ||
+          property.parking_spaces < minimumParkingSpaces)
+      ) {
+        return false;
+      }
+
+      if (
+        maximumParkingSpaces !== null &&
+        (property.parking_spaces === null ||
+          property.parking_spaces === undefined ||
+          property.parking_spaces > maximumParkingSpaces)
+      ) {
+        return false;
+      }
+
+      if (availableFrom && property.available_from) {
+        const availableDate = new Date(property.available_from);
+        const desiredDate = new Date(availableFrom);
+
+        if (availableDate > desiredDate) return false;
+      }
+
+      if (petsAllowedOnly && !property.pets_allowed) {
         return false;
       }
 
@@ -387,13 +474,18 @@ export default function PropertiesPage() {
     });
   }, [
     availableFrom,
-    billsIncludedOnly,
     filterCoordinates,
-    furnishedOnly,
     locationFilters,
     maxRentWeekly,
+    maxBathrooms,
+    maxBedrooms,
+    maxParkingSpaces,
+    minRentWeekly,
+    minBathrooms,
+    minBedrooms,
+    minParkingSpaces,
+    petsAllowedOnly,
     properties,
-    roomType,
     searchQuery,
   ]);
 
@@ -401,11 +493,16 @@ export default function PropertiesPage() {
     setSearchQuery("");
     setLocationFilters([]);
     setFilterCoordinates({ latitude: null, longitude: null });
+    setMinRentWeekly("");
     setMaxRentWeekly("");
-    setRoomType("");
+    setMinBedrooms("");
+    setMaxBedrooms("");
+    setMinBathrooms("");
+    setMaxBathrooms("");
+    setMinParkingSpaces("");
+    setMaxParkingSpaces("");
     setAvailableFrom("");
-    setFurnishedOnly(false);
-    setBillsIncludedOnly(false);
+    setPetsAllowedOnly(false);
   };
 
   return (
@@ -467,7 +564,20 @@ export default function PropertiesPage() {
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-5">
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                週家賃の下限
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={minRentWeekly}
+                onChange={(event) => setMinRentWeekly(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 180"
+              />
+            </label>
             <label className="block">
               <span className="text-sm font-bold text-gray-900">
                 週家賃の上限
@@ -483,13 +593,80 @@ export default function PropertiesPage() {
             </label>
             <label className="block">
               <span className="text-sm font-bold text-gray-900">
-                部屋タイプ
+                ベッドルーム数の下限
               </span>
               <input
-                value={roomType}
-                onChange={(event) => setRoomType(event.target.value)}
+                type="number"
+                min="0"
+                value={minBedrooms}
+                onChange={(event) => setMinBedrooms(event.target.value)}
                 className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: private"
+                placeholder="例: 1"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                ベッドルーム数の上限
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={maxBedrooms}
+                onChange={(event) => setMaxBedrooms(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 3"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                バスルーム数の下限
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={minBathrooms}
+                onChange={(event) => setMinBathrooms(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 1"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                バスルーム数の上限
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={maxBathrooms}
+                onChange={(event) => setMaxBathrooms(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 2"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                駐車場数の下限
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={minParkingSpaces}
+                onChange={(event) => setMinParkingSpaces(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 1"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">
+                駐車場数の上限
+              </span>
+              <input
+                type="number"
+                min="0"
+                value={maxParkingSpaces}
+                onChange={(event) => setMaxParkingSpaces(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                placeholder="例: 2"
               />
             </label>
             <label className="block">
@@ -506,22 +683,11 @@ export default function PropertiesPage() {
             <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:mt-7">
               <input
                 type="checkbox"
-                checked={furnishedOnly}
-                onChange={(event) => setFurnishedOnly(event.target.checked)}
+                checked={petsAllowedOnly}
+                onChange={(event) => setPetsAllowedOnly(event.target.checked)}
                 className="h-5 w-5"
               />
-              家具付き
-            </label>
-            <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:mt-7">
-              <input
-                type="checkbox"
-                checked={billsIncludedOnly}
-                onChange={(event) =>
-                  setBillsIncludedOnly(event.target.checked)
-                }
-                className="h-5 w-5"
-              />
-              光熱費込み
+              ペット可
             </label>
           </div>
 

@@ -98,7 +98,8 @@ const textFields: Array<{
 function isMissingColumnError(error: { message?: string } | null) {
   return Boolean(
     error?.message?.includes("column") ||
-      error?.message?.includes("schema cache"),
+      error?.message?.includes("schema cache") ||
+      error?.message?.includes("relation"),
   );
 }
 
@@ -107,16 +108,6 @@ const textAreaFields: Array<{
   label: string;
   placeholder: string;
 }> = [
-  {
-    key: "work_experience",
-    label: "職歴・経験",
-    placeholder: "Hospitality, retail, farm work, office experience...",
-  },
-  {
-    key: "skills",
-    label: "スキル",
-    placeholder: "Customer service, POS, barista, cleaning, driving...",
-  },
   {
     key: "self_introduction",
     label: "自己紹介",
@@ -567,7 +558,7 @@ export default function ResumePage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-lg font-bold text-gray-900">
-                      関連経験
+                      職歴・経験
                     </h2>
                     <p className="mt-1 text-sm font-medium leading-6 text-gray-800">
                       応募文で自然な英語の職務経験として使います。
@@ -578,7 +569,7 @@ export default function ResumePage() {
                     onClick={addExperienceItem}
                     className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
                   >
-                    経験を追加
+                    職歴を追加
                   </button>
                 </div>
 

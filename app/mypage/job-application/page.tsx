@@ -77,8 +77,13 @@ function formatMoney(value: number | null) {
 function isMissingColumnError(error: { message?: string } | null) {
   return Boolean(
     error?.message?.includes("column") ||
-      error?.message?.includes("schema cache"),
+      error?.message?.includes("schema cache") ||
+      error?.message?.includes("relation"),
   );
+}
+
+function isMissingRelationError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes("relation"));
 }
 
 function JobApplicationPageContent() {
@@ -101,6 +106,7 @@ function JobApplicationPageContent() {
   const [jobDetails, setJobDetails] =
     useState<JobApplicationDetails>(emptyJobDetails);
   const [draft, setDraft] = useState("");
+  const [lastGenerationSignature, setLastGenerationSignature] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [customSkill, setCustomSkill] = useState("");
@@ -145,8 +151,9 @@ function JobApplicationPageContent() {
         .eq("user_id", user.id)
         .maybeSingle<ApplicationResume>();
 
-      const resumeResult =
-        extendedResumeResult.error &&
+      const resumeResult = isMissingRelationError(extendedResumeResult.error)
+        ? { data: null, error: null }
+        : extendedResumeResult.error &&
         isMissingColumnError(extendedResumeResult.error)
           ? await supabase
               .from("resumes")
@@ -413,6 +420,21 @@ function JobApplicationPageContent() {
 
     saveDraft(false);
 
+    const generationSignature = JSON.stringify({
+      documentType,
+      target: activeTarget,
+      resume,
+      jobDetails,
+    });
+
+    if (
+      draft.trim() &&
+      lastGenerationSignature === generationSignature &&
+      !window.confirm("同じ入力内容で再生成しますか？")
+    ) {
+      return;
+    }
+
     const fallbackContent =
       documentType === "application_email"
         ? generateJobApplicationEmail({
@@ -448,6 +470,7 @@ function JobApplicationPageContent() {
       };
 
       setDraft(data.content || fallbackContent);
+      setLastGenerationSignature(generationSignature);
       setSuccessMessage(
         data.content
           ? "AIで英語の下書きを作成しました。内容を編集してから利用できます。"
@@ -455,6 +478,7 @@ function JobApplicationPageContent() {
       );
     } catch {
       setDraft(fallbackContent);
+      setLastGenerationSignature(generationSignature);
       setSuccessMessage(
         "テンプレートで下書きを作成しました。内容を編集してから利用できます。",
       );
@@ -823,26 +847,10 @@ function JobApplicationPageContent() {
                 placeholder="例: 日常会話レベル"
               />
             </label>
-            <label className="block md:col-span-2">
-              <span className="text-sm font-bold text-gray-900">
-                関連経験
-              </span>
-              <textarea
-                value={jobDetails.relevantExperience || ""}
-                onChange={(event) =>
-                  setJobDetails({
-                    ...jobDetails,
-                    relevantExperience: event.target.value,
-                  })
-                }
-                className="mt-2 min-h-28 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 日本で2年間カフェ接客を経験。レジ、清掃、簡単な調理を担当。"
-              />
-            </label>
             <section className="rounded-xl border border-gray-200 bg-gray-50 p-4 md:col-span-2">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="font-bold text-gray-900">経験を構造化する</h3>
+                  <h3 className="font-bold text-gray-900">職歴・経験</h3>
                   <p className="mt-1 text-sm font-medium leading-6 text-gray-800">
                     複数の職歴を分けて入力すると、生成文で自然な職務経験として整理されます。
                   </p>
@@ -852,7 +860,7 @@ function JobApplicationPageContent() {
                   onClick={addExperienceItem}
                   className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
                 >
-                  経験を追加
+                  職歴を追加
                 </button>
               </div>
 
@@ -940,17 +948,6 @@ function JobApplicationPageContent() {
                 ))}
               </div>
             </section>
-            <label className="block md:col-span-2">
-              <span className="text-sm font-bold text-gray-900">スキル</span>
-              <textarea
-                value={jobDetails.skills || ""}
-                onChange={(event) =>
-                  setJobDetails({ ...jobDetails, skills: event.target.value })
-                }
-                className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 接客、チームワーク、時間厳守、基本的な英会話"
-              />
-            </label>
             <section className="rounded-xl border border-gray-200 bg-gray-50 p-4 md:col-span-2">
               <h3 className="font-bold text-gray-900">キースキルを選ぶ</h3>
               <div className="mt-3 flex flex-wrap gap-2">

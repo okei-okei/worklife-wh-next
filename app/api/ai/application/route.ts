@@ -70,8 +70,9 @@ export async function POST(request: Request) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-5.2",
+      model: process.env.APPLICATION_AI_MODEL || "gpt-5-nano",
       input: buildPrompt(body),
+      max_output_tokens: 500,
     }),
   });
 

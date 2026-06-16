@@ -6,7 +6,9 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import {
   generatePropertyInquiryEmail,
+  type ApplicationResume,
   type ApplicationTarget,
+  type ExperienceItem,
   type PropertyInquiryDetails,
 } from "@/lib/services/applicationWriter";
 import { supabase } from "@/lib/supabase";
@@ -43,6 +45,7 @@ const emptyPropertyDetails: PropertyInquiryDetails = {
   plannedStayDuration: "",
   occupants: "",
   occupation: "",
+  experienceItems: [],
   selfIntroduction: "",
   viewingAvailability: "",
   questions: "",
@@ -53,6 +56,18 @@ function formatRent(value: number | null) {
   if (value === null) return "未設定";
 
   return `$${value}/週`;
+}
+
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("column") ||
+      error?.message?.includes("schema cache") ||
+      error?.message?.includes("relation"),
+  );
+}
+
+function isMissingRelationError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes("relation"));
 }
 
 function PropertyInquiryPageContent() {
@@ -70,8 +85,18 @@ function PropertyInquiryPageContent() {
   const [propertyDetails, setPropertyDetails] =
     useState<PropertyInquiryDetails>(emptyPropertyDetails);
   const [draft, setDraft] = useState("");
+  const [lastGenerationSignature, setLastGenerationSignature] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  const buildResumeDefaults = (resumeData: ApplicationResume | null) => ({
+    ...emptyPropertyDetails,
+    fullName: resumeData?.full_name || "",
+    currentCity: resumeData?.current_city || "",
+    selfIntroduction: resumeData?.self_introduction || "",
+    occupation: resumeData?.visa_type || "",
+    experienceItems: resumeData?.experience_items || [],
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -90,6 +115,25 @@ function PropertyInquiryPageContent() {
       }
 
       setUserId(user.id);
+
+      const extendedResumeResult = await supabase
+        .from("resumes")
+        .select(
+          "full_name,current_city,visa_type,self_introduction,experience_items",
+        )
+        .eq("user_id", user.id)
+        .maybeSingle<ApplicationResume>();
+
+      const resumeResult = isMissingRelationError(extendedResumeResult.error)
+        ? { data: null, error: null }
+        : extendedResumeResult.error &&
+        isMissingColumnError(extendedResumeResult.error)
+          ? await supabase
+              .from("resumes")
+              .select("full_name,current_city,visa_type,self_introduction")
+              .eq("user_id", user.id)
+              .maybeSingle<ApplicationResume>()
+          : extendedResumeResult;
 
       const [propertiesResult, draftResult] = await Promise.all([
         supabase
@@ -119,16 +163,20 @@ function PropertyInquiryPageContent() {
         }
       }
 
+      const resumeDefaults = resumeResult.error
+        ? emptyPropertyDetails
+        : buildResumeDefaults(resumeResult.data);
+
       if (draftResult.error) {
         console.warn(draftResult.error.message);
-        setPropertyDetails(emptyPropertyDetails);
+        setPropertyDetails(resumeDefaults);
       } else if (draftResult.data?.form_data) {
         setPropertyDetails({
-          ...emptyPropertyDetails,
+          ...resumeDefaults,
           ...draftResult.data.form_data,
         });
       } else {
-        setPropertyDetails(emptyPropertyDetails);
+        setPropertyDetails(resumeDefaults);
       }
 
       setIsLoading(false);
@@ -225,6 +273,50 @@ function PropertyInquiryPageContent() {
     setErrorMessage("");
   };
 
+  const updateExperienceItem = (
+    index: number,
+    key: keyof ExperienceItem,
+    value: string,
+  ) => {
+    setPropertyDetails((current) => {
+      const nextItems = [...(current.experienceItems || [])];
+      nextItems[index] = {
+        ...nextItems[index],
+        [key]: value,
+      };
+
+      return {
+        ...current,
+        experienceItems: nextItems,
+      };
+    });
+  };
+
+  const addExperienceItem = () => {
+    setPropertyDetails((current) => ({
+      ...current,
+      experienceItems: [
+        ...(current.experienceItems || []),
+        {
+          company: "",
+          role: "",
+          period: "",
+          description: "",
+          achievement: "",
+        },
+      ],
+    }));
+  };
+
+  const removeExperienceItem = (index: number) => {
+    setPropertyDetails((current) => ({
+      ...current,
+      experienceItems: (current.experienceItems || []).filter(
+        (_item, itemIndex) => itemIndex !== index,
+      ),
+    }));
+  };
+
   const handleGenerate = async () => {
     setErrorMessage("");
     setSuccessMessage("");
@@ -240,6 +332,19 @@ function PropertyInquiryPageContent() {
     }
 
     saveDraft(false);
+
+    const generationSignature = JSON.stringify({
+      target: activeTarget,
+      propertyDetails,
+    });
+
+    if (
+      draft.trim() &&
+      lastGenerationSignature === generationSignature &&
+      !window.confirm("同じ入力内容で再生成しますか？")
+    ) {
+      return;
+    }
 
     const fallbackContent = generatePropertyInquiryEmail({
       target: activeTarget,
@@ -265,6 +370,7 @@ function PropertyInquiryPageContent() {
       };
 
       setDraft(data.content || fallbackContent);
+      setLastGenerationSignature(generationSignature);
       setSuccessMessage(
         data.content
           ? "AIで問い合わせメールの下書きを作成しました。"
@@ -272,6 +378,7 @@ function PropertyInquiryPageContent() {
       );
     } catch {
       setDraft(fallbackContent);
+      setLastGenerationSignature(generationSignature);
       setSuccessMessage("テンプレートで問い合わせメールの下書きを作成しました。");
     }
   };
@@ -641,6 +748,110 @@ function PropertyInquiryPageContent() {
                 placeholder="例: ワーホリで仕事を探している / 語学学校に通学中"
               />
             </label>
+            <div className="md:col-span-2">
+              <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="font-bold text-gray-900">職歴・経験</h3>
+                    <p className="mt-1 text-sm font-medium text-gray-700">
+                      履歴書に保存した内容があれば初期表示されます。問い合わせ文に自然に反映できます。
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addExperienceItem}
+                    className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
+                  >
+                    職歴を追加
+                  </button>
+                </div>
+
+                {(propertyDetails.experienceItems || []).length === 0 ? (
+                  <p className="text-sm font-medium text-gray-700">
+                    未入力です。必要な場合だけ追加してください。
+                  </p>
+                ) : (
+                  (propertyDetails.experienceItems || []).map(
+                    (item, index) => (
+                      <div
+                        key={index}
+                        className="grid grid-cols-1 gap-3 rounded-lg bg-white p-3 md:grid-cols-2"
+                      >
+                        <input
+                          value={item.company || ""}
+                          onChange={(event) =>
+                            updateExperienceItem(
+                              index,
+                              "company",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                          placeholder="会社名"
+                        />
+                        <input
+                          value={item.role || ""}
+                          onChange={(event) =>
+                            updateExperienceItem(
+                              index,
+                              "role",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                          placeholder="役職"
+                        />
+                        <input
+                          value={item.period || ""}
+                          onChange={(event) =>
+                            updateExperienceItem(
+                              index,
+                              "period",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                          placeholder="期間"
+                        />
+                        <input
+                          value={item.achievement || ""}
+                          onChange={(event) =>
+                            updateExperienceItem(
+                              index,
+                              "achievement",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                          placeholder="実績・強み"
+                        />
+                        <textarea
+                          value={item.description || ""}
+                          onChange={(event) =>
+                            updateExperienceItem(
+                              index,
+                              "description",
+                              event.target.value,
+                            )
+                          }
+                          className="min-h-24 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900 md:col-span-2"
+                          placeholder="業務内容"
+                        />
+                        <div className="flex justify-end md:col-span-2">
+                          <button
+                            type="button"
+                            onClick={() => removeExperienceItem(index)}
+                            className="w-full rounded-lg bg-gray-200 px-4 py-3 font-bold text-gray-900 sm:w-auto"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      </div>
+                    ),
+                  )
+                )}
+              </div>
+            </div>
             <label className="block md:col-span-2">
               <span className="text-sm font-bold text-gray-900">自己紹介</span>
               <textarea

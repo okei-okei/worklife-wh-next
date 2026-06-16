@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { filterNzLocations, nzLocations } from "@/lib/constants/nzLocations";
+import { nzLocations } from "@/lib/constants/nzLocations";
 
 type Props = {
   label?: string;
@@ -27,7 +27,7 @@ export default function NzLocationPicker({
   onCoordinatesChange,
   allLabel = "全て",
 }: Props) {
-  const [query, setQuery] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [geoMessage, setGeoMessage] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -36,14 +36,11 @@ export default function NzLocationPicker({
     return Array.from(new Set(nzLocations.map((location) => location.region)));
   }, []);
 
-  const locations = useMemo(() => {
-    const base = query ? filterNzLocations(query) : nzLocations;
-    const scoped = selectedRegion
-      ? base.filter((location) => location.region === selectedRegion)
-      : base;
-
-    return scoped.slice(0, 24);
-  }, [query, selectedRegion]);
+  const districts = useMemo(() => {
+    return selectedRegion
+      ? nzLocations.filter((location) => location.region === selectedRegion)
+      : nzLocations;
+  }, [selectedRegion]);
 
   const selectedValues = multiple ? values : value ? [value] : [];
 
@@ -105,7 +102,10 @@ export default function NzLocationPicker({
           <span className="text-sm font-bold text-gray-900">{label}</span>
           <select
             value={selectedRegion}
-            onChange={(event) => setSelectedRegion(event.target.value)}
+            onChange={(event) => {
+              setSelectedRegion(event.target.value);
+              setSelectedDistrict("");
+            }}
             className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
           >
             <option value="">Regionを選択</option>
@@ -119,14 +119,24 @@ export default function NzLocationPicker({
 
         <label className="block">
           <span className="text-sm font-bold text-gray-900">
-            地区・市区町村を検索
+            District / City
           </span>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+          <select
+            value={selectedDistrict}
+            onChange={(event) => {
+              const labelValue = event.target.value;
+              setSelectedDistrict(labelValue);
+              if (labelValue) selectLocation(labelValue);
+            }}
             className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900 placeholder:text-gray-600"
-            placeholder="例: Wellington, Queenstown"
-          />
+          >
+            <option value="">未設定</option>
+            {districts.map((location) => (
+              <option key={location.label} value={location.label}>
+                {location.district}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 
@@ -173,28 +183,9 @@ export default function NzLocationPicker({
         </p>
       )}
 
-      <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2">
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          {locations.map((location) => {
-            const selected = selectedValues.includes(location.label);
-
-            return (
-              <button
-                key={location.label}
-                type="button"
-                onClick={() => selectLocation(location.label)}
-                className={`rounded-lg px-3 py-2 text-left text-sm font-bold ${
-                  selected
-                    ? "bg-blue-700 text-white"
-                    : "bg-white text-gray-900 hover:bg-blue-50"
-                }`}
-              >
-                {location.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <p className="text-xs font-medium text-gray-700">
+        選択中: {selectedValues.length ? selectedValues.join(" / ") : allLabel}
+      </p>
     </div>
   );
 }

@@ -17,33 +17,28 @@ const mypageCards = [
     description: "気になる物件を保存・管理できます。",
   },
   {
-    href: "/mypage/job-application",
-    title: "求人応募支援",
-    description: "日本語入力から英語の応募文を作れます。",
-  },
-  {
-    href: "/mypage/property-inquiry",
-    title: "物件問い合わせ支援",
-    description: "日本語入力から英語の問い合わせ文を作れます。",
-  },
-  {
     href: "/mypage/resume",
     title: "履歴書管理",
     description: "応募に使う基本情報とPDFを保存できます。",
   },
   {
-    href: "/planner",
-    title: "ライフプランナー",
-    description: "仕事・住まい・生活費から収支を確認できます。",
+    href: "/mypage/job-application",
+    title: "求人応募支援",
+    description: "英語の応募メールとカバーレターを作れます。",
+  },
+  {
+    href: "/mypage/property-inquiry",
+    title: "物件問い合わせ支援",
+    description: "英語の問い合わせメールを作れます。",
   },
   {
     href: "/mypage/checklist",
-    title: "渡航・生活チェックリスト",
+    title: "チェックリスト",
     description: "渡航前から生活開始までの準備を確認できます。",
   },
   {
     href: "/partners",
-    title: "比較・おすすめサービス",
+    title: "比較おすすめサービス",
     description: "SIM、保険、送金、生活インフラを確認できます。",
   },
   {

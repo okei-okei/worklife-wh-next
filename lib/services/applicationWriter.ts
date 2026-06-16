@@ -71,6 +71,7 @@ export type PropertyInquiryDetails = {
   plannedStayDuration?: string;
   occupants?: string;
   occupation?: string;
+  experienceItems?: ExperienceItem[];
   selfIntroduction?: string;
   viewingAvailability?: string;
   questions?: string;
@@ -232,6 +233,7 @@ function mergePropertyDetails(
     plannedStayDuration: valueOrPlaceholder(details?.plannedStayDuration, ""),
     occupants: valueOrPlaceholder(details?.occupants, ""),
     occupation: valueOrPlaceholder(details?.occupation, ""),
+    experienceItems: details?.experienceItems || [],
     selfIntroduction: valueOrPlaceholder(details?.selfIntroduction, ""),
     viewingAvailability: valueOrPlaceholder(details?.viewingAvailability, ""),
     questions: valueOrPlaceholder(details?.questions, ""),
@@ -392,6 +394,9 @@ function buildPropertyInquiryEmailTemplate(
   const occupationLine = input.occupation
     ? ` My current work or study situation is: ${input.occupation}.`
     : "";
+  const experienceLine = formatExperienceItems(input.experienceItems)
+    ? `\nMy background includes:\n${formatExperienceItems(input.experienceItems)}\n`
+    : "";
   const viewingLine = input.viewingAvailability
     ? ` I am available for a viewing ${input.viewingAvailability}.`
     : " I would appreciate the opportunity to arrange a viewing.";
@@ -411,6 +416,7 @@ I am writing to enquire about ${target.title}${propertyLocation ? ` in ${propert
 ${input.selfIntroduction || "I am currently looking for a suitable place to live in New Zealand."} ${input.currentCity ? `I am currently based in ${input.currentCity}.` : ""}
 
 I would like to ask whether this property is still available.${rentLine}${moveInLine}${stayLine}${occupantsLine}${occupationLine}
+${experienceLine}
 
 ${viewingLine} Please let me know if there are any suitable times or any next steps for applying.
 ${questionsLine}${additionalLine}

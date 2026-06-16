@@ -21,6 +21,7 @@ type PublicJob = {
   apply_url: string | null;
   latitude: number | null;
   longitude: number | null;
+  employment_type?: string | null;
 };
 
 function isMissingColumnError(error: { message?: string } | null) {
@@ -68,6 +69,7 @@ export default function JobsPage() {
   }>({ latitude: null, longitude: null });
   const [minHourlyRate, setMinHourlyRate] = useState("");
   const [minWorkHours, setMinWorkHours] = useState("");
+  const [employmentType, setEmploymentType] = useState("");
   const [accommodationOnly, setAccommodationOnly] = useState(false);
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
@@ -79,15 +81,28 @@ export default function JobsPage() {
     const fetchJobs = async () => {
       setIsLoading(true);
 
-      const { data, error } = await supabase
+      const extendedResult = await supabase
         .from("public_jobs")
         .select(
-          "id, title, company, city, address, hourly_rate, work_hours, description, visa_support, japanese_ok, accommodation_available, apply_url, latitude, longitude",
+          "id, title, company, city, address, hourly_rate, work_hours, description, visa_support, japanese_ok, accommodation_available, apply_url, latitude, longitude, employment_type",
         )
         .eq("is_active", true)
         .order("created_at", {
           ascending: false,
         });
+
+      const { data, error } =
+        extendedResult.error && isMissingColumnError(extendedResult.error)
+          ? await supabase
+              .from("public_jobs")
+              .select(
+                "id, title, company, city, address, hourly_rate, work_hours, description, visa_support, japanese_ok, accommodation_available, apply_url, latitude, longitude",
+              )
+              .eq("is_active", true)
+              .order("created_at", {
+                ascending: false,
+              })
+          : extendedResult;
 
       if (error) {
         console.error(error);
@@ -316,11 +331,16 @@ export default function JobsPage() {
           .join(" ")
           .toLowerCase();
 
-        if (
-          !normalizedLocations.some((location) =>
-            jobLocationText.includes(location),
-          )
-        ) {
+        const matchesLocation = normalizedLocations.some((location) => {
+          const parts = location
+            .split("/")
+            .map((part) => part.trim())
+            .filter(Boolean);
+
+          return parts.some((part) => jobLocationText.includes(part));
+        });
+
+        if (!matchesLocation) {
           return false;
         }
       }
@@ -364,10 +384,15 @@ export default function JobsPage() {
         return false;
       }
 
+      if (employmentType && job.employment_type !== employmentType) {
+        return false;
+      }
+
       return true;
     });
   }, [
     accommodationOnly,
+    employmentType,
     filterCoordinates,
     jobs,
     locationFilters,
@@ -382,6 +407,7 @@ export default function JobsPage() {
     setFilterCoordinates({ latitude: null, longitude: null });
     setMinHourlyRate("");
     setMinWorkHours("");
+    setEmploymentType("");
     setAccommodationOnly(false);
   };
 
@@ -444,7 +470,7 @@ export default function JobsPage() {
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-5">
             <label className="block">
               <span className="text-sm font-bold text-gray-900">
                 時給の下限
@@ -470,6 +496,22 @@ export default function JobsPage() {
                 className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
                 placeholder="例: 30"
               />
+            </label>
+            <label className="block">
+              <span className="text-sm font-bold text-gray-900">採用形態</span>
+              <select
+                value={employmentType}
+                onChange={(event) => setEmploymentType(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+              >
+                <option value="">全て</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Casual">Casual</option>
+                <option value="Seasonal">Seasonal</option>
+                <option value="Fixed-term">Fixed-term</option>
+                <option value="Internship">Internship</option>
+              </select>
             </label>
             <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:mt-7">
               <input

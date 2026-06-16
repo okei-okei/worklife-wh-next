@@ -406,7 +406,7 @@ export default function PlannerPage() {
       <div className="mx-auto max-w-6xl min-w-0">
         <div className="mb-8">
           <h1 className="min-w-0 whitespace-normal break-words text-2xl font-bold md:text-4xl">
-            ライフプランナー（最適化AI）
+            ライフプランナー（生活プラン比較）
           </h1>
         </div>
 

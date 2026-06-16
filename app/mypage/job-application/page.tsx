@@ -331,7 +331,7 @@ function JobApplicationPageContent() {
   const updateExperienceItem = (
     index: number,
     key: keyof ExperienceItem,
-    value: string,
+    value: string | boolean,
   ) => {
     setJobDetails((current) => {
       const nextItems = [...(current.experienceItems || [])];
@@ -356,6 +356,9 @@ function JobApplicationPageContent() {
           company: "",
           role: "",
           period: "",
+          startMonth: "",
+          endMonth: "",
+          isCurrent: false,
           description: "",
           achievement: "",
         },
@@ -473,7 +476,7 @@ function JobApplicationPageContent() {
       setLastGenerationSignature(generationSignature);
       setSuccessMessage(
         data.content
-          ? "AIで英語の下書きを作成しました。内容を編集してから利用できます。"
+          ? "英語の下書きを作成しました。内容を編集してから利用できます。"
           : "テンプレートで下書きを作成しました。内容を編集してから利用できます。",
       );
     } catch {
@@ -907,18 +910,59 @@ function JobApplicationPageContent() {
                         className="rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
                         placeholder="役職"
                       />
-                      <input
-                        value={item.period || ""}
-                        onChange={(event) =>
-                          updateExperienceItem(
-                            index,
-                            "period",
-                            event.target.value,
-                          )
-                        }
-                        className="rounded-lg border border-gray-300 p-3 font-medium text-gray-900 md:col-span-2"
-                        placeholder="期間"
-                      />
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-900">
+                          開始年月
+                        </span>
+                        <input
+                          type="month"
+                          value={item.startMonth || ""}
+                          onChange={(event) =>
+                            updateExperienceItem(
+                              index,
+                              "startMonth",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-900">
+                          終了年月
+                        </span>
+                        <input
+                          type="month"
+                          value={item.endMonth || ""}
+                          onChange={(event) =>
+                            updateExperienceItem(
+                              index,
+                              "endMonth",
+                              event.target.value,
+                            )
+                          }
+                          disabled={Boolean(item.isCurrent)}
+                          className="w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900 disabled:bg-gray-100"
+                        />
+                      </label>
+                      <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:col-span-2">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(item.isCurrent)}
+                          onChange={(event) => {
+                            updateExperienceItem(
+                              index,
+                              "isCurrent",
+                              event.target.checked,
+                            );
+                            if (event.target.checked) {
+                              updateExperienceItem(index, "endMonth", "");
+                            }
+                          }}
+                          className="h-5 w-5"
+                        />
+                        現在も継続中
+                      </label>
                       <textarea
                         value={item.description || ""}
                         onChange={(event) =>

@@ -58,6 +58,71 @@ function calculateDistanceKm(
   return earthRadiusKm * c;
 }
 
+function RangeNumberInput({
+  label,
+  prefix = "",
+  minValue,
+  maxValue,
+  onMinChange,
+  onMaxChange,
+  minPlaceholder,
+  maxPlaceholder,
+}: {
+  label: string;
+  prefix?: string;
+  minValue: string;
+  maxValue: string;
+  onMinChange: (value: string) => void;
+  onMaxChange: (value: string) => void;
+  minPlaceholder: string;
+  maxPlaceholder: string;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+      <p className="text-sm font-bold text-gray-900">{label}</p>
+      <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <label className="min-w-0">
+          <span className="sr-only">{label} 下限</span>
+          <div className="flex items-center rounded-lg border border-gray-300 bg-white px-3">
+            {prefix && (
+              <span className="shrink-0 text-sm font-bold text-gray-700">
+                {prefix}
+              </span>
+            )}
+            <input
+              type="number"
+              min="0"
+              value={minValue}
+              onChange={(event) => onMinChange(event.target.value)}
+              className="min-w-0 flex-1 bg-transparent px-2 py-3 font-medium text-gray-900 outline-none placeholder:text-gray-500"
+              placeholder={minPlaceholder}
+            />
+          </div>
+        </label>
+        <span className="text-sm font-bold text-gray-600">〜</span>
+        <label className="min-w-0">
+          <span className="sr-only">{label} 上限</span>
+          <div className="flex items-center rounded-lg border border-gray-300 bg-white px-3">
+            {prefix && (
+              <span className="shrink-0 text-sm font-bold text-gray-700">
+                {prefix}
+              </span>
+            )}
+            <input
+              type="number"
+              min="0"
+              value={maxValue}
+              onChange={(event) => onMaxChange(event.target.value)}
+              className="min-w-0 flex-1 bg-transparent px-2 py-3 font-medium text-gray-900 outline-none placeholder:text-gray-500"
+              placeholder={maxPlaceholder}
+            />
+          </div>
+        </label>
+      </div>
+    </div>
+  );
+}
+
 export default function PropertiesPage() {
   const router = useRouter();
   const [properties, setProperties] = useState<PublicProperty[]>([]);
@@ -544,7 +609,7 @@ export default function PropertiesPage() {
         )}
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
+          <div>
             <label className="block">
               <span className="text-sm font-bold text-gray-900">検索</span>
               <input
@@ -554,7 +619,9 @@ export default function PropertiesPage() {
                 placeholder="物件名、エリア、住所、説明で検索"
               />
             </label>
+          </div>
 
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
             <NzLocationPicker
               label="地域"
               multiple
@@ -562,113 +629,46 @@ export default function PropertiesPage() {
               onValuesChange={setLocationFilters}
               onCoordinatesChange={setFilterCoordinates}
             />
+            <RangeNumberInput
+              label="週家賃"
+              prefix="$"
+              minValue={minRentWeekly}
+              maxValue={maxRentWeekly}
+              onMinChange={setMinRentWeekly}
+              onMaxChange={setMaxRentWeekly}
+              minPlaceholder="200"
+              maxPlaceholder="450"
+            />
+            <RangeNumberInput
+              label="ベッドルーム数"
+              minValue={minBedrooms}
+              maxValue={maxBedrooms}
+              onMinChange={setMinBedrooms}
+              onMaxChange={setMaxBedrooms}
+              minPlaceholder="1"
+              maxPlaceholder="3"
+            />
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-4">
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">
-                週家賃の下限
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={minRentWeekly}
-                onChange={(event) => setMinRentWeekly(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 180"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">
-                週家賃の上限
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={maxRentWeekly}
-                onChange={(event) => setMaxRentWeekly(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 300"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">
-                ベッドルーム数の下限
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={minBedrooms}
-                onChange={(event) => setMinBedrooms(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 1"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">
-                ベッドルーム数の上限
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={maxBedrooms}
-                onChange={(event) => setMaxBedrooms(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 3"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">
-                バスルーム数の下限
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={minBathrooms}
-                onChange={(event) => setMinBathrooms(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 1"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">
-                バスルーム数の上限
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={maxBathrooms}
-                onChange={(event) => setMaxBathrooms(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 2"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">
-                駐車場数の下限
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={minParkingSpaces}
-                onChange={(event) => setMinParkingSpaces(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 1"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-gray-900">
-                駐車場数の上限
-              </span>
-              <input
-                type="number"
-                min="0"
-                value={maxParkingSpaces}
-                onChange={(event) => setMaxParkingSpaces(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                placeholder="例: 2"
-              />
-            </label>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <RangeNumberInput
+              label="バスルーム数"
+              minValue={minBathrooms}
+              maxValue={maxBathrooms}
+              onMinChange={setMinBathrooms}
+              onMaxChange={setMaxBathrooms}
+              minPlaceholder="1"
+              maxPlaceholder="2"
+            />
+            <RangeNumberInput
+              label="駐車場数"
+              minValue={minParkingSpaces}
+              maxValue={maxParkingSpaces}
+              onMinChange={setMinParkingSpaces}
+              onMaxChange={setMaxParkingSpaces}
+              minPlaceholder="0"
+              maxPlaceholder="1"
+            />
             <label className="block">
               <span className="text-sm font-bold text-gray-900">
                 入居可能日
@@ -680,7 +680,7 @@ export default function PropertiesPage() {
                 className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
               />
             </label>
-            <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:mt-7">
+            <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900 lg:mt-7">
               <input
                 type="checkbox"
                 checked={petsAllowedOnly}

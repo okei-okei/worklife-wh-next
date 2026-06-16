@@ -40,6 +40,9 @@ export type ExperienceItem = {
   company?: string;
   role?: string;
   period?: string;
+  startMonth?: string;
+  endMonth?: string;
+  isCurrent?: boolean;
   description?: string;
   achievement?: string;
 };
@@ -132,6 +135,31 @@ function formatMoney(value: number | null | undefined) {
   return `$${value}`;
 }
 
+function formatMonth(value: string | null | undefined) {
+  if (!value) return "";
+
+  const [year, month] = value.split("-");
+  const monthIndex = Number(month) - 1;
+
+  if (!year || Number.isNaN(monthIndex)) return value;
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    year: "numeric",
+  }).format(new Date(Number(year), monthIndex, 1));
+}
+
+function formatExperiencePeriod(item: ExperienceItem) {
+  if (item.startMonth) {
+    const start = formatMonth(item.startMonth);
+    const end = item.isCurrent ? "Present" : formatMonth(item.endMonth);
+
+    return [start, end].filter(Boolean).join(" - ");
+  }
+
+  return item.period?.trim() || "";
+}
+
 function normalizeInput(
   input: ApplicationWriterInput,
 ): NormalizedApplicationWriterInput {
@@ -194,13 +222,16 @@ function formatExperienceItems(items: ExperienceItem[] | undefined) {
         item.company?.trim() ||
         item.role?.trim() ||
         item.period?.trim() ||
+        item.startMonth?.trim() ||
+        item.endMonth?.trim() ||
         item.description?.trim() ||
         item.achievement?.trim()
       );
     })
     .map((item) => {
       const title = [item.role, item.company].filter(Boolean).join(" at ");
-      const period = item.period ? ` (${item.period})` : "";
+      const formattedPeriod = formatExperiencePeriod(item);
+      const period = formattedPeriod ? ` (${formattedPeriod})` : "";
       const lines = [
         title ? `- ${title}${period}` : "- Relevant experience",
         item.description ? `  Responsibilities: ${item.description}` : "",

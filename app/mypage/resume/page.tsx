@@ -265,7 +265,7 @@ export default function ResumePage() {
   const updateExperienceItem = (
     index: number,
     key: keyof ExperienceItem,
-    value: string,
+    value: string | boolean,
   ) => {
     setForm((current) => {
       const nextItems = [...current.experience_items];
@@ -290,6 +290,9 @@ export default function ResumePage() {
           company: "",
           role: "",
           period: "",
+          startMonth: "",
+          endMonth: "",
+          isCurrent: false,
           description: "",
           achievement: "",
         },
@@ -632,22 +635,58 @@ export default function ResumePage() {
                               placeholder="例: Cafe staff"
                             />
                           </label>
-                          <label className="block md:col-span-2">
+                          <label className="block">
                             <span className="text-sm font-bold text-gray-900">
-                              期間
+                              開始年月
                             </span>
                             <input
-                              value={item.period || ""}
+                              type="month"
+                              value={item.startMonth || ""}
                               onChange={(event) =>
                                 updateExperienceItem(
                                   index,
-                                  "period",
+                                  "startMonth",
                                   event.target.value,
                                 )
                               }
                               className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
-                              placeholder="例: 2023年4月 - 2024年3月"
                             />
+                          </label>
+                          <label className="block">
+                            <span className="text-sm font-bold text-gray-900">
+                              終了年月
+                            </span>
+                            <input
+                              type="month"
+                              value={item.endMonth || ""}
+                              onChange={(event) =>
+                                updateExperienceItem(
+                                  index,
+                                  "endMonth",
+                                  event.target.value,
+                                )
+                              }
+                              disabled={Boolean(item.isCurrent)}
+                              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900 disabled:bg-gray-100"
+                            />
+                          </label>
+                          <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:col-span-2">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(item.isCurrent)}
+                              onChange={(event) => {
+                                updateExperienceItem(
+                                  index,
+                                  "isCurrent",
+                                  event.target.checked,
+                                );
+                                if (event.target.checked) {
+                                  updateExperienceItem(index, "endMonth", "");
+                                }
+                              }}
+                              className="h-5 w-5"
+                            />
+                            現在も継続中
                           </label>
                           <label className="block md:col-span-2">
                             <span className="text-sm font-bold text-gray-900">

@@ -32,6 +32,11 @@ const mypageCards = [
     description: "英語の問い合わせメールを作れます。",
   },
   {
+    href: "/planner",
+    title: "ライフプランナー",
+    description: "仕事と住まいの収支を比較できます。",
+  },
+  {
     href: "/mypage/checklist",
     title: "チェックリスト",
     description: "渡航前から生活開始までの準備を確認できます。",

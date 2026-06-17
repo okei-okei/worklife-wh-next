@@ -11,6 +11,7 @@ type RequestBody = {
   resume?: unknown;
   jobDetails?: unknown;
   propertyDetails?: unknown;
+  acceptedWarning?: boolean;
 };
 
 function getSupabaseAdminClient() {
@@ -85,16 +86,35 @@ async function getDailyUsage(userId: string) {
   };
 }
 
-async function recordUsage(userId: string, documentType: RequestBody["documentType"]) {
+async function recordUsage(
+  userId: string,
+  documentType: RequestBody["documentType"],
+  acceptedWarning: boolean,
+) {
   const supabase = getSupabaseAdminClient();
 
   if (!supabase) return;
 
-  const { error } = await supabase.from("ai_generation_logs").insert({
+  const detailedPayload = {
     user_id: userId,
     document_type: documentType,
+    generation_type: documentType,
     generated_on: getTodayIsoDate(),
-  });
+    accepted_warning: acceptedWarning,
+  };
+
+  let { error } = await supabase.from("ai_generation_logs").insert(detailedPayload);
+
+  if (error?.message.includes("column")) {
+    const { error: fallbackError } = await supabase
+      .from("ai_generation_logs")
+      .insert({
+        user_id: userId,
+        document_type: documentType,
+        generated_on: getTodayIsoDate(),
+      });
+    error = fallbackError;
+  }
 
   if (error) {
     console.warn("AI usage log skipped:", error.message);
@@ -234,7 +254,7 @@ export async function POST(request: Request) {
   const content = getOutputText(data);
 
   if (content) {
-    await recordUsage(user.id, body.documentType);
+    await recordUsage(user.id, body.documentType, Boolean(body.acceptedWarning));
   }
 
   return NextResponse.json({

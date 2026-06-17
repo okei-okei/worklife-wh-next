@@ -2,6 +2,11 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import {
+  LegalConsentCheckboxes,
+  LegalLink,
+} from "@/components/LegalConsentCheckboxes";
+import { LEGAL_VERSION } from "@/app/legal/_data/legalDocuments";
 import { supabase } from "@/lib/supabase";
 
 type SubmissionType = "job" | "property";
@@ -13,6 +18,9 @@ export default function CompanySubmitPage() {
   const [email, setEmail] = useState("");
   const [description, setDescription] = useState("");
   const [url, setUrl] = useState("");
+  const [agreedToPostingTerms, setAgreedToPostingTerms] = useState(false);
+  const [agreedToBusinessTerms, setAgreedToBusinessTerms] = useState(false);
+  const [agreedToPersonalDataUse, setAgreedToPersonalDataUse] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -24,6 +32,9 @@ export default function CompanySubmitPage() {
     setEmail("");
     setDescription("");
     setUrl("");
+    setAgreedToPostingTerms(false);
+    setAgreedToBusinessTerms(false);
+    setAgreedToPersonalDataUse(false);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -36,13 +47,22 @@ export default function CompanySubmitPage() {
       return;
     }
 
+    if (
+      !agreedToPostingTerms ||
+      !agreedToBusinessTerms ||
+      !agreedToPersonalDataUse
+    ) {
+      setErrorMessage("掲載に必要な規約と個人情報取扱いへの同意が必要です。");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const { error } = await supabase.from("listing_submissions").insert({
+    const submissionPayload = {
       user_id: user?.id ?? null,
       type,
       title: title.trim(),
@@ -51,7 +71,35 @@ export default function CompanySubmitPage() {
       description: description.trim() || null,
       url: url.trim() || null,
       status: "pending",
-    });
+      consent_versions: {
+        posting_terms:
+          type === "job" ? "job_posting" : "property_posting",
+        business_terms: "business_terms",
+        version: LEGAL_VERSION,
+        agreed_to_personal_data_use: true,
+      },
+    };
+
+    let { error } = await supabase
+      .from("listing_submissions")
+      .insert(submissionPayload);
+
+    if (error?.message.includes("column")) {
+      const fallbackPayload = {
+        user_id: submissionPayload.user_id,
+        type: submissionPayload.type,
+        title: submissionPayload.title,
+        company_or_owner: submissionPayload.company_or_owner,
+        email: submissionPayload.email,
+        description: submissionPayload.description,
+        url: submissionPayload.url,
+        status: submissionPayload.status,
+      };
+      const fallbackResult = await supabase
+        .from("listing_submissions")
+        .insert(fallbackPayload);
+      error = fallbackResult.error;
+    }
 
     setIsSubmitting(false);
 
@@ -207,6 +255,57 @@ export default function CompanySubmitPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </label>
+
+            <LegalConsentCheckboxes
+              items={[
+                {
+                  id: "posting-terms",
+                  checked: agreedToPostingTerms,
+                  onChange: setAgreedToPostingTerms,
+                  required: true,
+                  label:
+                    type === "job" ? (
+                      <>
+                        <LegalLink href="/legal/job-posting">
+                          求人掲載規約
+                        </LegalLink>
+                        に同意します
+                      </>
+                    ) : (
+                      <>
+                        <LegalLink href="/legal/property-posting">
+                          物件掲載規約
+                        </LegalLink>
+                        に同意します
+                      </>
+                    ),
+                },
+                {
+                  id: "business-terms",
+                  checked: agreedToBusinessTerms,
+                  onChange: setAgreedToBusinessTerms,
+                  required: true,
+                  label: (
+                    <>
+                      <LegalLink href="/legal/business-terms">
+                        企業・掲載者向け利用規約
+                      </LegalLink>
+                      に同意します
+                    </>
+                  ),
+                },
+                {
+                  id: "personal-data",
+                  checked: agreedToPersonalDataUse,
+                  onChange: setAgreedToPersonalDataUse,
+                  required: true,
+                  label:
+                    type === "job"
+                      ? "応募者情報を採用目的の範囲でのみ利用し、適用法令を遵守します"
+                      : "問い合わせ者情報を入居関連目的の範囲でのみ利用し、適用法令を遵守します",
+                },
+              ]}
+            />
 
             {errorMessage ? (
               <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">

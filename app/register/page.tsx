@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import {
+  LegalConsentCheckboxes,
+  LegalLink,
+} from "@/components/LegalConsentCheckboxes";
+import { LEGAL_VERSION } from "@/app/legal/_data/legalDocuments";
 import { supabase } from "@/lib/supabase";
 
 export default function RegisterPage() {
@@ -10,13 +15,18 @@ export default function RegisterPage() {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [agreedToCookies, setAgreedToCookies] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [consentErrorMessage, setConsentErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMessage("");
+    setConsentErrorMessage("");
     setSuccessMessage("");
 
     if (password !== passwordConfirm) {
@@ -24,9 +34,16 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!agreedToTerms || !agreedToPrivacy || !agreedToCookies) {
+      setConsentErrorMessage(
+        "利用規約、プライバシーポリシー、Cookieポリシーへの同意が必要です。",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -39,6 +56,25 @@ export default function RegisterPage() {
     if (error) {
       setErrorMessage(`登録に失敗しました。${error.message}`);
       return;
+    }
+
+    if (data.user?.id) {
+      await fetch("/api/legal/consent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: data.user.id,
+          email,
+          sourcePage: "/register",
+          documents: [
+            { documentKey: "terms", version: LEGAL_VERSION },
+            { documentKey: "privacy", version: LEGAL_VERSION },
+            { documentKey: "cookies", version: LEGAL_VERSION },
+          ],
+        }),
+      });
     }
 
     setSuccessMessage(
@@ -121,6 +157,50 @@ export default function RegisterPage() {
               </button>
             </div>
           </label>
+
+          <LegalConsentCheckboxes
+            errorMessage={consentErrorMessage}
+            items={[
+              {
+                id: "terms",
+                checked: agreedToTerms,
+                onChange: setAgreedToTerms,
+                required: true,
+                label: (
+                  <>
+                    <LegalLink href="/legal/terms">利用規約</LegalLink>を確認し、
+                    サービス利用条件に同意します
+                  </>
+                ),
+              },
+              {
+                id: "privacy",
+                checked: agreedToPrivacy,
+                onChange: setAgreedToPrivacy,
+                required: true,
+                label: (
+                  <>
+                    <LegalLink href="/legal/privacy">
+                      プライバシーポリシー
+                    </LegalLink>
+                    を確認し、個人情報の取り扱いに同意します
+                  </>
+                ),
+              },
+              {
+                id: "cookies",
+                checked: agreedToCookies,
+                onChange: setAgreedToCookies,
+                required: true,
+                label: (
+                  <>
+                    <LegalLink href="/legal/cookies">Cookieポリシー</LegalLink>
+                    を確認し、必須Cookieの利用に同意します
+                  </>
+                ),
+              },
+            ]}
+          />
 
           {errorMessage ? (
             <p className="rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">

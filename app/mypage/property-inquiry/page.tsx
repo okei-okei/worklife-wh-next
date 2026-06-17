@@ -875,6 +875,12 @@ function PropertyInquiryPageContent() {
               ? ` 本日の残り回数: ${aiAvailability.remainingToday}回`
               : ""}
           </p>
+          <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-6 text-amber-900">
+            AIは誤る可能性があります。送信前に必ず内容を確認してください。{" "}
+            <Link href="/legal/ai-policy" className="underline">
+              AI利用ポリシー
+            </Link>
+          </p>
 
           {errorMessage && (
             <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">

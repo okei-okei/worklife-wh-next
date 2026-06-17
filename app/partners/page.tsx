@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import AdDisclosureNotice from "@/components/AdDisclosureNotice";
 import { supabase } from "@/lib/supabase";
 import { LeadPartnerButton } from "./_components/LeadPartnerButton";
 import {
@@ -161,9 +162,7 @@ function PartnersPageContent() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium leading-7 text-amber-900 md:p-5">
-          このページには広告・紹介リンクを含む場合があります。掲載内容はワーホリ生活の準備に役立つかを基準に整理しています。契約前には必ず公式サイトで最新条件を確認してください。
-        </section>
+        <AdDisclosureNotice />
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <h2 className="text-xl font-bold text-gray-900">カテゴリ</h2>

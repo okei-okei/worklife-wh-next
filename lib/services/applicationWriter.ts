@@ -626,6 +626,7 @@ async function callApplicationWriterAi(
     resume?: ApplicationResume | null;
     jobDetails?: JobApplicationDetails;
     propertyDetails?: PropertyInquiryDetails;
+    acceptedWarning?: boolean;
   },
   accessToken?: string,
 ): Promise<AiWriterResponse> {
@@ -666,6 +667,7 @@ export function generateJobApplicationEmailWithAI(
       },
       resume: input.resume,
       jobDetails: input.jobDetails,
+      acceptedWarning: true,
     },
     accessToken,
   );
@@ -684,6 +686,7 @@ export function generateJobCoverLetterWithAI(
       },
       resume: input.resume,
       jobDetails: input.jobDetails,
+      acceptedWarning: true,
     },
     accessToken,
   );
@@ -698,9 +701,10 @@ export function generatePropertyInquiryEmailWithAI(
       documentType: "property_inquiry",
       target: {
         ...input.target,
-        type: "property",
+      type: "property",
       },
       propertyDetails: input.propertyDetails,
+      acceptedWarning: true,
     },
     accessToken,
   );

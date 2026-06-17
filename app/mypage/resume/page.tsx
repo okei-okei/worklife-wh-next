@@ -104,6 +104,10 @@ function isMissingColumnError(error: { message?: string } | null) {
   );
 }
 
+function isMissingRelationError(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes("relation"));
+}
+
 const textAreaFields: Array<{
   key: keyof ResumeForm;
   label: string;
@@ -351,50 +355,87 @@ export default function ResumePage() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    const payload = {
+    const extendedPayload = {
       user_id: currentUserId,
       ...form,
       available_from: form.available_from || null,
       updated_at: new Date().toISOString(),
     };
 
-    const response = await supabase.from("resumes").upsert(payload, {
-      onConflict: "user_id",
-    });
+    const basePayload = {
+      user_id: currentUserId,
+      full_name: form.full_name,
+      email: form.email,
+      phone: form.phone,
+      current_city: form.current_city,
+      visa_type: form.visa_type,
+      available_from: form.available_from || null,
+      work_experience: form.work_experience,
+      skills: form.skills,
+      english_level: form.english_level,
+      self_introduction: form.self_introduction,
+      updated_at: new Date().toISOString(),
+    };
 
-    const fallbackResponse =
-      response.error && isMissingColumnError(response.error)
-        ? await supabase.from("resumes").upsert(
-            {
-              user_id: currentUserId,
-              full_name: form.full_name,
-              email: form.email,
-              phone: form.phone,
-              current_city: form.current_city,
-              visa_type: form.visa_type,
-              available_from: form.available_from || null,
-              work_experience: form.work_experience,
-              skills: form.skills,
-              english_level: form.english_level,
-              self_introduction: form.self_introduction,
-              updated_at: new Date().toISOString(),
-            },
-            {
-              onConflict: "user_id",
-            },
-          )
-        : response;
+    const existingResumeResponse = await supabase
+      .from("resumes")
+      .select("id")
+      .eq("user_id", currentUserId)
+      .maybeSingle<{ id: string }>();
 
-    const { error } = fallbackResponse;
-
-    setIsSaving(false);
-
-    if (error) {
-      setErrorMessage(`保存に失敗しました。${error.message}`);
+    if (isMissingRelationError(existingResumeResponse.error)) {
+      setIsSaving(false);
+      setErrorMessage(
+        "resumesテーブルが未作成です。supabase/resume_structured_fields.sql をSupabase SQL Editorで実行してください。",
+      );
       return;
     }
 
-    setSuccessMessage("履歴書情報を保存しました。");
+    if (existingResumeResponse.error) {
+      setIsSaving(false);
+      setErrorMessage(
+        `保存前の確認に失敗しました。${existingResumeResponse.error.message}`,
+      );
+      return;
+    }
+
+    const saveWithPayload = async (
+      payload: typeof extendedPayload | typeof basePayload,
+    ) => {
+      if (existingResumeResponse.data?.id) {
+        return supabase
+          .from("resumes")
+          .update(payload)
+          .eq("user_id", currentUserId)
+          .select("id")
+          .single();
+      }
+
+      return supabase.from("resumes").insert(payload).select("id").single();
+    };
+
+    let saveResponse = await saveWithPayload(extendedPayload);
+    let savedStructuredFields = true;
+
+    if (saveResponse.error && isMissingColumnError(saveResponse.error)) {
+      saveResponse = await saveWithPayload(basePayload);
+      savedStructuredFields = false;
+    }
+
+    if (saveResponse.error) {
+      setIsSaving(false);
+      setErrorMessage(`保存に失敗しました。${saveResponse.error.message}`);
+      return;
+    }
+
+    await loadResume();
+    setIsSaving(false);
+
+    setSuccessMessage(
+      savedStructuredFields
+        ? "履歴書情報を保存しました。"
+        : "基本情報を保存しました。職歴・スキルも保存するには supabase/resume_structured_fields.sql を実行してください。",
+    );
   };
 
   const handleUpload = async () => {

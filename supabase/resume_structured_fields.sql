@@ -22,6 +22,19 @@ add column if not exists skills_list jsonb not null default '[]'::jsonb;
 create unique index if not exists resumes_user_id_unique_idx
 on public.resumes (user_id);
 
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'resumes_user_id_key'
+      and conrelid = 'public.resumes'::regclass
+  ) then
+    alter table public.resumes
+    add constraint resumes_user_id_key unique (user_id);
+  end if;
+end $$;
+
 alter table public.resumes enable row level security;
 
 drop policy if exists "Users can view own resume" on public.resumes;

@@ -22,7 +22,7 @@ export default function LegalIndexPage() {
               </a>
             </p>
             <p>
-              現時点では法人未設立の学生個人運営です。法人化や提携拡大時には内容を更新します。
+              サービス内容や提携範囲の変更に応じて、法務文書は適宜更新します。
             </p>
           </div>
         </section>

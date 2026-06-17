@@ -51,11 +51,6 @@ const mypageCards = [
     title: "役立ち情報",
     description: "ビザ、IRD、契約時の注意点を確認できます。",
   },
-  {
-    href: "/mypage/privacy",
-    title: "プライバシー設定",
-    description: "Cookie、データ共有、削除申請を管理できます。",
-  },
 ];
 
 export default function MyPage() {

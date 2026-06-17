@@ -15,11 +15,11 @@ export type LegalDocument = {
 
 export const LEGAL_VERSION = "1.0.0";
 export const LEGAL_LAST_UPDATED = "2026-06-17";
-export const OPERATOR_NAME = "WorkLife WH 運営者（学生個人運営）";
+export const OPERATOR_NAME = "WorkLife WH 運営事務局";
 export const OPERATOR_EMAIL = "worklife.wh@gmail.com";
 
 const commonNotice =
-  "本ページは初期運用のためのドラフトです。WorkLife WHは現時点で法人ではなく、学生個人が運営しています。正式な法人化、有料提携、広告配信、掲載事業の拡大時には、必要に応じて内容を更新し、専門家確認を行います。";
+  "本ページは初期運用のためのドラフトです。サービス内容、有料提携、広告配信、掲載事業の拡大、法令や外部サービスの変更に応じて、必要に応じて内容を更新し、専門家確認を行います。";
 
 export const legalDocuments: LegalDocument[] = [
   {

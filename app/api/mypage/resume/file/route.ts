@@ -61,6 +61,14 @@ function buildResumeFilePath(userId: string, fileName: string) {
   return `${userId}/${timestamp}-${safeFileName || "resume.pdf"}`;
 }
 
+function formatSupabaseErrorMessage(message: string) {
+  if (message.includes("permission denied")) {
+    return `${message}。Supabase SQL Editorで resume_structured_fields.sql と resume_files.sql を再実行してください。`;
+  }
+
+  return message;
+}
+
 export async function POST(request: Request) {
   const user = await getUser(request);
   const adminClient = getSupabaseAdminClient();
@@ -107,7 +115,7 @@ export async function POST(request: Request) {
 
   if (uploadResponse.error) {
     return NextResponse.json(
-      { message: uploadResponse.error.message },
+      { message: formatSupabaseErrorMessage(uploadResponse.error.message) },
       { status: 500 },
     );
   }
@@ -123,7 +131,7 @@ export async function POST(request: Request) {
     await adminClient.storage.from(resumeBucketName).remove([filePath]);
 
     return NextResponse.json(
-      { message: insertResponse.error.message },
+      { message: formatSupabaseErrorMessage(insertResponse.error.message) },
       { status: 500 },
     );
   }
@@ -164,7 +172,7 @@ export async function DELETE(request: Request) {
 
   if (fileResponse.error) {
     return NextResponse.json(
-      { message: fileResponse.error.message },
+      { message: formatSupabaseErrorMessage(fileResponse.error.message) },
       { status: 500 },
     );
   }
@@ -182,7 +190,7 @@ export async function DELETE(request: Request) {
 
   if (storageResponse.error) {
     return NextResponse.json(
-      { message: storageResponse.error.message },
+      { message: formatSupabaseErrorMessage(storageResponse.error.message) },
       { status: 500 },
     );
   }
@@ -195,7 +203,7 @@ export async function DELETE(request: Request) {
 
   if (deleteResponse.error) {
     return NextResponse.json(
-      { message: deleteResponse.error.message },
+      { message: formatSupabaseErrorMessage(deleteResponse.error.message) },
       { status: 500 },
     );
   }

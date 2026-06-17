@@ -19,6 +19,9 @@ create index if not exists resume_files_user_created_at_idx
 
 alter table public.resume_files enable row level security;
 
+grant usage on schema public to authenticated, service_role;
+grant select, insert, update, delete on public.resume_files to authenticated, service_role;
+
 drop policy if exists "Users can read own resume files" on public.resume_files;
 create policy "Users can read own resume files"
 on public.resume_files

@@ -37,6 +37,9 @@ end $$;
 
 alter table public.resumes enable row level security;
 
+grant usage on schema public to authenticated, service_role;
+grant select, insert, update, delete on public.resumes to authenticated, service_role;
+
 drop policy if exists "Users can view own resume" on public.resumes;
 create policy "Users can view own resume"
 on public.resumes

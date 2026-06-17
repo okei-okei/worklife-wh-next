@@ -88,6 +88,14 @@ function sanitizeResumePayload(payload: ResumePayload, userId: string) {
   };
 }
 
+function formatSupabaseErrorMessage(message: string) {
+  if (message.includes("permission denied")) {
+    return `${message}。Supabase SQL Editorで resume_structured_fields.sql と resume_files.sql を再実行してください。`;
+  }
+
+  return message;
+}
+
 export async function GET(request: Request) {
   const user = await getUser(request);
   const adminClient = getSupabaseAdminClient();
@@ -113,7 +121,7 @@ export async function GET(request: Request) {
 
   if (resumeResponse.error) {
     return NextResponse.json(
-      { message: resumeResponse.error.message },
+      { message: formatSupabaseErrorMessage(resumeResponse.error.message) },
       { status: 500 },
     );
   }
@@ -126,7 +134,7 @@ export async function GET(request: Request) {
 
   if (filesResponse.error) {
     return NextResponse.json(
-      { message: filesResponse.error.message },
+      { message: formatSupabaseErrorMessage(filesResponse.error.message) },
       { status: 500 },
     );
   }
@@ -176,7 +184,7 @@ export async function POST(request: Request) {
 
   if (existingResponse.error) {
     return NextResponse.json(
-      { message: existingResponse.error.message },
+      { message: formatSupabaseErrorMessage(existingResponse.error.message) },
       { status: 500 },
     );
   }
@@ -192,7 +200,7 @@ export async function POST(request: Request) {
 
   if (saveResponse.error) {
     return NextResponse.json(
-      { message: saveResponse.error.message },
+      { message: formatSupabaseErrorMessage(saveResponse.error.message) },
       { status: 500 },
     );
   }

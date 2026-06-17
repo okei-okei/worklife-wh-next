@@ -6,6 +6,9 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import {
   generatePropertyInquiryEmail,
+  generatePropertyInquiryEmailWithAI,
+  getApplicationWriterAiAvailability,
+  type AiAvailability,
   type ApplicationResume,
   type ApplicationTarget,
   type PropertyInquiryDetails,
@@ -84,6 +87,13 @@ function PropertyInquiryPageContent() {
     useState<PropertyInquiryDetails>(emptyPropertyDetails);
   const [draft, setDraft] = useState("");
   const [lastGenerationSignature, setLastGenerationSignature] = useState("");
+  const [lastAiGeneration, setLastAiGeneration] = useState<{
+    signature: string;
+    content: string;
+  } | null>(null);
+  const [aiAvailability, setAiAvailability] = useState<AiAvailability>({
+    enabled: false,
+  });
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -112,6 +122,21 @@ function PropertyInquiryPageContent() {
       }
 
       setUserId(user.id);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.access_token) {
+        try {
+          const availability = await getApplicationWriterAiAvailability(
+            session.access_token,
+          );
+          if (isMounted) setAiAvailability(availability);
+        } catch {
+          if (isMounted) setAiAvailability({ enabled: false });
+        }
+      }
 
       const extendedResumeResult = await supabase
         .from("resumes")
@@ -218,6 +243,12 @@ function PropertyInquiryPageContent() {
     };
   }, [manualProperty, selectedProperty, sourceMode]);
 
+  const aiUnavailableLabel = !aiAvailability.hasApiKey
+    ? "AI生成は現在準備中です。"
+    : aiAvailability.remainingToday === 0
+      ? "本日のAI生成回数に達しました。"
+      : "";
+
   const targetUrl = activeTarget?.url?.trim() || "";
 
   const saveDraft = async (showMessage = true) => {
@@ -312,25 +343,50 @@ function PropertyInquiryPageContent() {
       return;
     }
 
+    if (lastAiGeneration?.signature === generationSignature) {
+      setDraft(lastAiGeneration.content);
+      setSuccessMessage("直近のAI生成結果を再利用しました。");
+      return;
+    }
+
+    if (!aiAvailability.enabled) {
+      setDraft(fallbackContent);
+      setLastGenerationSignature(generationSignature);
+      setSuccessMessage(
+        "AI生成は現在利用できません。テンプレートで問い合わせメールの下書きを作成しました。",
+      );
+      return;
+    }
+
     try {
-      const response = await fetch("/api/ai/application-writer", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          documentType: "property_inquiry",
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const data = await generatePropertyInquiryEmailWithAI(
+        {
           target: activeTarget,
           propertyDetails,
-        }),
-      });
-      const data = (await response.json()) as {
-        content?: string | null;
-        fallback?: boolean;
-      };
+        },
+        session?.access_token,
+      );
 
       setDraft(data.content || fallbackContent);
       setLastGenerationSignature(generationSignature);
+      if (data.content) {
+        setLastAiGeneration({
+          signature: generationSignature,
+          content: data.content,
+        });
+        setAiAvailability((current) => ({
+          ...current,
+          usedToday: data.usedToday ?? current.usedToday,
+          remainingToday: data.remainingToday ?? current.remainingToday,
+          enabled:
+            typeof data.remainingToday === "number"
+              ? data.remainingToday > 0
+              : current.enabled,
+        }));
+      }
       setSuccessMessage(
         data.content
           ? "より自然な英語の問い合わせメールを作成しました。"
@@ -787,9 +843,10 @@ function PropertyInquiryPageContent() {
               <button
                 type="button"
                 onClick={() => handleGenerate(true)}
-                className="w-full rounded-lg border border-blue-700 px-4 py-3 font-bold text-blue-700 sm:w-auto"
+                disabled={!aiAvailability.enabled}
+                className="w-full rounded-lg border border-blue-700 px-4 py-3 font-bold text-blue-700 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto"
               >
-                より自然な英語で作成
+                AIで自然な英語にする
               </button>
               <button
                 type="button"
@@ -810,6 +867,14 @@ function PropertyInquiryPageContent() {
               )}
             </div>
           </div>
+
+          <p className="mt-3 text-sm font-medium text-gray-700">
+            AI生成は任意です。{aiUnavailableLabel}
+            {aiAvailability.enabled &&
+            typeof aiAvailability.remainingToday === "number"
+              ? ` 本日の残り回数: ${aiAvailability.remainingToday}回`
+              : ""}
+          </p>
 
           {errorMessage && (
             <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">

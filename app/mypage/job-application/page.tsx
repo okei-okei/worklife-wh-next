@@ -8,7 +8,11 @@ import NzLocationPicker from "@/components/NzLocationPicker";
 import { skillOptions } from "@/lib/constants/applicationOptions";
 import {
   generateJobApplicationEmail,
+  generateJobApplicationEmailWithAI,
   generateJobCoverLetter,
+  generateJobCoverLetterWithAI,
+  getApplicationWriterAiAvailability,
+  type AiAvailability,
   type ApplicationResume,
   type ApplicationTarget,
   type ExperienceItem,
@@ -108,6 +112,13 @@ function JobApplicationPageContent() {
     useState<JobApplicationDetails>(emptyJobDetails);
   const [draft, setDraft] = useState("");
   const [lastGenerationSignature, setLastGenerationSignature] = useState("");
+  const [lastAiGeneration, setLastAiGeneration] = useState<{
+    signature: string;
+    content: string;
+  } | null>(null);
+  const [aiAvailability, setAiAvailability] = useState<AiAvailability>({
+    enabled: false,
+  });
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [customSkill, setCustomSkill] = useState("");
@@ -143,6 +154,21 @@ function JobApplicationPageContent() {
       }
 
       setUserId(user.id);
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.access_token) {
+        try {
+          const availability = await getApplicationWriterAiAvailability(
+            session.access_token,
+          );
+          if (isMounted) setAiAvailability(availability);
+        } catch {
+          if (isMounted) setAiAvailability({ enabled: false });
+        }
+      }
 
       const extendedResumeResult = await supabase
         .from("resumes")
@@ -278,6 +304,12 @@ function JobApplicationPageContent() {
       workHours: manualJob.workHours ? Number(manualJob.workHours) : null,
     };
   }, [manualJob, selectedJob, sourceMode]);
+
+  const aiUnavailableLabel = !aiAvailability.hasApiKey
+    ? "AI生成は現在準備中です。"
+    : aiAvailability.remainingToday === 0
+      ? "本日のAI生成回数に達しました。"
+      : "";
 
   const targetUrl = activeTarget?.url?.trim() || "";
 
@@ -463,29 +495,61 @@ function JobApplicationPageContent() {
       return;
     }
 
+    if (lastAiGeneration?.signature === generationSignature) {
+      setDraft(lastAiGeneration.content);
+      setSuccessMessage("直近のAI生成結果を再利用しました。");
+      return;
+    }
+
+    if (!aiAvailability.enabled) {
+      setDraft(fallbackContent);
+      setLastGenerationSignature(generationSignature);
+      setSuccessMessage(
+        "AI生成は現在利用できません。テンプレートで下書きを作成しました。",
+      );
+      return;
+    }
+
     try {
-      const response = await fetch("/api/ai/application-writer", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          documentType:
-            documentType === "application_email"
-              ? "job_application_email"
-              : "job_cover_letter",
-          target: activeTarget,
-          resume,
-          jobDetails,
-        }),
-      });
-      const data = (await response.json()) as {
-        content?: string | null;
-        fallback?: boolean;
-      };
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const data =
+        documentType === "application_email"
+          ? await generateJobApplicationEmailWithAI(
+              {
+                target: activeTarget,
+                resume,
+                jobDetails,
+              },
+              session?.access_token,
+            )
+          : await generateJobCoverLetterWithAI(
+              {
+                target: activeTarget,
+                resume,
+                jobDetails,
+              },
+              session?.access_token,
+            );
 
       setDraft(data.content || fallbackContent);
       setLastGenerationSignature(generationSignature);
+      if (data.content) {
+        setLastAiGeneration({
+          signature: generationSignature,
+          content: data.content,
+        });
+        setAiAvailability((current) => ({
+          ...current,
+          usedToday: data.usedToday ?? current.usedToday,
+          remainingToday: data.remainingToday ?? current.remainingToday,
+          enabled:
+            typeof data.remainingToday === "number"
+              ? data.remainingToday > 0
+              : current.enabled,
+        }));
+      }
       setSuccessMessage(
         data.content
           ? "より自然な英語の下書きを作成しました。内容を編集してから利用できます。"
@@ -1163,9 +1227,10 @@ function JobApplicationPageContent() {
               <button
                 type="button"
                 onClick={() => handleGenerate(true)}
-                className="w-full rounded-lg border border-blue-700 px-4 py-3 font-bold text-blue-700 sm:w-auto"
+                disabled={!aiAvailability.enabled}
+                className="w-full rounded-lg border border-blue-700 px-4 py-3 font-bold text-blue-700 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto"
               >
-                より自然な英語で作成
+                AIで自然な英語にする
               </button>
               <button
                 type="button"
@@ -1186,6 +1251,14 @@ function JobApplicationPageContent() {
               )}
             </div>
           </div>
+
+          <p className="mt-3 text-sm font-medium text-gray-700">
+            AI生成は任意です。{aiUnavailableLabel}
+            {aiAvailability.enabled &&
+            typeof aiAvailability.remainingToday === "number"
+              ? ` 本日の残り回数: ${aiAvailability.remainingToday}回`
+              : ""}
+          </p>
 
           {errorMessage && (
             <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">

@@ -97,6 +97,25 @@ type OptionalResumeWriterInput = {
   propertyDetails?: PropertyInquiryDetails;
 };
 
+export type AiWriterResponse = {
+  content: string | null;
+  fallback?: boolean;
+  message?: string;
+  dailyLimit?: number;
+  usedToday?: number;
+  remainingToday?: number;
+};
+
+export type AiAvailability = {
+  enabled: boolean;
+  hasApiKey?: boolean;
+  dailyLimit?: number;
+  usedToday?: number;
+  remainingToday?: number;
+  loggingEnabled?: boolean;
+  reason?: string;
+};
+
 type NormalizedApplicationWriterInput = {
   target: ApplicationTarget;
   resume: ApplicationResume;
@@ -541,6 +560,12 @@ export function generateCoverLetter(input: ApplicationWriterInput) {
 }
 
 export function generateJobApplicationEmail(input: OptionalResumeWriterInput) {
+  return generateJobApplicationEmailTemplate(input);
+}
+
+export function generateJobApplicationEmailTemplate(
+  input: OptionalResumeWriterInput,
+) {
   return buildJobApplicationEmailTemplate(
     {
       ...input.target,
@@ -552,6 +577,10 @@ export function generateJobApplicationEmail(input: OptionalResumeWriterInput) {
 }
 
 export function generateJobCoverLetter(input: OptionalResumeWriterInput) {
+  return generateJobCoverLetterTemplate(input);
+}
+
+export function generateJobCoverLetterTemplate(input: OptionalResumeWriterInput) {
   return buildJobCoverLetterTemplate(
     {
       ...input.target,
@@ -563,6 +592,12 @@ export function generateJobCoverLetter(input: OptionalResumeWriterInput) {
 }
 
 export function generatePropertyInquiryEmail(input: OptionalResumeWriterInput) {
+  return generatePropertyInquiryEmailTemplate(input);
+}
+
+export function generatePropertyInquiryEmailTemplate(
+  input: OptionalResumeWriterInput,
+) {
   return buildPropertyInquiryEmailTemplate(
     {
       ...input.target,
@@ -578,5 +613,95 @@ export function generatePropertyInquiryEmail(input: OptionalResumeWriterInput) {
       desiredMoveInDate: input.target.desiredMoveInDate || "",
       plannedStayDuration: input.target.plannedStayDuration || "",
     },
+  );
+}
+
+async function callApplicationWriterAi(
+  body: {
+    documentType:
+      | "job_application_email"
+      | "job_cover_letter"
+      | "property_inquiry";
+    target: ApplicationTarget;
+    resume?: ApplicationResume | null;
+    jobDetails?: JobApplicationDetails;
+    propertyDetails?: PropertyInquiryDetails;
+  },
+  accessToken?: string,
+): Promise<AiWriterResponse> {
+  const response = await fetch("/api/ai/application-writer", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  return (await response.json()) as AiWriterResponse;
+}
+
+export async function getApplicationWriterAiAvailability(
+  accessToken?: string,
+): Promise<AiAvailability> {
+  const response = await fetch("/api/ai/application-writer", {
+    headers: {
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+  });
+
+  return (await response.json()) as AiAvailability;
+}
+
+export function generateJobApplicationEmailWithAI(
+  input: OptionalResumeWriterInput,
+  accessToken?: string,
+) {
+  return callApplicationWriterAi(
+    {
+      documentType: "job_application_email",
+      target: {
+        ...input.target,
+        type: "job",
+      },
+      resume: input.resume,
+      jobDetails: input.jobDetails,
+    },
+    accessToken,
+  );
+}
+
+export function generateJobCoverLetterWithAI(
+  input: OptionalResumeWriterInput,
+  accessToken?: string,
+) {
+  return callApplicationWriterAi(
+    {
+      documentType: "job_cover_letter",
+      target: {
+        ...input.target,
+        type: "job",
+      },
+      resume: input.resume,
+      jobDetails: input.jobDetails,
+    },
+    accessToken,
+  );
+}
+
+export function generatePropertyInquiryEmailWithAI(
+  input: OptionalResumeWriterInput,
+  accessToken?: string,
+) {
+  return callApplicationWriterAi(
+    {
+      documentType: "property_inquiry",
+      target: {
+        ...input.target,
+        type: "property",
+      },
+      propertyDetails: input.propertyDetails,
+    },
+    accessToken,
   );
 }

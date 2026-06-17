@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import ExperiencePeriodFields from "@/components/ExperiencePeriodFields";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { skillOptions } from "@/lib/constants/applicationOptions";
 import {
@@ -356,7 +357,9 @@ function JobApplicationPageContent() {
           company: "",
           role: "",
           period: "",
+          startYear: "",
           startMonth: "",
+          endYear: "",
           endMonth: "",
           isCurrent: false,
           description: "",
@@ -407,7 +410,7 @@ function JobApplicationPageContent() {
     setCustomSkill("");
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (useAi = false) => {
     setErrorMessage("");
     setSuccessMessage("");
 
@@ -451,8 +454,17 @@ function JobApplicationPageContent() {
             jobDetails,
           });
 
+    if (!useAi) {
+      setDraft(fallbackContent);
+      setLastGenerationSignature(generationSignature);
+      setSuccessMessage(
+        "テンプレートで下書きを作成しました。内容を編集してから利用できます。",
+      );
+      return;
+    }
+
     try {
-      const response = await fetch("/api/ai/application", {
+      const response = await fetch("/api/ai/application-writer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -476,7 +488,7 @@ function JobApplicationPageContent() {
       setLastGenerationSignature(generationSignature);
       setSuccessMessage(
         data.content
-          ? "英語の下書きを作成しました。内容を編集してから利用できます。"
+          ? "より自然な英語の下書きを作成しました。内容を編集してから利用できます。"
           : "テンプレートで下書きを作成しました。内容を編集してから利用できます。",
       );
     } catch {
@@ -910,59 +922,12 @@ function JobApplicationPageContent() {
                         className="rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
                         placeholder="役職"
                       />
-                      <label className="block">
-                        <span className="mb-2 block text-sm font-bold text-gray-900">
-                          開始年月
-                        </span>
-                        <input
-                          type="month"
-                          value={item.startMonth || ""}
-                          onChange={(event) =>
-                            updateExperienceItem(
-                              index,
-                              "startMonth",
-                              event.target.value,
-                            )
-                          }
-                          className="w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="mb-2 block text-sm font-bold text-gray-900">
-                          終了年月
-                        </span>
-                        <input
-                          type="month"
-                          value={item.endMonth || ""}
-                          onChange={(event) =>
-                            updateExperienceItem(
-                              index,
-                              "endMonth",
-                              event.target.value,
-                            )
-                          }
-                          disabled={Boolean(item.isCurrent)}
-                          className="w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900 disabled:bg-gray-100"
-                        />
-                      </label>
-                      <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:col-span-2">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(item.isCurrent)}
-                          onChange={(event) => {
-                            updateExperienceItem(
-                              index,
-                              "isCurrent",
-                              event.target.checked,
-                            );
-                            if (event.target.checked) {
-                              updateExperienceItem(index, "endMonth", "");
-                            }
-                          }}
-                          className="h-5 w-5"
-                        />
-                        現在も継続中
-                      </label>
+                      <ExperiencePeriodFields
+                        item={item}
+                        onChange={(key, value) =>
+                          updateExperienceItem(index, key, value)
+                        }
+                      />
                       <textarea
                         value={item.description || ""}
                         onChange={(event) =>
@@ -1190,10 +1155,17 @@ function JobApplicationPageContent() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"
-                onClick={handleGenerate}
+                onClick={() => handleGenerate(false)}
                 className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
               >
-                文書を作成
+                テンプレートで作成
+              </button>
+              <button
+                type="button"
+                onClick={() => handleGenerate(true)}
+                className="w-full rounded-lg border border-blue-700 px-4 py-3 font-bold text-blue-700 sm:w-auto"
+              >
+                より自然な英語で作成
               </button>
               <button
                 type="button"

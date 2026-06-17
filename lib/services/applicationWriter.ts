@@ -40,7 +40,9 @@ export type ExperienceItem = {
   company?: string;
   role?: string;
   period?: string;
+  startYear?: string;
   startMonth?: string;
+  endYear?: string;
   endMonth?: string;
   isCurrent?: boolean;
   description?: string;
@@ -74,7 +76,6 @@ export type PropertyInquiryDetails = {
   plannedStayDuration?: string;
   occupants?: string;
   occupation?: string;
-  experienceItems?: ExperienceItem[];
   selfIntroduction?: string;
   viewingAvailability?: string;
   questions?: string;
@@ -135,26 +136,57 @@ function formatMoney(value: number | null | undefined) {
   return `$${value}`;
 }
 
-function formatMonth(value: string | null | undefined) {
-  if (!value) return "";
+function normalizeLegacyYearMonth(value: string | undefined) {
+  if (!value?.includes("-")) return { year: "", month: "" };
 
   const [year, month] = value.split("-");
-  const monthIndex = Number(month) - 1;
 
-  if (!year || Number.isNaN(monthIndex)) return value;
+  return {
+    year: year || "",
+    month: month ? String(Number(month)) : "",
+  };
+}
 
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    year: "numeric",
-  }).format(new Date(Number(year), monthIndex, 1));
+function formatYearMonth(year: string | undefined, month: string | undefined) {
+  if (!year && !month) return "";
+
+  if (year && month) return `${year}年${Number(month)}月`;
+  if (year) return `${year}年`;
+
+  return `${Number(month)}月`;
+}
+
+function getExperienceStart(item: ExperienceItem) {
+  const legacy = normalizeLegacyYearMonth(item.startMonth);
+
+  return {
+    year: item.startYear || legacy.year,
+    month: item.startMonth?.includes("-")
+      ? legacy.month
+      : item.startMonth || "",
+  };
+}
+
+function getExperienceEnd(item: ExperienceItem) {
+  const legacy = normalizeLegacyYearMonth(item.endMonth);
+
+  return {
+    year: item.endYear || legacy.year,
+    month: item.endMonth?.includes("-") ? legacy.month : item.endMonth || "",
+  };
 }
 
 function formatExperiencePeriod(item: ExperienceItem) {
-  if (item.startMonth) {
-    const start = formatMonth(item.startMonth);
-    const end = item.isCurrent ? "Present" : formatMonth(item.endMonth);
+  const start = getExperienceStart(item);
+  const end = getExperienceEnd(item);
+  const startLabel = formatYearMonth(start.year, start.month);
 
-    return [start, end].filter(Boolean).join(" - ");
+  if (startLabel) {
+    const endLabel = item.isCurrent
+      ? "現在"
+      : formatYearMonth(end.year, end.month);
+
+    return [startLabel, endLabel].filter(Boolean).join("〜");
   }
 
   return item.period?.trim() || "";
@@ -222,7 +254,9 @@ function formatExperienceItems(items: ExperienceItem[] | undefined) {
         item.company?.trim() ||
         item.role?.trim() ||
         item.period?.trim() ||
+        item.startYear?.trim() ||
         item.startMonth?.trim() ||
+        item.endYear?.trim() ||
         item.endMonth?.trim() ||
         item.description?.trim() ||
         item.achievement?.trim()
@@ -264,7 +298,6 @@ function mergePropertyDetails(
     plannedStayDuration: valueOrPlaceholder(details?.plannedStayDuration, ""),
     occupants: valueOrPlaceholder(details?.occupants, ""),
     occupation: valueOrPlaceholder(details?.occupation, ""),
-    experienceItems: details?.experienceItems || [],
     selfIntroduction: valueOrPlaceholder(details?.selfIntroduction, ""),
     viewingAvailability: valueOrPlaceholder(details?.viewingAvailability, ""),
     questions: valueOrPlaceholder(details?.questions, ""),
@@ -425,9 +458,6 @@ function buildPropertyInquiryEmailTemplate(
   const occupationLine = input.occupation
     ? ` My current work or study situation is: ${input.occupation}.`
     : "";
-  const experienceLine = formatExperienceItems(input.experienceItems)
-    ? `\nMy background includes:\n${formatExperienceItems(input.experienceItems)}\n`
-    : "";
   const viewingLine = input.viewingAvailability
     ? ` I am available for a viewing ${input.viewingAvailability}.`
     : " I would appreciate the opportunity to arrange a viewing.";
@@ -447,7 +477,6 @@ I am writing to enquire about ${target.title}${propertyLocation ? ` in ${propert
 ${input.selfIntroduction || "I am currently looking for a suitable place to live in New Zealand."} ${input.currentCity ? `I am currently based in ${input.currentCity}.` : ""}
 
 I would like to ask whether this property is still available.${rentLine}${moveInLine}${stayLine}${occupantsLine}${occupationLine}
-${experienceLine}
 
 ${viewingLine} Please let me know if there are any suitable times or any next steps for applying.
 ${questionsLine}${additionalLine}
@@ -479,8 +508,9 @@ const openAiApplicationWriter: ApplicationWriter = {
   generateApplicationEmail(input) {
     // OpenAI API keys must never be stored in NEXT_PUBLIC_* variables or called
     // directly from the browser. This provider is a placeholder for the future
-    // app/api/ai/application/route.ts server endpoint, where OPENAI_API_KEY can
-    // be read securely and the response can be normalized for the UI.
+    // app/api/ai/application-writer/route.ts server endpoint, where
+    // OPENAI_API_KEY can be read securely and the response can be normalized
+    // for the UI.
     return templateApplicationWriter.generateApplicationEmail(input);
   },
 

@@ -8,7 +8,6 @@ import {
   generatePropertyInquiryEmail,
   type ApplicationResume,
   type ApplicationTarget,
-  type ExperienceItem,
   type PropertyInquiryDetails,
 } from "@/lib/services/applicationWriter";
 import { supabase } from "@/lib/supabase";
@@ -45,7 +44,6 @@ const emptyPropertyDetails: PropertyInquiryDetails = {
   plannedStayDuration: "",
   occupants: "",
   occupation: "",
-  experienceItems: [],
   selfIntroduction: "",
   viewingAvailability: "",
   questions: "",
@@ -95,7 +93,6 @@ function PropertyInquiryPageContent() {
     currentCity: resumeData?.current_city || "",
     selfIntroduction: resumeData?.self_introduction || "",
     occupation: resumeData?.visa_type || "",
-    experienceItems: resumeData?.experience_items || [],
   });
 
   useEffect(() => {
@@ -118,9 +115,7 @@ function PropertyInquiryPageContent() {
 
       const extendedResumeResult = await supabase
         .from("resumes")
-        .select(
-          "full_name,current_city,visa_type,self_introduction,experience_items",
-        )
+        .select("full_name,current_city,visa_type,self_introduction")
         .eq("user_id", user.id)
         .maybeSingle<ApplicationResume>();
 
@@ -273,54 +268,7 @@ function PropertyInquiryPageContent() {
     setErrorMessage("");
   };
 
-  const updateExperienceItem = (
-    index: number,
-    key: keyof ExperienceItem,
-    value: string | boolean,
-  ) => {
-    setPropertyDetails((current) => {
-      const nextItems = [...(current.experienceItems || [])];
-      nextItems[index] = {
-        ...nextItems[index],
-        [key]: value,
-      };
-
-      return {
-        ...current,
-        experienceItems: nextItems,
-      };
-    });
-  };
-
-  const addExperienceItem = () => {
-    setPropertyDetails((current) => ({
-      ...current,
-      experienceItems: [
-        ...(current.experienceItems || []),
-        {
-          company: "",
-          role: "",
-          period: "",
-          startMonth: "",
-          endMonth: "",
-          isCurrent: false,
-          description: "",
-          achievement: "",
-        },
-      ],
-    }));
-  };
-
-  const removeExperienceItem = (index: number) => {
-    setPropertyDetails((current) => ({
-      ...current,
-      experienceItems: (current.experienceItems || []).filter(
-        (_item, itemIndex) => itemIndex !== index,
-      ),
-    }));
-  };
-
-  const handleGenerate = async () => {
+  const handleGenerate = async (useAi = false) => {
     setErrorMessage("");
     setSuccessMessage("");
 
@@ -355,8 +303,17 @@ function PropertyInquiryPageContent() {
       propertyDetails,
     });
 
+    if (!useAi) {
+      setDraft(fallbackContent);
+      setLastGenerationSignature(generationSignature);
+      setSuccessMessage(
+        "テンプレートで問い合わせメールの下書きを作成しました。",
+      );
+      return;
+    }
+
     try {
-      const response = await fetch("/api/ai/application", {
+      const response = await fetch("/api/ai/application-writer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -376,7 +333,7 @@ function PropertyInquiryPageContent() {
       setLastGenerationSignature(generationSignature);
       setSuccessMessage(
         data.content
-          ? "問い合わせメールの下書きを作成しました。"
+          ? "より自然な英語の問い合わせメールを作成しました。"
           : "テンプレートで問い合わせメールの下書きを作成しました。",
       );
     } catch {
@@ -751,151 +708,6 @@ function PropertyInquiryPageContent() {
                 placeholder="例: ワーホリで仕事を探している / 語学学校に通学中"
               />
             </label>
-            <div className="md:col-span-2">
-              <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="font-bold text-gray-900">職歴・経験</h3>
-                    <p className="mt-1 text-sm font-medium text-gray-700">
-                      履歴書に保存した内容があれば初期表示されます。問い合わせ文に自然に反映できます。
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addExperienceItem}
-                    className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
-                  >
-                    職歴を追加
-                  </button>
-                </div>
-
-                {(propertyDetails.experienceItems || []).length === 0 ? (
-                  <p className="text-sm font-medium text-gray-700">
-                    未入力です。必要な場合だけ追加してください。
-                  </p>
-                ) : (
-                  (propertyDetails.experienceItems || []).map(
-                    (item, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-1 gap-3 rounded-lg bg-white p-3 md:grid-cols-2"
-                      >
-                        <input
-                          value={item.company || ""}
-                          onChange={(event) =>
-                            updateExperienceItem(
-                              index,
-                              "company",
-                              event.target.value,
-                            )
-                          }
-                          className="w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                          placeholder="会社名"
-                        />
-                        <input
-                          value={item.role || ""}
-                          onChange={(event) =>
-                            updateExperienceItem(
-                              index,
-                              "role",
-                              event.target.value,
-                            )
-                          }
-                          className="w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                          placeholder="役職"
-                        />
-                        <label className="block">
-                          <span className="mb-2 block text-sm font-bold text-gray-900">
-                            開始年月
-                          </span>
-                          <input
-                            type="month"
-                            value={item.startMonth || ""}
-                            onChange={(event) =>
-                              updateExperienceItem(
-                                index,
-                                "startMonth",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="mb-2 block text-sm font-bold text-gray-900">
-                            終了年月
-                          </span>
-                          <input
-                            type="month"
-                            value={item.endMonth || ""}
-                            onChange={(event) =>
-                              updateExperienceItem(
-                                index,
-                                "endMonth",
-                                event.target.value,
-                              )
-                            }
-                            disabled={Boolean(item.isCurrent)}
-                            className="w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900 disabled:bg-gray-100"
-                          />
-                        </label>
-                        <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:col-span-2">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(item.isCurrent)}
-                            onChange={(event) => {
-                              updateExperienceItem(
-                                index,
-                                "isCurrent",
-                                event.target.checked,
-                              );
-                              if (event.target.checked) {
-                                updateExperienceItem(index, "endMonth", "");
-                              }
-                            }}
-                            className="h-5 w-5"
-                          />
-                          現在も継続中
-                        </label>
-                        <input
-                          value={item.achievement || ""}
-                          onChange={(event) =>
-                            updateExperienceItem(
-                              index,
-                              "achievement",
-                              event.target.value,
-                            )
-                          }
-                          className="w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
-                          placeholder="実績・強み"
-                        />
-                        <textarea
-                          value={item.description || ""}
-                          onChange={(event) =>
-                            updateExperienceItem(
-                              index,
-                              "description",
-                              event.target.value,
-                            )
-                          }
-                          className="min-h-24 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900 md:col-span-2"
-                          placeholder="業務内容"
-                        />
-                        <div className="flex justify-end md:col-span-2">
-                          <button
-                            type="button"
-                            onClick={() => removeExperienceItem(index)}
-                            className="w-full rounded-lg bg-gray-200 px-4 py-3 font-bold text-gray-900 sm:w-auto"
-                          >
-                            削除
-                          </button>
-                        </div>
-                      </div>
-                    ),
-                  )
-                )}
-              </div>
-            </div>
             <label className="block md:col-span-2">
               <span className="text-sm font-bold text-gray-900">自己紹介</span>
               <textarea
@@ -967,10 +779,17 @@ function PropertyInquiryPageContent() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"
-                onClick={handleGenerate}
+                onClick={() => handleGenerate(false)}
                 className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
               >
-                問い合わせメールを作成
+                テンプレートで作成
+              </button>
+              <button
+                type="button"
+                onClick={() => handleGenerate(true)}
+                className="w-full rounded-lg border border-blue-700 px-4 py-3 font-bold text-blue-700 sm:w-auto"
+              >
+                より自然な英語で作成
               </button>
               <button
                 type="button"

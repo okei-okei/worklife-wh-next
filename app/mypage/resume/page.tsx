@@ -33,8 +33,6 @@ type ResumeFile = {
   created_at: string;
 };
 
-const resumeBucketName = "resumes";
-
 const initialResumeForm: ResumeForm = {
   full_name: "",
   email: "",
@@ -96,18 +94,6 @@ const textFields: Array<{
   },
 ];
 
-function isMissingColumnError(error: { message?: string } | null) {
-  return Boolean(
-    error?.message?.includes("column") ||
-      error?.message?.includes("schema cache") ||
-      error?.message?.includes("relation"),
-  );
-}
-
-function isMissingRelationError(error: { message?: string } | null) {
-  return Boolean(error?.message?.includes("relation"));
-}
-
 const textAreaFields: Array<{
   key: keyof ResumeForm;
   label: string;
@@ -130,15 +116,6 @@ function formatDateTime(value: string) {
   }).format(new Date(value));
 }
 
-function buildResumeFilePath(userId: string, fileName: string) {
-  const timestamp = Date.now();
-  const safeFileName = fileName
-    .replace(/[^a-zA-Z0-9._-]/g, "-")
-    .replace(/-+/g, "-");
-
-  return `resumes/${userId}/${timestamp}-${safeFileName || "resume.pdf"}`;
-}
-
 export default function ResumePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -153,6 +130,14 @@ export default function ResumePage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [customSkill, setCustomSkill] = useState("");
+
+  const getAccessToken = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    return session?.access_token || "";
+  };
 
   const loadResume = useCallback(async () => {
     setIsLoading(true);
@@ -169,86 +154,50 @@ export default function ResumePage() {
 
     setCurrentUserId(user.id);
 
-    const extendedResumeResponse = await supabase
-      .from("resumes")
-      .select(
-        "full_name, email, phone, current_city, visa_type, available_from, work_experience, skills, skills_list, experience_items, english_level, self_introduction",
-      )
-      .eq("user_id", user.id)
-      .maybeSingle<Partial<ResumeForm>>();
+    const accessToken = await getAccessToken();
+    const response = await fetch("/api/mypage/resume", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const data = (await response.json()) as {
+      resume: Partial<ResumeForm> | null;
+      files: ResumeFile[];
+      email: string;
+      message?: string;
+    };
 
-    const resumeResponse =
-      extendedResumeResponse.error &&
-      isMissingColumnError(extendedResumeResponse.error)
-        ? await supabase
-            .from("resumes")
-            .select(
-              "full_name, email, phone, current_city, visa_type, available_from, work_experience, skills, english_level, self_introduction",
-            )
-            .eq("user_id", user.id)
-            .maybeSingle<Partial<ResumeForm>>()
-        : extendedResumeResponse;
-
-    const filesResponse =
-      await supabase
-        .from("resume_files")
-        .select("id, user_id, file_name, file_path, file_url, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-    if (resumeResponse.error) {
+    if (!response.ok) {
       setErrorMessage(
-        `履歴書情報の読み込みに失敗しました。${resumeResponse.error.message}`,
+        `履歴書情報の読み込みに失敗しました。${data.message || "時間をおいて再度お試しください。"}`,
       );
       setIsLoading(false);
       return;
     }
 
-    if (filesResponse.error) {
-      setErrorMessage(
-        `履歴書PDFの読み込みに失敗しました。${filesResponse.error.message}`,
-      );
-      setIsLoading(false);
-      return;
-    }
-
-    if (resumeResponse.data) {
+    if (data.resume) {
       setForm({
-        full_name: resumeResponse.data.full_name || "",
-        email: resumeResponse.data.email || user.email || "",
-        phone: resumeResponse.data.phone || "",
-        current_city: resumeResponse.data.current_city || "",
-        visa_type: resumeResponse.data.visa_type || "",
-        available_from: resumeResponse.data.available_from || "",
-        work_experience: resumeResponse.data.work_experience || "",
-        skills: resumeResponse.data.skills || "",
-        skills_list: resumeResponse.data.skills_list || [],
-        experience_items: resumeResponse.data.experience_items || [],
-        english_level: resumeResponse.data.english_level || "",
-        self_introduction: resumeResponse.data.self_introduction || "",
+        full_name: data.resume.full_name || "",
+        email: data.resume.email || data.email || "",
+        phone: data.resume.phone || "",
+        current_city: data.resume.current_city || "",
+        visa_type: data.resume.visa_type || "",
+        available_from: data.resume.available_from || "",
+        work_experience: data.resume.work_experience || "",
+        skills: data.resume.skills || "",
+        skills_list: data.resume.skills_list || [],
+        experience_items: data.resume.experience_items || [],
+        english_level: data.resume.english_level || "",
+        self_introduction: data.resume.self_introduction || "",
       });
     } else {
       setForm({
         ...initialResumeForm,
-        email: user.email || "",
+        email: data.email || user.email || "",
       });
     }
 
-    const files = (filesResponse.data || []) as ResumeFile[];
-    const filesWithSignedUrls = await Promise.all(
-      files.map(async (file) => {
-        const { data } = await supabase.storage
-          .from(resumeBucketName)
-          .createSignedUrl(file.file_path, 60 * 60);
-
-        return {
-          ...file,
-          signed_url: data?.signedUrl || file.file_url,
-        };
-      }),
-    );
-
-    setResumeFiles(filesWithSignedUrls);
+    setResumeFiles(data.files || []);
     setIsLoading(false);
   }, [router]);
 
@@ -355,87 +304,33 @@ export default function ResumePage() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    const extendedPayload = {
-      user_id: currentUserId,
+    const payload = {
       ...form,
       available_from: form.available_from || null,
-      updated_at: new Date().toISOString(),
     };
+    const accessToken = await getAccessToken();
+    const response = await fetch("/api/mypage/resume", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = (await response.json()) as { message?: string };
 
-    const basePayload = {
-      user_id: currentUserId,
-      full_name: form.full_name,
-      email: form.email,
-      phone: form.phone,
-      current_city: form.current_city,
-      visa_type: form.visa_type,
-      available_from: form.available_from || null,
-      work_experience: form.work_experience,
-      skills: form.skills,
-      english_level: form.english_level,
-      self_introduction: form.self_introduction,
-      updated_at: new Date().toISOString(),
-    };
-
-    const existingResumeResponse = await supabase
-      .from("resumes")
-      .select("id")
-      .eq("user_id", currentUserId)
-      .maybeSingle<{ id: string }>();
-
-    if (isMissingRelationError(existingResumeResponse.error)) {
+    if (!response.ok) {
       setIsSaving(false);
       setErrorMessage(
-        "resumesテーブルが未作成です。supabase/resume_structured_fields.sql をSupabase SQL Editorで実行してください。",
+        `保存に失敗しました。${data.message || "時間をおいて再度お試しください。"}`,
       );
-      return;
-    }
-
-    if (existingResumeResponse.error) {
-      setIsSaving(false);
-      setErrorMessage(
-        `保存前の確認に失敗しました。${existingResumeResponse.error.message}`,
-      );
-      return;
-    }
-
-    const saveWithPayload = async (
-      payload: typeof extendedPayload | typeof basePayload,
-    ) => {
-      if (existingResumeResponse.data?.id) {
-        return supabase
-          .from("resumes")
-          .update(payload)
-          .eq("user_id", currentUserId)
-          .select("id")
-          .single();
-      }
-
-      return supabase.from("resumes").insert(payload).select("id").single();
-    };
-
-    let saveResponse = await saveWithPayload(extendedPayload);
-    let savedStructuredFields = true;
-
-    if (saveResponse.error && isMissingColumnError(saveResponse.error)) {
-      saveResponse = await saveWithPayload(basePayload);
-      savedStructuredFields = false;
-    }
-
-    if (saveResponse.error) {
-      setIsSaving(false);
-      setErrorMessage(`保存に失敗しました。${saveResponse.error.message}`);
       return;
     }
 
     await loadResume();
     setIsSaving(false);
 
-    setSuccessMessage(
-      savedStructuredFields
-        ? "履歴書情報を保存しました。"
-        : "基本情報を保存しました。職歴・スキルも保存するには supabase/resume_structured_fields.sql を実行してください。",
-    );
+    setSuccessMessage("履歴書情報を保存しました。");
   };
 
   const handleUpload = async () => {
@@ -462,38 +357,27 @@ export default function ResumePage() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    const filePath = buildResumeFilePath(currentUserId, selectedFile.name);
-    const uploadResponse = await supabase.storage
-      .from(resumeBucketName)
-      .upload(filePath, selectedFile, {
-        contentType: "application/pdf",
-        upsert: false,
-      });
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    const accessToken = await getAccessToken();
+    const uploadResponse = await fetch("/api/mypage/resume/file", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: formData,
+    });
+    const uploadData = (await uploadResponse.json()) as { message?: string };
 
-    if (uploadResponse.error) {
+    if (!uploadResponse.ok) {
       setIsUploading(false);
       setErrorMessage(
-        `PDFのアップロードに失敗しました。${uploadResponse.error.message}`,
+        `PDFのアップロードに失敗しました。${uploadData.message || "時間をおいて再度お試しください。"}`,
       );
       return;
     }
-
-    const insertResponse = await supabase.from("resume_files").insert({
-      user_id: currentUserId,
-      file_name: selectedFile.name,
-      file_path: filePath,
-      file_url: null,
-    });
 
     setIsUploading(false);
-
-    if (insertResponse.error) {
-      await supabase.storage.from(resumeBucketName).remove([filePath]);
-      setErrorMessage(
-        `PDF情報の保存に失敗しました。${insertResponse.error.message}`,
-      );
-      return;
-    }
 
     setSelectedFile(null);
     if (fileInputRef.current) {
@@ -508,31 +392,27 @@ export default function ResumePage() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    const storageResponse = await supabase.storage
-      .from(resumeBucketName)
-      .remove([file.file_path]);
+    const accessToken = await getAccessToken();
+    const deleteResponse = await fetch(
+      `/api/mypage/resume/file?id=${encodeURIComponent(file.id)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+    const deleteData = (await deleteResponse.json()) as { message?: string };
 
-    if (storageResponse.error) {
+    if (!deleteResponse.ok) {
       setDeletingFileId("");
       setErrorMessage(
-        `PDFファイルの削除に失敗しました。${storageResponse.error.message}`,
+        `PDFファイルの削除に失敗しました。${deleteData.message || "時間をおいて再度お試しください。"}`,
       );
       return;
     }
-
-    const deleteResponse = await supabase
-      .from("resume_files")
-      .delete()
-      .eq("id", file.id);
 
     setDeletingFileId("");
-
-    if (deleteResponse.error) {
-      setErrorMessage(
-        `PDF情報の削除に失敗しました。${deleteResponse.error.message}`,
-      );
-      return;
-    }
 
     setResumeFiles((current) => current.filter((item) => item.id !== file.id));
     setSuccessMessage("履歴書PDFを削除しました。");

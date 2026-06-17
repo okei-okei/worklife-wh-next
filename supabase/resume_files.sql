@@ -55,8 +55,13 @@ for select
 to authenticated
 using (
   bucket_id = 'resumes'
-  and (storage.foldername(name))[1] = 'resumes'
-  and (storage.foldername(name))[2] = auth.uid()::text
+  and (
+    (storage.foldername(name))[1] = auth.uid()::text
+    or (
+      (storage.foldername(name))[1] = 'resumes'
+      and (storage.foldername(name))[2] = auth.uid()::text
+    )
+  )
 );
 
 drop policy if exists "Users can upload own resume PDFs" on storage.objects;
@@ -66,8 +71,13 @@ for insert
 to authenticated
 with check (
   bucket_id = 'resumes'
-  and (storage.foldername(name))[1] = 'resumes'
-  and (storage.foldername(name))[2] = auth.uid()::text
+  and (
+    (storage.foldername(name))[1] = auth.uid()::text
+    or (
+      (storage.foldername(name))[1] = 'resumes'
+      and (storage.foldername(name))[2] = auth.uid()::text
+    )
+  )
   and lower(right(name, 4)) = '.pdf'
 );
 
@@ -78,13 +88,23 @@ for update
 to authenticated
 using (
   bucket_id = 'resumes'
-  and (storage.foldername(name))[1] = 'resumes'
-  and (storage.foldername(name))[2] = auth.uid()::text
+  and (
+    (storage.foldername(name))[1] = auth.uid()::text
+    or (
+      (storage.foldername(name))[1] = 'resumes'
+      and (storage.foldername(name))[2] = auth.uid()::text
+    )
+  )
 )
 with check (
   bucket_id = 'resumes'
-  and (storage.foldername(name))[1] = 'resumes'
-  and (storage.foldername(name))[2] = auth.uid()::text
+  and (
+    (storage.foldername(name))[1] = auth.uid()::text
+    or (
+      (storage.foldername(name))[1] = 'resumes'
+      and (storage.foldername(name))[2] = auth.uid()::text
+    )
+  )
   and lower(right(name, 4)) = '.pdf'
 );
 
@@ -95,6 +115,11 @@ for delete
 to authenticated
 using (
   bucket_id = 'resumes'
-  and (storage.foldername(name))[1] = 'resumes'
-  and (storage.foldername(name))[2] = auth.uid()::text
+  and (
+    (storage.foldername(name))[1] = auth.uid()::text
+    or (
+      (storage.foldername(name))[1] = 'resumes'
+      and (storage.foldername(name))[2] = auth.uid()::text
+    )
+  )
 );

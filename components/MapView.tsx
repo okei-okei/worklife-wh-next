@@ -35,6 +35,9 @@ type Point = {
   lat: number;
   lng: number;
   label: string;
+  subtitle?: string;
+  details?: string[];
+  href?: string;
 };
 
 type Line = {
@@ -98,8 +101,23 @@ export default function MapView({
             icon={job.id === highlightedJobId ? highlightedJobIcon : jobIcon}
           >
             <Popup>
-              {job.id === highlightedJobId ? "おすすめの仕事: " : "仕事: "}
-              {job.label}
+              <div className="min-w-44 space-y-2 text-gray-900">
+                <p className="font-bold">{job.label}</p>
+                {job.subtitle ? <p className="text-sm">{job.subtitle}</p> : null}
+                {job.details?.map((detail) => (
+                  <p key={detail} className="text-sm">
+                    {detail}
+                  </p>
+                ))}
+                {job.href ? (
+                  <a
+                    href={job.href}
+                    className="inline-block font-bold text-blue-700 underline"
+                  >
+                    詳細を見る
+                  </a>
+                ) : null}
+              </div>
             </Popup>
           </Marker>
         ))}
@@ -115,10 +133,25 @@ export default function MapView({
             }
           >
             <Popup>
-              {property.id === highlightedPropertyId
-                ? "おすすめの物件: "
-                : "物件: "}
-              {property.label}
+              <div className="min-w-44 space-y-2 text-gray-900">
+                <p className="font-bold">{property.label}</p>
+                {property.subtitle ? (
+                  <p className="text-sm">{property.subtitle}</p>
+                ) : null}
+                {property.details?.map((detail) => (
+                  <p key={detail} className="text-sm">
+                    {detail}
+                  </p>
+                ))}
+                {property.href ? (
+                  <a
+                    href={property.href}
+                    className="inline-block font-bold text-blue-700 underline"
+                  >
+                    詳細を見る
+                  </a>
+                ) : null}
+              </div>
             </Popup>
           </Marker>
         ))}

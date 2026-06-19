@@ -20,13 +20,25 @@ export default function Footer() {
             プライバシーポリシー
           </Link>
           <Link href="/legal/cookies" className="hover:text-blue-600">
-            Cookie
+            Cookieポリシー
           </Link>
           <Link href="/legal/affiliate-disclosure" className="hover:text-blue-600">
-            広告開示
+            広告・アフィリエイト開示
           </Link>
-          <Link href="/legal/business-terms" className="hover:text-blue-600">
-            掲載者向け
+          <Link href="/legal/ai-policy" className="hover:text-blue-600">
+            AI利用ポリシー
+          </Link>
+          <Link href="/legal/job-posting" className="hover:text-blue-600">
+            求人掲載規約
+          </Link>
+          <Link href="/legal/property-posting" className="hover:text-blue-600">
+            物件掲載規約
+          </Link>
+          <Link href="/legal/community-guidelines" className="hover:text-blue-600">
+            コミュニティガイドライン
+          </Link>
+          <Link href="/legal/data-transfer" className="hover:text-blue-600">
+            データ利用ポリシー
           </Link>
         </nav>
       </div>

@@ -6,35 +6,135 @@ import {
   LegalConsentCheckboxes,
   LegalLink,
 } from "@/components/LegalConsentCheckboxes";
+import NzLocationPicker from "@/components/NzLocationPicker";
 import { LEGAL_VERSION } from "@/app/legal/_data/legalDocuments";
 import { supabase } from "@/lib/supabase";
 
 type SubmissionType = "job" | "property";
+type CountryCode = "NZ" | "AU" | "CA";
+
+const inputClass =
+  "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 
 export default function CompanySubmitPage() {
   const [type, setType] = useState<SubmissionType>("job");
+  const [countryCode, setCountryCode] = useState<CountryCode>("NZ");
   const [title, setTitle] = useState("");
   const [companyOrOwner, setCompanyOrOwner] = useState("");
   const [email, setEmail] = useState("");
   const [description, setDescription] = useState("");
   const [url, setUrl] = useState("");
+  const [region, setRegion] = useState("");
+  const [district, setDistrict] = useState("");
+  const [area, setArea] = useState("");
+  const [address, setAddress] = useState("");
+  const [employmentType, setEmploymentType] = useState("");
+  const [hourlyRateMin, setHourlyRateMin] = useState("");
+  const [hourlyRateMax, setHourlyRateMax] = useState("");
+  const [weeklyHours, setWeeklyHours] = useState("");
+  const [accommodationAvailable, setAccommodationAvailable] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [applicationMethod, setApplicationMethod] = useState("");
+  const [rentWeekly, setRentWeekly] = useState("");
+  const [bedrooms, setBedrooms] = useState("");
+  const [bathrooms, setBathrooms] = useState("");
+  const [parkingSpaces, setParkingSpaces] = useState("");
+  const [availableFrom, setAvailableFrom] = useState("");
+  const [petsAllowed, setPetsAllowed] = useState(false);
+  const [furnished, setFurnished] = useState(false);
+  const [utilitiesIncluded, setUtilitiesIncluded] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
   const [agreedToPostingTerms, setAgreedToPostingTerms] = useState(false);
   const [agreedToBusinessTerms, setAgreedToBusinessTerms] = useState(false);
   const [agreedToPersonalDataUse, setAgreedToPersonalDataUse] = useState(false);
+  const [agreedNoIllegalFee, setAgreedNoIllegalFee] = useState(false);
+  const [agreedNoDiscrimination, setAgreedNoDiscrimination] = useState(false);
+  const [agreedListingAuthority, setAgreedListingAuthority] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const resetForm = () => {
-    setType("job");
     setTitle("");
     setCompanyOrOwner("");
     setEmail("");
     setDescription("");
     setUrl("");
+    setRegion("");
+    setDistrict("");
+    setArea("");
+    setAddress("");
+    setEmploymentType("");
+    setHourlyRateMin("");
+    setHourlyRateMax("");
+    setWeeklyHours("");
+    setAccommodationAvailable(false);
+    setStartDate("");
+    setApplicationMethod("");
+    setRentWeekly("");
+    setBedrooms("");
+    setBathrooms("");
+    setParkingSpaces("");
+    setAvailableFrom("");
+    setPetsAllowed(false);
+    setFurnished(false);
+    setUtilitiesIncluded(false);
+    setFiles([]);
     setAgreedToPostingTerms(false);
     setAgreedToBusinessTerms(false);
     setAgreedToPersonalDataUse(false);
+    setAgreedNoIllegalFee(false);
+    setAgreedNoDiscrimination(false);
+    setAgreedListingAuthority(false);
+  };
+
+  const handleFiles = (selectedFiles: FileList | null) => {
+    const nextFiles = Array.from(selectedFiles || []);
+    const maxFiles = type === "job" ? 1 : 10;
+
+    if (nextFiles.length > maxFiles) {
+      setErrorMessage(
+        type === "job"
+          ? "求人画像は1枚までです。"
+          : "物件画像は10枚までです。",
+      );
+      return;
+    }
+
+    const invalid = nextFiles.find(
+      (file) =>
+        !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+        file.size > 5 * 1024 * 1024,
+    );
+
+    if (invalid) {
+      setErrorMessage("画像はjpg/png/webp、1枚5MB以下にしてください。");
+      return;
+    }
+
+    setErrorMessage("");
+    setFiles(nextFiles);
+  };
+
+  const uploadImages = async (submissionId: string) => {
+    const imageUrls: string[] = [];
+
+    for (const [index, file] of files.entries()) {
+      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const filePath = `${submissionId}/${Date.now()}-${index}.${extension}`;
+      const { error } = await supabase.storage
+        .from("listing-images")
+        .upload(filePath, file, { upsert: false });
+
+      if (error) throw error;
+
+      const { data } = supabase.storage
+        .from("listing-images")
+        .getPublicUrl(filePath);
+      imageUrls.push(data.publicUrl);
+    }
+
+    return imageUrls;
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -42,220 +142,441 @@ export default function CompanySubmitPage() {
     setMessage("");
     setErrorMessage("");
 
-    if (!title.trim()) {
-      setErrorMessage("タイトルを入力してください。");
+    if (!title.trim() || !email.trim()) {
+      setErrorMessage("タイトルと連絡先メールを入力してください。");
       return;
     }
 
     if (
       !agreedToPostingTerms ||
       !agreedToBusinessTerms ||
-      !agreedToPersonalDataUse
+      !agreedToPersonalDataUse ||
+      !agreedNoIllegalFee ||
+      !agreedNoDiscrimination ||
+      (type === "property" && !agreedListingAuthority)
     ) {
-      setErrorMessage("掲載に必要な規約と個人情報取扱いへの同意が必要です。");
+      setErrorMessage("必須の確認事項すべてへの同意が必要です。");
       return;
     }
 
     setIsSubmitting(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    const submissionPayload = {
-      user_id: user?.id ?? null,
-      type,
-      title: title.trim(),
-      company_or_owner: companyOrOwner.trim() || null,
-      email: email.trim() || null,
-      description: description.trim() || null,
-      url: url.trim() || null,
-      status: "pending",
-      consent_versions: {
-        posting_terms:
-          type === "job" ? "job_posting" : "property_posting",
-        business_terms: "business_terms",
-        version: LEGAL_VERSION,
-        agreed_to_personal_data_use: true,
-      },
-    };
-
-    let { error } = await supabase
-      .from("listing_submissions")
-      .insert(submissionPayload);
-
-    if (error?.message.includes("column")) {
-      const fallbackPayload = {
-        user_id: submissionPayload.user_id,
-        type: submissionPayload.type,
-        title: submissionPayload.title,
-        company_or_owner: submissionPayload.company_or_owner,
-        email: submissionPayload.email,
-        description: submissionPayload.description,
-        url: submissionPayload.url,
-        status: submissionPayload.status,
+      const structuredData = {
+        country_code: countryCode,
+        region: region || null,
+        district: district || null,
+        suburb: area || null,
+        area: area || null,
+        address: address || null,
+        employment_type: type === "job" ? employmentType || null : null,
+        hourly_rate_min:
+          type === "job" && hourlyRateMin ? Number(hourlyRateMin) : null,
+        hourly_rate_max:
+          type === "job" && hourlyRateMax ? Number(hourlyRateMax) : null,
+        weekly_hours:
+          type === "job" && weeklyHours ? Number(weeklyHours) : null,
+        accommodation_available:
+          type === "job" ? accommodationAvailable : null,
+        start_date: type === "job" ? startDate || null : null,
+        application_method:
+          type === "job" ? applicationMethod || null : null,
+        rent_weekly:
+          type === "property" && rentWeekly ? Number(rentWeekly) : null,
+        bedrooms:
+          type === "property" && bedrooms ? Number(bedrooms) : null,
+        bathrooms:
+          type === "property" && bathrooms ? Number(bathrooms) : null,
+        parking_spaces:
+          type === "property" && parkingSpaces
+            ? Number(parkingSpaces)
+            : null,
+        available_from:
+          type === "property" ? availableFrom || null : null,
+        pets_allowed: type === "property" ? petsAllowed : null,
+        furnished: type === "property" ? furnished : null,
+        utilities_included:
+          type === "property" ? utilitiesIncluded : null,
       };
-      const fallbackResult = await supabase
+
+      const { data: submission, error } = await supabase
         .from("listing_submissions")
-        .insert(fallbackPayload);
-      error = fallbackResult.error;
+        .insert({
+          user_id: user?.id ?? null,
+          submitted_by: user?.id ?? null,
+          type,
+          title: title.trim(),
+          company_or_owner: companyOrOwner.trim() || null,
+          email: email.trim(),
+          description: description.trim() || null,
+          url: url.trim() || null,
+          status: "pending",
+          country_code: countryCode,
+          region: region || null,
+          district: district || null,
+          suburb: area || null,
+          area: area || null,
+          structured_data: structuredData,
+          consent_versions: {
+            posting_terms:
+              type === "job" ? "job_posting" : "property_posting",
+            business_terms: "business_terms",
+            version: LEGAL_VERSION,
+          },
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+
+      if (files.length) {
+        const imageUrls = await uploadImages(submission.id);
+        const { error: imageUpdateError } = await supabase
+          .from("listing_submissions")
+          .update({ image_urls: imageUrls })
+          .eq("id", submission.id);
+
+        if (imageUpdateError) throw imageUpdateError;
+      }
+
+      setMessage("掲載申請を受け付けました。確認後、承認された内容を公開します。");
+      resetForm();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "掲載申請を送信できませんでした。",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
-
-    if (error) {
-      setErrorMessage(error.message);
-      return;
-    }
-
-    setMessage("掲載申請を受け付けました。運営側で内容を確認します。");
-    resetForm();
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
-      <div className="mx-auto max-w-4xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
+      <div className="mx-auto max-w-5xl space-y-6">
+        <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH 掲載申請
             </p>
-            <h1 className="text-4xl font-bold">求人・物件の掲載申請</h1>
-            <p className="mt-2 text-gray-600">
-              求人掲載企業・物件オーナー向けの申請フォームです。
+            <h1 className="text-2xl font-bold md:text-4xl">
+              求人・物件の掲載申請
+            </h1>
+            <p className="mt-2 max-w-3xl font-medium leading-7 text-gray-700">
+              申請内容を運営者が確認し、承認後に公開します。
             </p>
           </div>
-
           <Link
             href="/"
-            className="rounded-lg bg-gray-500 px-4 py-2 text-white"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 sm:w-auto"
           >
-            ← TOPへ戻る
+            TOPへ戻る
           </Link>
-        </div>
+        </header>
 
-        <section className="rounded-2xl border border-orange-200 bg-orange-50 p-5 text-orange-900">
-          <h2 className="text-xl font-bold">掲載前の注意</h2>
-          <p className="mt-2 leading-7">
-            違法求人、最低賃金違反、虚偽条件の掲載、ビザ違反を誘導する内容、
-            差別的な条件提示、詐欺的な募集や物件掲載は禁止です。申請内容は運営が確認し、
-            不適切と判断した場合は掲載を見送ることがあります。
-          </p>
-        </section>
-
-        <form onSubmit={handleSubmit} className="rounded-2xl bg-white p-6 shadow">
-          <div className="space-y-5">
-            <div>
-              <span className="mb-2 block text-sm font-bold text-gray-700">
-                掲載種別
-              </span>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label
-                  className={
-                    type === "job"
-                      ? "cursor-pointer rounded-xl border-2 border-blue-500 bg-blue-50 p-4"
-                      : "cursor-pointer rounded-xl border border-gray-200 p-4 hover:bg-gray-50"
-                  }
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+            <h2 className="text-xl font-bold">1. 掲載種別</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {(["job", "property"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    setType(value);
+                    setFiles([]);
+                  }}
+                  className={`rounded-lg px-4 py-3 font-bold ${
+                    type === value
+                      ? "bg-blue-600 text-white"
+                      : "border border-gray-300 bg-white text-gray-900"
+                  }`}
                 >
-                  <input
-                    type="radio"
-                    name="type"
-                    value="job"
-                    checked={type === "job"}
-                    onChange={() => setType("job")}
-                    className="mr-2"
-                  />
-                  <span className="font-bold">求人掲載</span>
-                </label>
-
-                <label
-                  className={
-                    type === "property"
-                      ? "cursor-pointer rounded-xl border-2 border-blue-500 bg-blue-50 p-4"
-                      : "cursor-pointer rounded-xl border border-gray-200 p-4 hover:bg-gray-50"
-                  }
-                >
-                  <input
-                    type="radio"
-                    name="type"
-                    value="property"
-                    checked={type === "property"}
-                    onChange={() => setType("property")}
-                    className="mr-2"
-                  />
-                  <span className="font-bold">物件掲載</span>
-                </label>
-              </div>
+                  {value === "job" ? "求人掲載" : "物件掲載"}
+                </button>
+              ))}
             </div>
+          </section>
 
-            <label className="block">
-              <span className="mb-2 block text-sm font-bold text-gray-700">
-                タイトル
-              </span>
-              <input
-                type="text"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="例: Auckland CBD カフェスタッフ募集"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-            </label>
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-bold text-gray-700">
-                  掲載者名
-                </span>
+          <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+            <h2 className="text-xl font-bold">2. 基本情報</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <label>
+                <span className="text-sm font-bold">タイトル</span>
                 <input
-                  type="text"
-                  value={companyOrOwner}
-                  onChange={(event) => setCompanyOrOwner(event.target.value)}
-                  placeholder="会社名・店舗名・オーナー名"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  className={inputClass}
+                  required
                 />
               </label>
-
-              <label className="block">
-                <span className="mb-2 block text-sm font-bold text-gray-700">
-                  メールアドレス
+              <label>
+                <span className="text-sm font-bold">
+                  {type === "job" ? "会社名" : "掲載者・管理者名"}
                 </span>
+                <input
+                  value={companyOrOwner}
+                  onChange={(event) => setCompanyOrOwner(event.target.value)}
+                  className={inputClass}
+                />
+              </label>
+              <label>
+                <span className="text-sm font-bold">連絡先メール</span>
                 <input
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="contact@example.com"
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className={inputClass}
+                  required
+                />
+              </label>
+              <label>
+                <span className="text-sm font-bold">外部URL</span>
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(event) => setUrl(event.target.value)}
+                  className={inputClass}
+                />
+              </label>
+              <label>
+                <span className="text-sm font-bold">国</span>
+                <select
+                  value={countryCode}
+                  onChange={(event) =>
+                    setCountryCode(event.target.value as CountryCode)
+                  }
+                  className={inputClass}
+                >
+                  <option value="NZ">New Zealand</option>
+                  <option value="AU">Australia</option>
+                  <option value="CA">Canada</option>
+                </select>
+              </label>
+              <label>
+                <span className="text-sm font-bold">住所・エリア詳細</span>
+                <input
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  className={inputClass}
                 />
               </label>
             </div>
 
-            <label className="block">
-              <span className="mb-2 block text-sm font-bold text-gray-700">
-                説明
+            <div className="mt-4">
+              {countryCode === "NZ" ? (
+                <NzLocationPicker
+                  label="地域"
+                  onChange={() => undefined}
+                  allLabel="未設定"
+                  showCurrentLocation={false}
+                  onSelectionChange={(selection) => {
+                    setRegion(selection.region);
+                    setDistrict(selection.district);
+                    setArea(selection.area);
+                  }}
+                />
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    ["Region", region, setRegion],
+                    ["City / District", district, setDistrict],
+                    ["Area / Suburb", area, setArea],
+                  ].map(([label, value, setter]) => (
+                    <label key={label as string}>
+                      <span className="text-sm font-bold">{label as string}</span>
+                      <input
+                        value={value as string}
+                        onChange={(event) =>
+                          (setter as (value: string) => void)(event.target.value)
+                        }
+                        className={inputClass}
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {type === "job" ? (
+            <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+              <h2 className="text-xl font-bold">3. 求人条件</h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <label>
+                  <span className="text-sm font-bold">採用形態</span>
+                  <select
+                    value={employmentType}
+                    onChange={(event) => setEmploymentType(event.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">選択してください</option>
+                    {[
+                      "Full-time",
+                      "Part-time",
+                      "Casual",
+                      "Seasonal",
+                      "Fixed-term",
+                      "Internship",
+                    ].map((option) => (
+                      <option key={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className="text-sm font-bold">時給下限</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={hourlyRateMin}
+                    onChange={(event) => setHourlyRateMin(event.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <label>
+                  <span className="text-sm font-bold">時給上限</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={hourlyRateMax}
+                    onChange={(event) => setHourlyRateMax(event.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <label>
+                  <span className="text-sm font-bold">週勤務時間</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={weeklyHours}
+                    onChange={(event) => setWeeklyHours(event.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <label>
+                  <span className="text-sm font-bold">勤務開始可能日</span>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold">
+                  <input
+                    type="checkbox"
+                    checked={accommodationAvailable}
+                    onChange={(event) =>
+                      setAccommodationAvailable(event.target.checked)
+                    }
+                    className="h-5 w-5"
+                  />
+                  住み込み可能
+                </label>
+              </div>
+              <label className="mt-4 block">
+                <span className="text-sm font-bold">応募方法</span>
+                <input
+                  value={applicationMethod}
+                  onChange={(event) => setApplicationMethod(event.target.value)}
+                  className={inputClass}
+                />
+              </label>
+            </section>
+          ) : (
+            <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+              <h2 className="text-xl font-bold">3. 物件条件</h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[
+                  ["週家賃", rentWeekly, setRentWeekly],
+                  ["ベッドルーム数", bedrooms, setBedrooms],
+                  ["バスルーム数", bathrooms, setBathrooms],
+                  ["駐車場数", parkingSpaces, setParkingSpaces],
+                ].map(([label, value, setter]) => (
+                  <label key={label as string}>
+                    <span className="text-sm font-bold">{label as string}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={value as string}
+                      onChange={(event) =>
+                        (setter as (value: string) => void)(event.target.value)
+                      }
+                      className={inputClass}
+                    />
+                  </label>
+                ))}
+                <label>
+                  <span className="text-sm font-bold">入居可能日</span>
+                  <input
+                    type="date"
+                    value={availableFrom}
+                    onChange={(event) => setAvailableFrom(event.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                {[
+                  ["ペット可", petsAllowed, setPetsAllowed],
+                  ["家具付き", furnished, setFurnished],
+                  ["光熱費込み", utilitiesIncluded, setUtilitiesIncluded],
+                ].map(([label, checked, setter]) => (
+                  <label
+                    key={label as string}
+                    className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked as boolean}
+                      onChange={(event) =>
+                        (setter as (value: boolean) => void)(
+                          event.target.checked,
+                        )
+                      }
+                      className="h-5 w-5"
+                    />
+                    {label as string}
+                  </label>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+            <h2 className="text-xl font-bold">4. 説明と画像</h2>
+            <label className="mt-4 block">
+              <span className="text-sm font-bold">
+                {type === "job" ? "職務内容" : "物件説明"}
               </span>
               <textarea
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                rows={7}
-                placeholder="仕事内容、勤務条件、物件条件、家賃、所在地、応募・問い合わせ方法などを入力してください。"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                rows={6}
+                className={inputClass}
               />
             </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-bold text-gray-700">
-                関連URL
+            <label className="mt-4 block">
+              <span className="text-sm font-bold">
+                画像（{type === "job" ? "任意・1枚" : "最大10枚"}）
               </span>
               <input
-                type="url"
-                value={url}
-                onChange={(event) => setUrl(event.target.value)}
-                placeholder="https://example.com/listing"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple={type === "property"}
+                onChange={(event) => handleFiles(event.target.files)}
+                className={inputClass}
               />
+              <span className="mt-1 block text-xs font-medium text-gray-600">
+                jpg/png/webp、1枚5MB以下
+              </span>
             </label>
+          </section>
 
+          <section className="rounded-2xl bg-white p-4 shadow md:p-6">
             <LegalConsentCheckboxes
               items={[
                 {
@@ -301,32 +622,64 @@ export default function CompanySubmitPage() {
                   required: true,
                   label:
                     type === "job"
-                      ? "応募者情報を採用目的の範囲でのみ利用し、適用法令を遵守します"
-                      : "問い合わせ者情報を入居関連目的の範囲でのみ利用し、適用法令を遵守します",
+                      ? "応募者情報を採用目的の範囲でのみ利用します"
+                      : "問い合わせ者情報を入居関連目的の範囲でのみ利用します",
                 },
+                {
+                  id: "illegal-fee",
+                  checked: agreedNoIllegalFee,
+                  onChange: setAgreedNoIllegalFee,
+                  required: true,
+                  label:
+                    type === "job"
+                      ? "応募者に違法な費用負担を求めません"
+                      : "違法なletting feeを請求しません",
+                },
+                {
+                  id: "discrimination",
+                  checked: agreedNoDiscrimination,
+                  onChange: setAgreedNoDiscrimination,
+                  required: true,
+                  label:
+                    type === "job"
+                      ? "差別的な求人ではありません"
+                      : "差別的な条件・広告ではありません",
+                },
+                ...(type === "property"
+                  ? [
+                      {
+                        id: "listing-authority",
+                        checked: agreedListingAuthority,
+                        onChange: setAgreedListingAuthority,
+                        required: true,
+                        label: "この物件を掲載する正当な権限があります",
+                      },
+                    ]
+                  : []),
               ]}
             />
 
             {errorMessage ? (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+              <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm font-bold text-red-700">
                 {errorMessage}
-              </div>
+              </p>
             ) : null}
-
             {message ? (
-              <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-green-700">
+              <p className="mt-4 rounded-lg bg-green-50 p-3 text-sm font-bold text-green-700">
                 {message}
-              </div>
+              </p>
             ) : null}
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-lg bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
-            >
-              {isSubmitting ? "送信中..." : "掲載申請を送信"}
-            </button>
-          </div>
+            <div className="mt-5 flex justify-end">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full rounded-lg bg-blue-600 px-5 py-3 font-bold text-white hover:bg-blue-700 disabled:bg-gray-300 sm:w-auto"
+              >
+                {isSubmitting ? "送信中..." : "掲載申請を送信"}
+              </button>
+            </div>
+          </section>
         </form>
       </div>
     </main>

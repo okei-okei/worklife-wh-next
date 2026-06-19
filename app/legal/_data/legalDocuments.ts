@@ -1,3 +1,5 @@
+import { siteConfig } from "@/lib/siteConfig";
+
 export type LegalSection = {
   heading: string;
   paragraphs: string[];
@@ -15,11 +17,12 @@ export type LegalDocument = {
 
 export const LEGAL_VERSION = "1.0.0";
 export const LEGAL_LAST_UPDATED = "2026-06-17";
-export const OPERATOR_NAME = "WorkLife WH 運営事務局";
-export const OPERATOR_EMAIL = "worklife.wh@gmail.com";
+
+export const OPERATOR_NAME = siteConfig.operatorName;
+export const OPERATOR_EMAIL = siteConfig.supportEmail;
 
 const commonNotice =
-  "本ページは初期運用のためのドラフトです。サービス内容、有料提携、広告配信、掲載事業の拡大、法令や外部サービスの変更に応じて、必要に応じて内容を更新し、専門家確認を行います。";
+  "サービス内容、有料提携、広告配信、掲載事業の拡大、法令や外部サービスの変更に応じて、本ポリシーを更新する場合があります。重要な変更はサービス上でお知らせします。";
 
 export const legalDocuments: LegalDocument[] = [
   {

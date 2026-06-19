@@ -12,6 +12,8 @@ type ListingSubmission = {
   url: string | null;
   status: string;
   created_at: string;
+  structured_data?: Record<string, unknown> | null;
+  image_urls?: string[] | null;
 };
 
 type SubmissionAction = "approve" | "reject";
@@ -74,15 +76,28 @@ async function verifyAdmin(request: NextRequest) {
     return { error: createErrorResponse("Unauthorized.", 401) };
   }
 
-  if (user.email !== adminEmail) {
+  const serviceClient = createServiceClient();
+  const { data: profile } = await serviceClient
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  const hasAdminRole =
+    profile?.role === "admin" || profile?.role === "owner";
+
+  if (!hasAdminRole && user.email !== adminEmail) {
     return { error: createErrorResponse("Forbidden.", 403) };
   }
 
-  return { error: null };
+  return { error: null, user };
 }
 
-async function approveSubmission(submission: ListingSubmission) {
+async function approveSubmission(
+  submission: ListingSubmission,
+  approvedBy: string,
+) {
   const serviceClient = createServiceClient();
+  const details = submission.structured_data || {};
 
   if (submission.type === "job") {
     const { error } = await serviceClient.from("public_jobs").upsert(
@@ -93,6 +108,22 @@ async function approveSubmission(submission: ListingSubmission) {
         contact_email: submission.email,
         description: submission.description,
         apply_url: submission.url,
+        country_code: details.country_code,
+        region: details.region,
+        city: details.district,
+        district: details.district,
+        suburb: details.suburb,
+        area: details.area,
+        address: details.address,
+        employment_type: details.employment_type,
+        hourly_rate: details.hourly_rate_min,
+        hourly_rate_min: details.hourly_rate_min,
+        hourly_rate_max: details.hourly_rate_max,
+        work_hours: details.weekly_hours,
+        weekly_hours: details.weekly_hours,
+        accommodation_available: details.accommodation_available,
+        start_date: details.start_date,
+        image_url: submission.image_urls?.[0] || null,
         is_active: true,
       },
       {
@@ -112,6 +143,22 @@ async function approveSubmission(submission: ListingSubmission) {
         contact_email: submission.email,
         description: submission.description,
         url: submission.url,
+        country_code: details.country_code,
+        region: details.region,
+        city: details.district,
+        district: details.district,
+        suburb: details.suburb,
+        area: details.area,
+        address: details.address,
+        rent_weekly: details.rent_weekly,
+        bedrooms: details.bedrooms,
+        bathrooms: details.bathrooms,
+        parking_spaces: details.parking_spaces,
+        available_from: details.available_from,
+        pets_allowed: details.pets_allowed,
+        furnished: details.furnished,
+        bills_included: details.utilities_included,
+        image_urls: submission.image_urls || [],
         is_active: true,
       },
       {
@@ -124,7 +171,11 @@ async function approveSubmission(submission: ListingSubmission) {
 
   const { error } = await serviceClient
     .from("listing_submissions")
-    .update({ status: "approved" })
+    .update({
+      status: "approved",
+      approved_at: new Date().toISOString(),
+      approved_by: approvedBy,
+    })
     .eq("id", submission.id);
 
   if (error) throw error;
@@ -142,7 +193,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await serviceClient
       .from("listing_submissions")
       .select(
-        "id, user_id, type, title, company_or_owner, email, description, url, status, created_at",
+        "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, image_urls",
       )
       .eq("status", "pending")
       .order("created_at", { ascending: false });
@@ -164,7 +215,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = (await request.json().catch(() => null)) as
-    | { id?: string; action?: SubmissionAction }
+    | { id?: string; action?: SubmissionAction; rejectedReason?: string }
     | null;
 
   if (!body?.id || !body.action) {
@@ -180,7 +231,7 @@ export async function PATCH(request: NextRequest) {
     const { data, error } = await serviceClient
       .from("listing_submissions")
       .select(
-        "id, user_id, type, title, company_or_owner, email, description, url, status, created_at",
+        "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, image_urls",
       )
       .eq("id", body.id)
       .single<ListingSubmission>();
@@ -192,11 +243,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (body.action === "approve") {
-      await approveSubmission(data);
+      await approveSubmission(data, adminCheck.user.id);
     } else {
       const { error: updateError } = await serviceClient
         .from("listing_submissions")
-        .update({ status: "rejected" })
+        .update({
+          status: "rejected",
+          rejected_reason: body.rejectedReason?.trim() || null,
+        })
         .eq("id", data.id);
 
       if (updateError) throw updateError;

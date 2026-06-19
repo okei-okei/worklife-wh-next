@@ -15,9 +15,9 @@ type ListingSubmission = {
   url: string | null;
   status: string;
   created_at: string;
+  structured_data?: Record<string, unknown> | null;
+  image_urls?: string[] | null;
 };
-
-const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export default function AdminSubmissionsPage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -26,6 +26,9 @@ export default function AdminSubmissionsPage() {
   const [submissions, setSubmissions] = useState<ListingSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [rejectedReasons, setRejectedReasons] = useState<
+    Record<string, string>
+  >({});
   const [errorMessage, setErrorMessage] = useState("");
 
   const loadSubmissions = useCallback(async (token: string) => {
@@ -43,6 +46,7 @@ export default function AdminSubmissionsPage() {
         | { error?: string }
         | null;
       setErrorMessage(data?.error || "掲載申請を取得できませんでした。");
+      setIsAdmin(false);
       setIsLoading(false);
       return;
     }
@@ -51,6 +55,7 @@ export default function AdminSubmissionsPage() {
       submissions: ListingSubmission[];
     };
     setSubmissions(data.submissions);
+    setIsAdmin(true);
     setIsLoading(false);
   }, []);
 
@@ -60,18 +65,15 @@ export default function AdminSubmissionsPage() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      const userEmail = session?.user.email;
-
-      if (!adminEmail || !userEmail || userEmail !== adminEmail) {
+      if (!session) {
         setIsAdmin(false);
         setIsCheckingAuth(false);
         return;
       }
 
-      setIsAdmin(true);
       setAccessToken(session.access_token);
+      await loadSubmissions(session.access_token);
       setIsCheckingAuth(false);
-      loadSubmissions(session.access_token);
     };
 
     initialize();
@@ -95,6 +97,7 @@ export default function AdminSubmissionsPage() {
       body: JSON.stringify({
         id: submission.id,
         action,
+        rejectedReason: rejectedReasons[submission.id] || "",
       }),
     });
 
@@ -223,17 +226,17 @@ export default function AdminSubmissionsPage() {
                         type="button"
                         onClick={() => handleUpdate(submission, "approve")}
                         disabled={updatingId === submission.id}
-                        className="rounded-lg bg-green-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-green-300"
+                        className="rounded-lg bg-blue-600 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300"
                       >
-                        approve
+                        承認する
                       </button>
                       <button
                         type="button"
                         onClick={() => handleUpdate(submission, "reject")}
                         disabled={updatingId === submission.id}
-                        className="rounded-lg bg-red-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-red-300"
+                        className="rounded-lg bg-red-600 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-gray-300"
                       >
-                        reject
+                        却下する
                       </button>
                     </div>
                   </div>
@@ -271,6 +274,50 @@ export default function AdminSubmissionsPage() {
                       </dd>
                     </div>
                   </dl>
+
+                  {submission.image_urls?.length ? (
+                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {submission.image_urls.map((imageUrl) => (
+                        // Supabase Storage URLs are configured at runtime.
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          key={imageUrl}
+                          src={imageUrl}
+                          alt=""
+                          className="aspect-[4/3] w-full rounded-lg object-cover"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {submission.structured_data ? (
+                    <details className="mt-4 rounded-xl bg-gray-50 p-4">
+                      <summary className="cursor-pointer font-bold text-gray-900">
+                        詳細条件を確認
+                      </summary>
+                      <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-xs text-gray-800">
+                        {JSON.stringify(submission.structured_data, null, 2)}
+                      </pre>
+                    </details>
+                  ) : null}
+
+                  <label className="mt-4 block">
+                    <span className="text-sm font-bold text-gray-900">
+                      却下理由
+                    </span>
+                    <textarea
+                      value={rejectedReasons[submission.id] || ""}
+                      onChange={(event) =>
+                        setRejectedReasons((current) => ({
+                          ...current,
+                          [submission.id]: event.target.value,
+                        }))
+                      }
+                      rows={2}
+                      placeholder="却下する場合に理由を入力"
+                      className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 text-gray-900"
+                    />
+                  </label>
                 </article>
               ))}
             </div>

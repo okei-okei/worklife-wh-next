@@ -1,6 +1,5 @@
 import Hero from "../components/Hero";
 import Features from "../components/Features";
-import Footer from "../components/Footer";
 import Link from "next/link";
 
 export default function Home() {
@@ -34,8 +33,6 @@ export default function Home() {
       </section>
 
       <Features />
-
-      <Footer />
     </main>
   );
 }

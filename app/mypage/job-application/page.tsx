@@ -11,7 +11,6 @@ import {
   generateJobApplicationEmailWithAI,
   generateJobCoverLetter,
   generateJobCoverLetterWithAI,
-  getApplicationWriterAiAvailability,
   type AiAvailability,
   type ApplicationResume,
   type ApplicationTarget,
@@ -155,21 +154,6 @@ function JobApplicationPageContent() {
 
       setUserId(user.id);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.access_token) {
-        try {
-          const availability = await getApplicationWriterAiAvailability(
-            session.access_token,
-          );
-          if (isMounted) setAiAvailability(availability);
-        } catch {
-          if (isMounted) setAiAvailability({ enabled: false });
-        }
-      }
-
       const extendedResumeResult = await supabase
         .from("resumes")
         .select(
@@ -304,12 +288,6 @@ function JobApplicationPageContent() {
       workHours: manualJob.workHours ? Number(manualJob.workHours) : null,
     };
   }, [manualJob, selectedJob, sourceMode]);
-
-  const aiUnavailableLabel = !aiAvailability.hasApiKey
-    ? "AI生成は現在準備中です。"
-    : aiAvailability.remainingToday === 0
-      ? "本日のAI生成回数に達しました。"
-      : "";
 
   const targetUrl = activeTarget?.url?.trim() || "";
 
@@ -594,7 +572,10 @@ function JobApplicationPageContent() {
             求人応募支援
           </h1>
           <p className="mt-2 max-w-3xl text-base font-medium leading-7 text-gray-800">
-            保存済み求人、または外部求人URL・手入力情報をもとに、英語の応募メールとカバーレターを作成できます。
+            保存済み求人、または外部求人URL・手入力情報をもとに、英語の応募メールとカバーレターのテンプレートを作成できます。
+          </p>
+          <p className="mt-3 max-w-3xl rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium leading-6 text-blue-900">
+            現在は入力内容をもとに英語テンプレートを作成します。AIによる自然な英文生成は今後追加予定です。正確な文面にするため、入力は英語を推奨します。
           </p>
         </section>
 
@@ -808,7 +789,7 @@ function JobApplicationPageContent() {
                 2. 応募者情報を入力する
               </h2>
               <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
-                日本語で入力してください。出力は英語の応募文として整えます。履歴書情報がある項目は初期値として反映しています。
+                現在はテンプレート方式です。入力した文章は自動翻訳されないため、経験・自己PR・応募理由などは英語での入力を推奨します。履歴書情報がある項目は初期値として反映しています。
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -1222,15 +1203,14 @@ function JobApplicationPageContent() {
                 onClick={() => handleGenerate(false)}
                 className="w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white sm:w-auto"
               >
-                テンプレートで作成
+                テンプレートを作成
               </button>
               <button
                 type="button"
-                onClick={() => handleGenerate(true)}
-                disabled={!aiAvailability.enabled}
-                className="w-full rounded-lg border border-blue-700 px-4 py-3 font-bold text-blue-700 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto"
+                disabled
+                className="w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 font-bold text-gray-600 sm:w-auto"
               >
-                AIで自然な英語にする
+                AI英文生成（準備中）
               </button>
               <button
                 type="button"
@@ -1252,18 +1232,8 @@ function JobApplicationPageContent() {
             </div>
           </div>
 
-          <p className="mt-3 text-sm font-medium text-gray-700">
-            AI生成は任意です。{aiUnavailableLabel}
-            {aiAvailability.enabled &&
-            typeof aiAvailability.remainingToday === "number"
-              ? ` 本日の残り回数: ${aiAvailability.remainingToday}回`
-              : ""}
-          </p>
-          <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-bold leading-6 text-amber-900">
-            AIは誤る可能性があります。送信前に必ず内容を確認してください。{" "}
-            <Link href="/legal/ai-policy" className="underline">
-              AI利用ポリシー
-            </Link>
+          <p className="mt-3 text-sm font-medium leading-6 text-gray-700">
+            作成後は内容を確認し、応募先に合わせて編集してから送信してください。
           </p>
 
           {errorMessage && (

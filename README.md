@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WorkLife WH
 
-## Getting Started
+WorkLife WH is a Next.js App Router application for managing working-holiday jobs, housing, living-cost planning, resumes, and application support.
 
-First, run the development server:
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Required environment variables:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_ADMIN_EMAIL=
+SUPABASE_SERVICE_ROLE_KEY=
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Listing workflow
 
-## Learn More
+1. A job or property listing is submitted from `/company/submit`.
+2. Submission data is stored in `listing_submissions` with `status = pending`.
+3. Listing images are uploaded to the `listing-images` Storage bucket.
+4. An administrator reviews submissions at `/admin/listings`.
+5. Approval copies the structured data to `public_jobs` or `public_properties`.
+6. Rejection keeps the listing private and stores `rejected_reason`.
 
-To learn more about Next.js, take a look at the following resources:
+Run the following migration in Supabase before enabling the expanded form:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```text
+supabase/listing_workflow_enhancements.sql
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The current administrator email fallback is configured with
+`NEXT_PUBLIC_ADMIN_EMAIL`. The migration also prepares `profiles.role` for
+`admin` and `owner` role checks.
 
-## Deploy on Vercel
+## Legal routes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The common footer links to the legal document set under `/legal`.
+Document metadata and content are maintained in:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+app/legal/_data/legalDocuments.ts
+```
+
+Legal document versions are recorded during signup and listing consent flows.
+Cookie consent UI is currently not displayed because the application only
+uses necessary authentication cookies. The Cookie Policy remains published
+for future analytics and advertising support.
+
+## Application writing
+
+Job application and property inquiry pages currently use template generation.
+AI controls are disabled in the UI and reserved for a future opt-in release.
+
+## Verification
+
+```bash
+npm run lint
+npm run build
+```

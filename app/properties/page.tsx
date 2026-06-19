@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
+
+const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 type PublicProperty = {
   id: string;
@@ -25,6 +29,11 @@ type PublicProperty = {
   bathrooms?: number | null;
   parking_spaces?: number | null;
   pets_allowed?: boolean | null;
+  country_code?: string | null;
+  region?: string | null;
+  district?: string | null;
+  suburb?: string | null;
+  image_urls?: string[] | null;
 };
 
 function isMissingColumnError(error: { message?: string } | null) {
@@ -160,6 +169,7 @@ export default function PropertiesPage() {
   const [maxParkingSpaces, setMaxParkingSpaces] = useState("");
   const [availableFrom, setAvailableFrom] = useState("");
   const [petsAllowedOnly, setPetsAllowedOnly] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     inquiry?: (property: PublicProperty) => void;
@@ -173,7 +183,7 @@ export default function PropertiesPage() {
       const extendedResult = await supabase
         .from("public_properties")
         .select(
-          "id, title, city, area, address, rent_weekly, description, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, available_from",
+          "id, title, city, area, address, rent_weekly, description, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, available_from, country_code, region, district, suburb, image_urls",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -412,6 +422,9 @@ export default function PropertiesPage() {
         property.title,
         property.city,
         property.area,
+        property.region,
+        property.district,
+        property.suburb,
         property.address,
         property.description,
       ]
@@ -430,6 +443,9 @@ export default function PropertiesPage() {
         const propertyLocationText = [
           property.city,
           property.area,
+          property.region,
+          property.district,
+          property.suburb,
           property.address,
         ]
           .filter(Boolean)
@@ -585,6 +601,35 @@ export default function PropertiesPage() {
     setPetsAllowedOnly(false);
   };
 
+  const mapProperties = useMemo(
+    () =>
+      filteredProperties
+        .filter(
+          (property) =>
+            typeof property.latitude === "number" &&
+            typeof property.longitude === "number",
+        )
+        .map((property) => ({
+          id: property.id,
+          lat: property.latitude as number,
+          lng: property.longitude as number,
+          label: property.title,
+          subtitle:
+            property.area ||
+            property.suburb ||
+            property.district ||
+            property.city ||
+            "地域未設定",
+          details: [
+            formatRent(property.rent_weekly),
+            `ベッドルーム: ${property.bedrooms ?? "未設定"}`,
+            `入居可能日: ${property.available_from || "要確認"}`,
+          ],
+          href: property.url || `/properties#property-${property.id}`,
+        })),
+    [filteredProperties],
+  );
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -696,15 +741,6 @@ export default function PropertiesPage() {
               minPlaceholder="0"
               maxPlaceholder="1"
             />
-            <label className="flex min-h-[74px] items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900">
-              <input
-                type="checkbox"
-                checked={petsAllowedOnly}
-                onChange={(event) => setPetsAllowedOnly(event.target.checked)}
-                className="h-5 w-5"
-              />
-              ペット可
-            </label>
             <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
               <span className="text-sm font-bold text-gray-900">
                 入居可能日
@@ -715,6 +751,15 @@ export default function PropertiesPage() {
                 onChange={(event) => setAvailableFrom(event.target.value)}
                 className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
               />
+            </label>
+            <label className="flex min-h-[74px] items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900">
+              <input
+                type="checkbox"
+                checked={petsAllowedOnly}
+                onChange={(event) => setPetsAllowedOnly(event.target.checked)}
+                className="h-5 w-5"
+              />
+              ペット可
             </label>
           </div>
 
@@ -731,6 +776,10 @@ export default function PropertiesPage() {
             </button>
           </div>
         </section>
+
+        <div className="flex justify-end">
+          <ListMapToggle value={viewMode} onChange={setViewMode} />
+        </div>
 
         {isLoading ? (
           <div className="rounded-2xl bg-white p-6 shadow">
@@ -754,13 +803,34 @@ export default function PropertiesPage() {
               検索キーワードやフィルター条件を変更して再度お試しください。
             </p>
           </div>
+        ) : viewMode === "map" ? (
+          <section className="rounded-2xl bg-white p-3 shadow md:p-4">
+            {mapProperties.length ? (
+              <MapView jobs={[]} properties={mapProperties} />
+            ) : (
+              <p className="p-4 font-medium text-gray-700">
+                地図に表示できる座標付き物件がありません。リスト表示ではすべての物件を確認できます。
+              </p>
+            )}
+          </section>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {filteredProperties.map((property) => (
               <article
+                id={`property-${property.id}`}
                 key={property.id}
-                className="flex min-h-full flex-col rounded-2xl bg-white p-4 shadow md:p-5"
+                className="flex min-h-full flex-col overflow-hidden rounded-2xl bg-white shadow"
               >
+                {property.image_urls?.[0] ? (
+                  // Supabase Storage URLs are configured at runtime.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={property.image_urls[0]}
+                    alt=""
+                    className="aspect-[16/9] w-full object-cover"
+                  />
+                ) : null}
+                <div className="flex flex-1 flex-col p-4 md:p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <h2 className="break-words text-xl font-bold text-gray-900 md:text-2xl">
@@ -855,6 +925,7 @@ export default function PropertiesPage() {
                       物件ページを見る
                     </a>
                   )}
+                </div>
                 </div>
               </article>
             ))}

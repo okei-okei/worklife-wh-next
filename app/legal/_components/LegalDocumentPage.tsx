@@ -45,12 +45,7 @@ export default function LegalDocumentPage({
         </div>
 
         <article className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <p className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium leading-7 text-blue-900">
-            このページは初期版のドラフトです。契約や重要な判断を行う場合は、
-            公式情報、専門家、関係機関の情報も確認してください。
-          </p>
-
-          <div className="mt-8 space-y-8">
+          <div className="space-y-8">
             {document.sections.map((section) => (
               <section key={section.heading} className="space-y-3">
                 <h2 className="text-xl font-bold text-gray-900 md:text-2xl">
@@ -67,6 +62,10 @@ export default function LegalDocumentPage({
               </section>
             ))}
           </div>
+
+          <p className="mt-10 border-t border-gray-200 pt-5 text-sm font-medium leading-7 text-gray-700">
+            本サービスは、法的助言、移民助言、不動産仲介、職業紹介、金融助言を提供するものではありません。重要な判断を行う場合は、公式情報または専門家の確認を行ってください。
+          </p>
         </article>
 
         <nav className="rounded-2xl bg-white p-4 shadow md:p-6">

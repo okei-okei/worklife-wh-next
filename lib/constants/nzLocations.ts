@@ -1,6 +1,8 @@
 export type NzLocation = {
+  countryCode: "NZ";
   region: string;
   district: string;
+  area: string;
   label: string;
   searchText: string;
 };
@@ -72,13 +74,44 @@ const rawLocations = [
   ["Chatham Islands", "Chatham Islands Territory"],
 ] as const;
 
-export const nzLocations: NzLocation[] = rawLocations.map(
-  ([region, district]) => ({
-    region,
-    district,
-    label: `${region} / ${district}`,
-    searchText: `${region} ${district}`.toLowerCase(),
-  }),
+const areasByDistrict: Record<string, string[]> = {
+  Auckland: [
+    "Auckland CBD",
+    "North Shore",
+    "West Auckland",
+    "East Auckland",
+    "South Auckland",
+  ],
+  "Hamilton City": ["Hamilton Central", "Frankton", "Claudelands", "Rototuna"],
+  "Tauranga City": ["Tauranga Central", "Mount Maunganui", "Papamoa"],
+  "Rotorua Lakes District": ["Rotorua Central", "Fenton Park", "Ngongotaha"],
+  "Wellington City": ["Wellington Central", "Te Aro", "Newtown", "Kilbirnie"],
+  "Lower Hutt City": ["Lower Hutt Central", "Petone", "Wainuiomata"],
+  "Christchurch City": [
+    "Christchurch Central",
+    "Riccarton",
+    "Addington",
+    "Hornby",
+  ],
+  "Dunedin City": ["Dunedin Central", "North Dunedin", "South Dunedin"],
+  "Queenstown-Lakes District": ["Queenstown", "Frankton", "Wanaka"],
+};
+
+export const nzLocations: NzLocation[] = rawLocations.flatMap(
+  ([region, district]) => {
+    const areas = areasByDistrict[district] || [""];
+
+    return areas.map((area) => ({
+      countryCode: "NZ" as const,
+      region,
+      district,
+      area,
+      label: area
+        ? `${region} / ${district} / ${area}`
+        : `${region} / ${district}`,
+      searchText: `${region} ${district} ${area}`.toLowerCase(),
+    }));
+  },
 );
 
 export function filterNzLocations(query: string) {

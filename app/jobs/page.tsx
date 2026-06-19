@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
+
+const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 type PublicJob = {
   id: string;
@@ -22,6 +26,16 @@ type PublicJob = {
   latitude: number | null;
   longitude: number | null;
   employment_type?: string | null;
+  country_code?: string | null;
+  region?: string | null;
+  district?: string | null;
+  suburb?: string | null;
+  area?: string | null;
+  hourly_rate_min?: number | null;
+  hourly_rate_max?: number | null;
+  weekly_hours?: number | null;
+  start_date?: string | null;
+  image_url?: string | null;
 };
 
 function isMissingColumnError(error: { message?: string } | null) {
@@ -71,6 +85,7 @@ export default function JobsPage() {
   const [minWorkHours, setMinWorkHours] = useState("");
   const [employmentType, setEmploymentType] = useState("");
   const [accommodationOnly, setAccommodationOnly] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     apply?: (job: PublicJob) => void;
@@ -84,7 +99,7 @@ export default function JobsPage() {
       const extendedResult = await supabase
         .from("public_jobs")
         .select(
-          "id, title, company, city, address, hourly_rate, work_hours, description, visa_support, japanese_ok, accommodation_available, apply_url, latitude, longitude, employment_type",
+          "id, title, company, city, address, hourly_rate, work_hours, description, visa_support, japanese_ok, accommodation_available, apply_url, latitude, longitude, employment_type, country_code, region, district, suburb, area, hourly_rate_min, hourly_rate_max, weekly_hours, start_date, image_url",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -312,6 +327,10 @@ export default function JobsPage() {
         job.company,
         job.description,
         job.city,
+        job.region,
+        job.district,
+        job.suburb,
+        job.area,
         job.address,
       ]
         .filter(Boolean)
@@ -326,7 +345,14 @@ export default function JobsPage() {
         normalizedLocations.length > 0 &&
         !normalizedLocations.includes("現在地")
       ) {
-        const jobLocationText = [job.city, job.address]
+        const jobLocationText = [
+          job.region,
+          job.district,
+          job.suburb,
+          job.area,
+          job.city,
+          job.address,
+        ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
@@ -368,14 +394,16 @@ export default function JobsPage() {
 
       if (
         minimumHourlyRate !== null &&
-        (job.hourly_rate === null || job.hourly_rate < minimumHourlyRate)
+        ((job.hourly_rate_min ?? job.hourly_rate) === null ||
+          (job.hourly_rate_min ?? job.hourly_rate)! < minimumHourlyRate)
       ) {
         return false;
       }
 
       if (
         minimumWorkHours !== null &&
-        (job.work_hours === null || job.work_hours < minimumWorkHours)
+        ((job.weekly_hours ?? job.work_hours) === null ||
+          (job.weekly_hours ?? job.work_hours)! < minimumWorkHours)
       ) {
         return false;
       }
@@ -411,32 +439,57 @@ export default function JobsPage() {
     setAccommodationOnly(false);
   };
 
+  const mapJobs = useMemo(
+    () =>
+      filteredJobs
+        .filter(
+          (job) =>
+            typeof job.latitude === "number" &&
+            typeof job.longitude === "number",
+        )
+        .map((job) => ({
+          id: job.id,
+          lat: job.latitude as number,
+          lng: job.longitude as number,
+          label: job.title,
+          subtitle: `${job.company || "掲載企業未設定"} / ${
+            job.area || job.suburb || job.district || job.city || "地域未設定"
+          }`,
+          details: [
+            job.employment_type || "採用形態未設定",
+            formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate),
+          ],
+          href: job.apply_url || `/jobs#job-${job.id}`,
+        })),
+    [filteredJobs],
+  );
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH 公開求人
             </p>
             <h1 className="text-2xl font-bold md:text-4xl">
               ワーホリ向け求人
             </h1>
-            <p className="mt-2 text-base font-medium leading-7 text-gray-800">
-              運営または掲載企業が公開した求人を確認し、気になる求人をマイページへ保存できます。
+            <p className="mt-2 max-w-3xl text-base font-medium leading-7 text-gray-800">
+              ニュージーランドでの仕事探しに使える公開求人を確認できます。気になる求人は保存して、応募文の作成に進めます。
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Link
               href="/mypage"
-              className="w-full rounded-lg bg-white px-4 py-3 text-center font-bold text-gray-900 shadow sm:w-auto sm:py-2"
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 shadow-sm hover:bg-gray-50 sm:w-auto"
             >
               マイページ
             </Link>
             <Link
               href="/company/submit"
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-center font-bold text-white sm:w-auto sm:py-2"
+              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-bold text-white shadow-sm hover:bg-blue-700 sm:w-auto"
             >
               掲載申請
             </Link>
@@ -450,7 +503,19 @@ export default function JobsPage() {
         )}
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">求人を探す</h2>
+              <p className="mt-1 text-sm font-medium text-gray-600">
+                地域、時給、勤務時間、採用形態で絞り込めます。
+              </p>
+            </div>
+            <p className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+              {filteredJobs.length}件
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
             <label className="block">
               <span className="text-sm font-bold text-gray-900">検索</span>
               <input
@@ -461,6 +526,9 @@ export default function JobsPage() {
               />
             </label>
 
+          </div>
+
+          <div className="mt-4">
             <NzLocationPicker
               label="地域"
               multiple
@@ -470,7 +538,7 @@ export default function JobsPage() {
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-5">
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <label className="block">
               <span className="text-sm font-bold text-gray-900">
                 時給の下限
@@ -513,7 +581,7 @@ export default function JobsPage() {
                 <option value="Internship">Internship</option>
               </select>
             </label>
-            <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:mt-7">
+            <label className="flex min-h-[74px] items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900">
               <input
                 type="checkbox"
                 checked={accommodationOnly}
@@ -522,21 +590,22 @@ export default function JobsPage() {
               />
               住み込み可のみ
             </label>
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="w-full rounded-lg bg-gray-700 px-4 py-3 font-bold text-white sm:w-auto"
-              >
-                条件をリセット
-              </button>
-            </div>
           </div>
 
-          <p className="mt-4 text-sm font-bold text-gray-800">
-            結果: {filteredJobs.length}件
-          </p>
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+            >
+              条件をリセット
+            </button>
+          </div>
         </section>
+
+        <div className="flex justify-end">
+          <ListMapToggle value={viewMode} onChange={setViewMode} />
+        </div>
 
         {isLoading ? (
           <div className="rounded-2xl bg-white p-6 shadow">
@@ -560,21 +629,51 @@ export default function JobsPage() {
               検索キーワードやフィルター条件を変更して再度お試しください。
             </p>
           </div>
+        ) : viewMode === "map" ? (
+          <section className="rounded-2xl bg-white p-3 shadow md:p-4">
+            {mapJobs.length ? (
+              <MapView jobs={mapJobs} properties={[]} />
+            ) : (
+              <p className="p-4 font-medium text-gray-700">
+                地図に表示できる座標付き求人がありません。リスト表示ではすべての求人を確認できます。
+              </p>
+            )}
+          </section>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid gap-4 md:grid-cols-2">
             {filteredJobs.map((job) => (
-              <article key={job.id} className="rounded-2xl bg-white p-6 shadow">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold">{job.title}</h2>
+              <article
+                id={`job-${job.id}`}
+                key={job.id}
+                className="flex min-h-full flex-col overflow-hidden rounded-2xl bg-white shadow"
+              >
+                {job.image_url ? (
+                  // Supabase Storage URLs are configured at runtime.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={job.image_url}
+                    alt=""
+                    className="aspect-[16/9] w-full object-cover"
+                  />
+                ) : null}
+                <div className="flex flex-1 flex-col p-4 md:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <h2 className="break-words text-xl font-bold text-gray-900 md:text-2xl">
+                      {job.title}
+                    </h2>
                     <p className="mt-1 font-medium text-gray-800">
                       {job.company || "掲載企業未設定"}
-                      {job.city ? ` / ${job.city}` : ""}
+                      {job.area || job.suburb || job.district || job.city
+                        ? ` / ${job.area || job.suburb || job.district || job.city}`
+                        : ""}
                     </p>
                   </div>
 
-                  <div className="rounded-full bg-green-50 px-4 py-2 text-sm font-bold text-green-700">
-                    {formatHourlyRate(job.hourly_rate)}
+                  <div className="w-fit rounded-full bg-green-50 px-4 py-2 text-sm font-bold text-green-700">
+                    {job.hourly_rate_max
+                      ? `$${job.hourly_rate_min ?? job.hourly_rate ?? 0} - $${job.hourly_rate_max}/時`
+                      : formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate)}
                   </div>
                 </div>
 
@@ -594,24 +693,29 @@ export default function JobsPage() {
                       住み込み可能
                     </span>
                   )}
-                  {job.work_hours !== null && (
+                  {(job.weekly_hours ?? job.work_hours) != null && (
                     <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700">
-                      週{job.work_hours}時間
+                      週{job.weekly_hours ?? job.work_hours}時間
                     </span>
                   )}
+                  {job.employment_type ? (
+                    <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700">
+                      {job.employment_type}
+                    </span>
+                  ) : null}
                 </div>
 
                 {job.description && (
-                  <p className="mt-4 leading-7 text-gray-700">
+                  <p className="mt-4 line-clamp-4 text-sm font-medium leading-7 text-gray-800">
                     {job.description}
                   </p>
                 )}
 
-                <div className="mt-5 flex flex-wrap gap-3">
+                <div className="mt-auto flex flex-col gap-2 pt-5 sm:flex-row sm:flex-wrap">
                   <button
                     onClick={() => handleSaveJob(job)}
                     disabled={savingJobId === job.id}
-                    className="w-full rounded-lg bg-blue-600 px-4 py-3 font-bold text-white disabled:bg-gray-300 sm:w-auto sm:py-2"
+                    className="w-full rounded-lg border border-blue-600 bg-white px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto"
                   >
                     {savingJobId === job.id ? "保存中..." : "保存する"}
                   </button>
@@ -619,7 +723,7 @@ export default function JobsPage() {
                   <button
                     onClick={() => handleApplyJob(job)}
                     disabled={savingJobId === job.id}
-                    className="w-full rounded-lg bg-green-600 px-4 py-3 font-bold text-white disabled:bg-gray-300 sm:w-auto sm:py-2"
+                    className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-300 sm:w-auto"
                   >
                     {savingJobId === job.id ? "準備中..." : "応募する"}
                   </button>
@@ -629,11 +733,12 @@ export default function JobsPage() {
                       href={job.apply_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto sm:py-2"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
                     >
-                      応募ページを見る
+                      詳細を見る
                     </a>
                   )}
+                </div>
                 </div>
               </article>
             ))}

@@ -53,18 +53,29 @@ create table if not exists public.privacy_requests (
   updated_at timestamptz not null default now()
 );
 
-alter table public.partners
-  add column if not exists is_affiliate boolean not null default false,
-  add column if not exists affiliate_note text,
-  add column if not exists ranking_basis text,
-  add column if not exists sponsor_label text,
-  add column if not exists recommended_for text,
-  add column if not exists caution_note text,
-  add column if not exists price_note text,
-  add column if not exists official_url text;
+-- Optional feature tables may be installed in a different order. Only extend
+-- them when they already exist so this legal migration can run independently.
+do $$
+begin
+  if to_regclass('public.partners') is not null then
+    alter table public.partners
+      add column if not exists is_active boolean not null default true,
+      add column if not exists is_affiliate boolean not null default false,
+      add column if not exists affiliate_note text,
+      add column if not exists ranking_basis text,
+      add column if not exists sponsor_label text,
+      add column if not exists recommended_for text,
+      add column if not exists caution_note text,
+      add column if not exists price_note text,
+      add column if not exists official_url text;
+  end if;
 
-alter table public.listing_submissions
-  add column if not exists consent_versions jsonb not null default '{}'::jsonb;
+  if to_regclass('public.listing_submissions') is not null then
+    alter table public.listing_submissions
+      add column if not exists consent_versions jsonb not null default '{}'::jsonb;
+  end if;
+end
+$$;
 
 create table if not exists public.ai_generation_logs (
   id uuid primary key default gen_random_uuid(),
@@ -101,7 +112,6 @@ grant select on public.legal_documents to anon, authenticated;
 grant select, insert on public.user_consents to authenticated;
 grant select, insert, update on public.privacy_settings to authenticated;
 grant select, insert on public.privacy_requests to authenticated;
-grant select on public.partners to anon, authenticated;
 grant select, insert on public.ai_generation_logs to authenticated;
 
 alter table public.legal_documents enable row level security;
@@ -181,10 +191,20 @@ on public.ai_generation_logs
 for insert
 with check (auth.uid() = user_id);
 
--- Optional: public read policy for active partners if a stricter policy already exists.
-drop policy if exists "Public can read active partners"
-on public.partners;
-create policy "Public can read active partners"
-on public.partners
-for select
-using (is_active = true);
+-- Partners are optional. Apply its grants and policy only after that table has
+-- been created by supabase/partners.sql.
+do $$
+begin
+  if to_regclass('public.partners') is not null then
+    grant select on public.partners to anon, authenticated;
+    alter table public.partners enable row level security;
+
+    drop policy if exists "Public can read active partners"
+    on public.partners;
+    create policy "Public can read active partners"
+    on public.partners
+    for select
+    using (is_active = true);
+  end if;
+end
+$$;

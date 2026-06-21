@@ -12,6 +12,10 @@ create table if not exists public.user_form_drafts (
 
 alter table public.user_form_drafts enable row level security;
 
+grant select, insert, update, delete
+on table public.user_form_drafts
+to authenticated;
+
 drop policy if exists "Users can view own form drafts" on public.user_form_drafts;
 create policy "Users can view own form drafts"
 on public.user_form_drafts

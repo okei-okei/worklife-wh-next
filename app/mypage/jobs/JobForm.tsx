@@ -122,6 +122,8 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
         className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
         placeholder="時給"
         type="number"
+        min="0"
+        step="0.01"
         value={hourlyRate}
         onChange={(e) => setHourlyRate(e.target.value)}
       />

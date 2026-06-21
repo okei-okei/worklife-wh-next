@@ -110,6 +110,8 @@ export default function EditJobModal({
         <input
           className="w-full border p-2 rounded"
           type="number"
+          min="0"
+          step="0.01"
           value={hourlyRate}
           onChange={(e) => setHourlyRate(e.target.value)}
         />

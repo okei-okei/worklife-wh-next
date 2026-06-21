@@ -244,9 +244,13 @@ function PropertyInquiryPageContent() {
     );
 
     if (error) {
-      setErrorMessage(
-        "入力内容の保存に失敗しました。Supabaseに user_form_drafts テーブルが作成されているか確認してください。",
-      );
+      console.error("Failed to save property inquiry draft:", error);
+      if (showMessage) {
+        setErrorMessage(
+          "入力内容を保存できませんでした。管理者がSupabaseの user_form_drafts 設定を確認してください。",
+        );
+        setSuccessMessage("");
+      }
       return false;
     }
 
@@ -291,7 +295,7 @@ function PropertyInquiryPageContent() {
       return;
     }
 
-    saveDraft(false);
+    const draftSaved = await saveDraft(false);
 
     const generationSignature = JSON.stringify({
       target: activeTarget,
@@ -316,7 +320,9 @@ function PropertyInquiryPageContent() {
       setDraft(fallbackContent);
       setLastGenerationSignature(generationSignature);
       setSuccessMessage(
-        "テンプレートで問い合わせメールの下書きを作成しました。",
+        draftSaved
+          ? "テンプレートで問い合わせメールを作成し、入力内容を保存しました。"
+          : "テンプレートで問い合わせメールを作成しました。入力内容の自動保存は現在利用できません。",
       );
       return;
     }

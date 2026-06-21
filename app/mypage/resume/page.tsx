@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ExperiencePeriodFields from "@/components/ExperiencePeriodFields";
+import NzLocationPicker from "@/components/NzLocationPicker";
 import { skillOptions } from "@/lib/constants/applicationOptions";
 import type { ExperienceItem } from "@/lib/services/applicationWriter";
 import { supabase } from "@/lib/supabase";
@@ -70,11 +71,6 @@ const textFields: Array<{
     label: "電話番号",
     placeholder: "+64 21 000 0000",
     type: "tel",
-  },
-  {
-    key: "current_city",
-    label: "現在の都市",
-    placeholder: "Auckland",
   },
   {
     key: "visa_type",
@@ -461,6 +457,14 @@ export default function ResumePage() {
                   </label>
                 ))}
               </div>
+
+              <NzLocationPicker
+                label="現在地（地域・市区町村・地区）"
+                value={form.current_city}
+                onChange={(value) => updateField("current_city", value)}
+                allLabel="未設定"
+                showCurrentLocation={false}
+              />
 
               <div className="space-y-4">
                 {textAreaFields.map((field) => (

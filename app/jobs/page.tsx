@@ -528,7 +528,7 @@ export default function JobsPage() {
 
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
             <NzLocationPicker
               label="地域"
               multiple
@@ -536,23 +536,21 @@ export default function JobsPage() {
               onValuesChange={setLocationFilters}
               onCoordinatesChange={setFilterCoordinates}
             />
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <label className="block">
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
               <span className="text-sm font-bold text-gray-900">
                 時給の下限
               </span>
               <input
                 type="number"
                 min="0"
+                step="0.01"
                 value={minHourlyRate}
                 onChange={(event) => setMinHourlyRate(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
                 placeholder="例: 25"
               />
             </label>
-            <label className="block">
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
               <span className="text-sm font-bold text-gray-900">
                 週勤務時間の下限
               </span>
@@ -561,16 +559,19 @@ export default function JobsPage() {
                 min="0"
                 value={minWorkHours}
                 onChange={(event) => setMinWorkHours(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
                 placeholder="例: 30"
               />
             </label>
-            <label className="block">
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
               <span className="text-sm font-bold text-gray-900">採用形態</span>
               <select
                 value={employmentType}
                 onChange={(event) => setEmploymentType(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
               >
                 <option value="">全て</option>
                 <option value="Full-time">Full-time</option>

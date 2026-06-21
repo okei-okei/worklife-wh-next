@@ -27,7 +27,6 @@ export default function CompanySubmitPage() {
   const [region, setRegion] = useState("");
   const [district, setDistrict] = useState("");
   const [area, setArea] = useState("");
-  const [address, setAddress] = useState("");
   const [employmentType, setEmploymentType] = useState("");
   const [hourlyRateMin, setHourlyRateMin] = useState("");
   const [hourlyRateMax, setHourlyRateMax] = useState("");
@@ -63,7 +62,6 @@ export default function CompanySubmitPage() {
     setRegion("");
     setDistrict("");
     setArea("");
-    setAddress("");
     setEmploymentType("");
     setHourlyRateMin("");
     setHourlyRateMax("");
@@ -172,7 +170,6 @@ export default function CompanySubmitPage() {
         district: district || null,
         suburb: area || null,
         area: area || null,
-        address: address || null,
         employment_type: type === "job" ? employmentType || null : null,
         hourly_rate_min:
           type === "job" && hourlyRateMin ? Number(hourlyRateMin) : null,
@@ -358,14 +355,6 @@ export default function CompanySubmitPage() {
                   <option value="CA">Canada</option>
                 </select>
               </label>
-              <label>
-                <span className="text-sm font-bold">住所・エリア詳細</span>
-                <input
-                  value={address}
-                  onChange={(event) => setAddress(event.target.value)}
-                  className={inputClass}
-                />
-              </label>
             </div>
 
             <div className="mt-4">
@@ -433,6 +422,7 @@ export default function CompanySubmitPage() {
                   <input
                     type="number"
                     min="0"
+                    step="0.01"
                     value={hourlyRateMin}
                     onChange={(event) => setHourlyRateMin(event.target.value)}
                     className={inputClass}
@@ -443,6 +433,7 @@ export default function CompanySubmitPage() {
                   <input
                     type="number"
                     min="0"
+                    step="0.01"
                     value={hourlyRateMax}
                     onChange={(event) => setHourlyRateMax(event.target.value)}
                     className={inputClass}

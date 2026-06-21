@@ -306,9 +306,13 @@ function JobApplicationPageContent() {
     );
 
     if (error) {
-      setErrorMessage(
-        "入力内容の保存に失敗しました。Supabaseに user_form_drafts テーブルが作成されているか確認してください。",
-      );
+      console.error("Failed to save job application draft:", error);
+      if (showMessage) {
+        setErrorMessage(
+          "入力内容を保存できませんでした。管理者がSupabaseの user_form_drafts 設定を確認してください。",
+        );
+        setSuccessMessage("");
+      }
       return false;
     }
 
@@ -434,7 +438,7 @@ function JobApplicationPageContent() {
       return;
     }
 
-    saveDraft(false);
+    const draftSaved = await saveDraft(false);
 
     const generationSignature = JSON.stringify({
       documentType,
@@ -468,7 +472,9 @@ function JobApplicationPageContent() {
       setDraft(fallbackContent);
       setLastGenerationSignature(generationSignature);
       setSuccessMessage(
-        "テンプレートで下書きを作成しました。内容を編集してから利用できます。",
+        draftSaved
+          ? "テンプレートで下書きを作成し、入力内容を保存しました。"
+          : "テンプレートで下書きを作成しました。入力内容の自動保存は現在利用できません。",
       );
       return;
     }
@@ -733,6 +739,7 @@ function JobApplicationPageContent() {
                 <input
                   type="number"
                   min="0"
+                  step="0.01"
                   value={manualJob.hourlyRate}
                   onChange={(event) =>
                     setManualJob({

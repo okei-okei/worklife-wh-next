@@ -46,7 +46,7 @@ export default function AdminSubmissionsPage() {
         | { error?: string }
         | null;
       setErrorMessage(data?.error || "掲載申請を取得できませんでした。");
-      setIsAdmin(false);
+      setIsAdmin(response.status !== 401 && response.status !== 403);
       setIsLoading(false);
       return;
     }

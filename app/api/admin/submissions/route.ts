@@ -21,7 +21,35 @@ type SubmissionAction = "approve" | "reject";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+const adminEmail =
+  process.env.ADMIN_EMAIL ||
+  process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
+  "worklife.wh@gmail.com";
+
+function normalizeEmail(value: string | null | undefined) {
+  return value?.trim().toLowerCase() || "";
+}
+
+function isMissingColumnError(error: { code?: string; message?: string }) {
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    Boolean(error.message?.includes("column"))
+  );
+}
+
+function getErrorDetail(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  return "Unknown error";
+}
 
 function createErrorResponse(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -47,10 +75,6 @@ async function verifyAdmin(request: NextRequest) {
 
   if (!supabaseServiceRoleKey) {
     return { error: createErrorResponse("SUPABASE_SERVICE_ROLE_KEY is missing.", 500) };
-  }
-
-  if (!adminEmail) {
-    return { error: createErrorResponse("NEXT_PUBLIC_ADMIN_EMAIL is missing.", 500) };
   }
 
   const authorization = request.headers.get("authorization");
@@ -85,7 +109,10 @@ async function verifyAdmin(request: NextRequest) {
   const hasAdminRole =
     profile?.role === "admin" || profile?.role === "owner";
 
-  if (!hasAdminRole && user.email !== adminEmail) {
+  if (
+    !hasAdminRole &&
+    normalizeEmail(user.email) !== normalizeEmail(adminEmail)
+  ) {
     return { error: createErrorResponse("Forbidden.", 403) };
   }
 
@@ -190,7 +217,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const serviceClient = createServiceClient();
-    const { data, error } = await serviceClient
+    const extendedResult = await serviceClient
       .from("listing_submissions")
       .select(
         "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, image_urls",
@@ -198,12 +225,24 @@ export async function GET(request: NextRequest) {
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
-    if (error) throw error;
+    const result =
+      extendedResult.error && isMissingColumnError(extendedResult.error)
+        ? await serviceClient
+            .from("listing_submissions")
+            .select(
+              "id, user_id, type, title, company_or_owner, email, description, url, status, created_at",
+            )
+            .eq("status", "pending")
+            .order("created_at", { ascending: false })
+        : extendedResult;
 
-    return NextResponse.json({ submissions: data || [] });
+    if (result.error) throw result.error;
+
+    return NextResponse.json({ submissions: result.data || [] });
   } catch (error) {
     console.error(error);
-    return createErrorResponse("Failed to load submissions.", 500);
+    const detail = getErrorDetail(error);
+    return createErrorResponse(`掲載申請を取得できませんでした: ${detail}`, 500);
   }
 }
 
@@ -228,7 +267,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const serviceClient = createServiceClient();
-    const { data, error } = await serviceClient
+    const extendedResult = await serviceClient
       .from("listing_submissions")
       .select(
         "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, image_urls",
@@ -236,7 +275,19 @@ export async function PATCH(request: NextRequest) {
       .eq("id", body.id)
       .single<ListingSubmission>();
 
-    if (error) throw error;
+    const result =
+      extendedResult.error && isMissingColumnError(extendedResult.error)
+        ? await serviceClient
+            .from("listing_submissions")
+            .select(
+              "id, user_id, type, title, company_or_owner, email, description, url, status, created_at",
+            )
+            .eq("id", body.id)
+            .single<ListingSubmission>()
+        : extendedResult;
+
+    if (result.error) throw result.error;
+    const data = result.data;
 
     if (data.status !== "pending") {
       return createErrorResponse("Submission is not pending.", 409);
@@ -259,6 +310,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error(error);
-    return createErrorResponse("Failed to update submission.", 500);
+    const detail = getErrorDetail(error);
+    return createErrorResponse(`申請を更新できませんでした: ${detail}`, 500);
   }
 }

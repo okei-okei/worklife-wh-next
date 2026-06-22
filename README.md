@@ -14,7 +14,7 @@ Required environment variables:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-NEXT_PUBLIC_ADMIN_EMAIL=
+ADMIN_EMAIL=worklife.wh@gmail.com
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
@@ -23,7 +23,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 1. A job or property listing is submitted from `/company/submit`.
 2. Submission data is stored in `listing_submissions` with `status = pending`.
 3. Listing images are uploaded to the `listing-images` Storage bucket.
-4. An administrator reviews submissions at `/admin/listings`.
+4. An administrator reviews submissions at `/admin/submissions`.
 5. Approval copies the structured data to `public_jobs` or `public_properties`.
 6. Rejection keeps the listing private and stores `rejected_reason`.
 
@@ -33,9 +33,9 @@ Run the following migration in Supabase before enabling the expanded form:
 supabase/listing_workflow_enhancements.sql
 ```
 
-The current administrator email fallback is configured with
-`NEXT_PUBLIC_ADMIN_EMAIL`. The migration also prepares `profiles.role` for
-`admin` and `owner` role checks.
+The administrator email is configured with the server-only `ADMIN_EMAIL`.
+`NEXT_PUBLIC_ADMIN_EMAIL` remains supported for backward compatibility. The
+migration also prepares `profiles.role` for `admin` and `owner` role checks.
 
 ## Legal routes
 

@@ -17,8 +17,6 @@ type AdminMetrics = {
   }[];
 };
 
-const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-
 const metricLabels = [
   {
     key: "registeredUsers",
@@ -66,15 +64,11 @@ export default function AdminPage() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      const userEmail = session?.user.email;
-
-      if (!adminEmail || !userEmail || userEmail !== adminEmail) {
+      if (!session) {
         setIsAdmin(false);
         setIsCheckingAuth(false);
         return;
       }
-
-      setIsAdmin(true);
 
       const response = await fetch("/api/admin/metrics", {
         headers: {
@@ -87,11 +81,13 @@ export default function AdminPage() {
           | { error?: string }
           | null;
         setErrorMessage(data?.error || "管理指標を取得できませんでした。");
+        setIsAdmin(response.status !== 401 && response.status !== 403);
         setIsCheckingAuth(false);
         return;
       }
 
       const data = (await response.json()) as AdminMetrics;
+      setIsAdmin(true);
       setMetrics(data);
       setIsCheckingAuth(false);
     };

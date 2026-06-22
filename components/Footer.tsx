@@ -13,33 +13,12 @@ export default function Footer() {
           <Link href="/legal" className="hover:text-blue-600">
             法務一覧
           </Link>
-          <Link href="/legal/terms" className="hover:text-blue-600">
-            利用規約
+          <Link href="/cookie-preferences" className="hover:text-blue-600">
+            Cookie設定
           </Link>
-          <Link href="/legal/privacy" className="hover:text-blue-600">
-            プライバシーポリシー
-          </Link>
-          <Link href="/legal/cookies" className="hover:text-blue-600">
-            Cookieポリシー
-          </Link>
-          <Link href="/legal/affiliate-disclosure" className="hover:text-blue-600">
-            広告・アフィリエイト開示
-          </Link>
-          <Link href="/legal/ai-policy" className="hover:text-blue-600">
-            AI利用ポリシー
-          </Link>
-          <Link href="/legal/job-posting" className="hover:text-blue-600">
-            求人掲載規約
-          </Link>
-          <Link href="/legal/property-posting" className="hover:text-blue-600">
-            物件掲載規約
-          </Link>
-          <Link href="/legal/community-guidelines" className="hover:text-blue-600">
-            コミュニティガイドライン
-          </Link>
-          <Link href="/legal/data-transfer" className="hover:text-blue-600">
-            データ利用ポリシー
-          </Link>
+          <a href="mailto:worklife.wh@gmail.com" className="hover:text-blue-600">
+            お問い合わせ
+          </a>
         </nav>
       </div>
     </footer>

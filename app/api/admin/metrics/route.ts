@@ -21,7 +21,14 @@ type MetricResponse = {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+const adminEmail =
+  process.env.ADMIN_EMAIL ||
+  process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
+  "worklife.wh@gmail.com";
+
+function normalizeEmail(value: string | null | undefined) {
+  return value?.trim().toLowerCase() || "";
+}
 
 function createErrorResponse(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -122,10 +129,6 @@ export async function GET(request: NextRequest) {
     return createErrorResponse("SUPABASE_SERVICE_ROLE_KEY is missing.", 500);
   }
 
-  if (!adminEmail) {
-    return createErrorResponse("NEXT_PUBLIC_ADMIN_EMAIL is missing.", 500);
-  }
-
   const authorization = request.headers.get("authorization");
   const token = authorization?.replace("Bearer ", "");
 
@@ -149,7 +152,7 @@ export async function GET(request: NextRequest) {
     return createErrorResponse("Unauthorized.", 401);
   }
 
-  if (user.email !== adminEmail) {
+  if (normalizeEmail(user.email) !== normalizeEmail(adminEmail)) {
     return createErrorResponse("Forbidden.", 403);
   }
 

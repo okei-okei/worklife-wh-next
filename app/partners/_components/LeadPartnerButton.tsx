@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 
 type LeadPartnerButtonProps = {
   category: string;
@@ -42,6 +43,16 @@ export function LeadPartnerButton({
       setMessage("クリック記録を保存できませんでした。");
       return;
     }
+
+    trackMetric(destinationUrl ? "affiliate_clicked" : "partner_clicked", {
+      eventType: "conversion",
+      pagePath: sourcePage,
+      metadata: {
+        serviceName: partnerName,
+        category,
+        targetUrl: destinationUrl,
+      },
+    });
 
     if (destinationUrl) {
       window.open(destinationUrl, "_blank", "noopener,noreferrer");

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 
 type PhaseKey =
   | "渡航前"
@@ -378,6 +379,12 @@ export default function ChecklistPage() {
         [item.key]: !nextChecked,
       }));
       alert(error.message);
+    } else {
+      trackMetric("checklist_used", {
+        eventType: "feature",
+        pagePath: "/mypage/checklist",
+        metadata: { itemKey: item.key, completed: nextChecked },
+      });
     }
 
     setSavingKey(null);

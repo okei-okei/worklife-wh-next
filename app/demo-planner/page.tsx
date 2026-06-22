@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 import {
   calculateDistanceKm,
   estimateTravelTimeMinutes,
@@ -45,6 +46,7 @@ function formatNumber(value: number | null) {
 }
 
 export default function DemoPlannerPage() {
+  const hasTrackedUse = useRef(false);
   const [jobs, setJobs] = useState<PublicJob[]>([]);
   const [properties, setProperties] = useState<PublicProperty[]>([]);
   const [selectedJobId, setSelectedJobId] = useState("");
@@ -111,6 +113,16 @@ export default function DemoPlannerPage() {
       properties.find((property) => property.id === selectedPropertyId) || null
     );
   }, [properties, selectedPropertyId]);
+
+  useEffect(() => {
+    if (!selectedJob || !selectedProperty || hasTrackedUse.current) return;
+    hasTrackedUse.current = true;
+    trackMetric("planner_calculation", {
+      eventType: "feature",
+      pagePath: "/demo-planner",
+      metadata: { demo: true },
+    });
+  }, [selectedJob, selectedProperty]);
 
   const monthlyGrossIncome =
     (selectedJob?.hourly_rate || 0) *

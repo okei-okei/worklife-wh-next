@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import AdDisclosureNotice from "@/components/AdDisclosureNotice";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 import { LeadPartnerButton } from "./_components/LeadPartnerButton";
 import {
   PARTNER_CATEGORIES,
@@ -49,6 +50,14 @@ function PartnersPageContent() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const selectedCategory = categoryFromQuery;
+
+  useEffect(() => {
+    trackMetric("partners_viewed", {
+      eventType: "page_view",
+      pagePath: "/partners",
+      metadata: { category: categoryFromQuery },
+    });
+  }, [categoryFromQuery]);
 
   useEffect(() => {
     const loadPartners = async () => {
@@ -142,7 +151,7 @@ function PartnersPageContent() {
               生活準備サービスをカテゴリ別に確認
             </h1>
             <p className="mt-2 max-w-3xl text-base font-medium leading-7 text-gray-800">
-              チェックリストで気づいた準備項目を、カテゴリごとに確認できます。広告っぽく選ばせるより、契約前に条件を確認しやすい整理を優先しています。
+              SIM、保険、銀行、送金、生活インフラなどをカテゴリ別に比較し、公式情報を確認するためのページです。
             </p>
           </div>
 

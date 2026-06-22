@@ -13,6 +13,7 @@ import {
   type PropertyInquiryDetails,
 } from "@/lib/services/applicationWriter";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 
 type SourceMode = "saved" | "manual";
 
@@ -314,6 +315,12 @@ function PropertyInquiryPageContent() {
       target: activeTarget,
       resume: null,
       propertyDetails,
+    });
+
+    trackMetric("email_template_generated", {
+      eventType: "feature",
+      pagePath: "/mypage/property-inquiry",
+      metadata: { documentType: "property_inquiry", aiRequested: useAi },
     });
 
     if (!useAi) {

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 
 function getSafeRedirectPath() {
   if (typeof window === "undefined") return "/mypage";
@@ -44,6 +45,8 @@ export default function LoginPage() {
       setErrorMessage(`ログインに失敗しました。${error.message}`);
       return;
     }
+
+    trackMetric("login", { eventType: "auth", pagePath: "/login" });
 
     const redirectPath = getSafeRedirectPath();
 

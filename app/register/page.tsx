@@ -8,6 +8,7 @@ import {
 } from "@/components/LegalConsentCheckboxes";
 import { LEGAL_VERSION } from "@/app/legal/_data/legalDocuments";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -59,6 +60,7 @@ export default function RegisterPage() {
     }
 
     if (data.user?.id) {
+      trackMetric("sign_up", { eventType: "auth", pagePath: "/register" });
       await fetch("/api/legal/consent", {
         method: "POST",
         headers: {

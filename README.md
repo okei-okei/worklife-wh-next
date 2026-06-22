@@ -51,6 +51,21 @@ Cookie consent UI is currently not displayed because the application only
 uses necessary authentication cookies. The Cookie Policy remains published
 for future analytics and advertising support.
 
+## Analytics and articles
+
+Run the following migration before using the expanded dashboard and column
+editor:
+
+```text
+supabase/analytics_and_articles.sql
+```
+
+Public articles are available at `/articles`. Administrators can create,
+edit, publish, unpublish, and delete articles at `/admin/articles`. Service
+metrics are shown at `/admin`. Analytics and article writes use server API
+routes with `SUPABASE_SERVICE_ROLE_KEY`; the service role key must never use a
+`NEXT_PUBLIC_` prefix.
+
 ## Application writing
 
 Job application and property inquiry pages currently use template generation.

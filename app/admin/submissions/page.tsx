@@ -46,6 +46,14 @@ export default function AdminSubmissionsPage() {
         | { error?: string }
         | null;
       setErrorMessage(data?.error || "掲載申請を取得できませんでした。");
+      if (response.status === 401) {
+        window.location.replace("/login?redirect=/admin/submissions");
+        return;
+      }
+      if (response.status === 403) {
+        window.location.replace("/");
+        return;
+      }
       setIsAdmin(response.status !== 401 && response.status !== 403);
       setIsLoading(false);
       return;
@@ -66,8 +74,7 @@ export default function AdminSubmissionsPage() {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        setIsAdmin(false);
-        setIsCheckingAuth(false);
+        window.location.replace("/login?redirect=/admin/submissions");
         return;
       }
 

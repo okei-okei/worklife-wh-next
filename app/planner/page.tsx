@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { PlannerInputPanel } from "./_components/PlannerInputPanel";
 import { PlannerMapSection } from "./_components/PlannerMapSection";
@@ -25,6 +25,7 @@ import {
   type RouteInfo,
   type RouteMode,
 } from "@/lib/services/routeService";
+import { trackMetric } from "@/lib/analytics";
 
 const travelModeOptions: Array<{
   value: RouteMode;
@@ -49,6 +50,7 @@ const travelModeOptions: Array<{
 ];
 
 export default function PlannerPage() {
+  const hasTrackedPlannerUse = useRef(false);
   const [maxWeeklyRent, setMaxWeeklyRent] = useState("");
   const [maxCommuteMinutes, setMaxCommuteMinutes] = useState("");
   const [minHourlyRate, setMinHourlyRate] = useState("");
@@ -228,6 +230,16 @@ export default function PlannerPage() {
     travelMode,
     routeInfoByKey,
   ]);
+
+  useEffect(() => {
+    if (!results.length || hasTrackedPlannerUse.current) return;
+    hasTrackedPlannerUse.current = true;
+    trackMetric("planner_calculation", {
+      eventType: "feature",
+      pagePath: "/planner",
+      metadata: { combinations: results.length, travelMode },
+    });
+  }, [results.length, travelMode]);
 
   const activeFilterCount = [
     maxWeeklyRent,

@@ -18,6 +18,7 @@ import {
   type JobApplicationDetails,
 } from "@/lib/services/applicationWriter";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 
 type SourceMode = "saved" | "manual";
 type DocumentType = "application_email" | "cover_letter";
@@ -467,6 +468,12 @@ function JobApplicationPageContent() {
             resume,
             jobDetails,
           });
+
+    trackMetric("email_template_generated", {
+      eventType: "feature",
+      pagePath: "/mypage/job-application",
+      metadata: { documentType, aiRequested: useAi },
+    });
 
     if (!useAi) {
       setDraft(fallbackContent);

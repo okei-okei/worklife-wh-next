@@ -47,7 +47,7 @@ const mypageCards = [
     description: "SIM、保険、送金、生活インフラを確認できます。",
   },
   {
-    href: "/guides/working-holiday-start",
+    href: "/articles",
     title: "役立ち情報",
     description: "ビザ、IRD、契約時の注意点を確認できます。",
   },
@@ -109,19 +109,16 @@ export default function MyPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-bold text-blue-700">運営管理</p>
-                <h2 className="mt-1 text-xl font-bold text-gray-900">
-                  掲載申請の審査
-                </h2>
+                <h2 className="mt-1 text-xl font-bold text-gray-900">運営メニュー</h2>
                 <p className="mt-1 text-sm font-medium leading-6 text-gray-800">
-                  審査待ちの求人・物件を確認し、承認または却下できます。
+                  利用状況の確認、掲載申請の審査、コラム管理を行えます。
                 </p>
               </div>
-              <Link
-                href="/admin/submissions"
-                className="w-full shrink-0 rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white hover:bg-blue-800 sm:w-auto"
-              >
-                掲載申請を審査
-              </Link>
+              <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+                <Link href="/admin" className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white hover:bg-blue-800 sm:w-auto">ダッシュボード</Link>
+                <Link href="/admin/submissions" className="w-full rounded-lg border border-blue-300 bg-white px-4 py-3 text-center font-bold text-blue-800 sm:w-auto">掲載審査</Link>
+                <Link href="/admin/articles" className="w-full rounded-lg border border-blue-300 bg-white px-4 py-3 text-center font-bold text-blue-800 sm:w-auto">コラム管理</Link>
+              </div>
             </div>
           </section>
         ) : null}

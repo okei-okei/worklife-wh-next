@@ -1,197 +1,134 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getAdminContext } from "@/lib/server/adminAuth";
 
-type LeadClickRow = {
-  category: string | null;
-};
+type EventRow = { event_name: string; user_id: string | null; created_at: string };
+type ArticleRow = { title: string; slug: string; status: string; views: number };
+type LeadRow = { partner_name: string | null; category: string | null; destination_url: string | null };
+type AffiliateRow = { service_name: string | null; service_category: string | null; target_url: string | null; created_at: string };
 
-type MetricResponse = {
-  registeredUsers: number;
-  savedJobs: number;
-  savedProperties: number;
-  completedChecklistItems: number;
-  activePartners: number;
-  pendingListingSubmissions: number;
-  leadClicksByCategory: {
-    category: string;
-    count: number;
-  }[];
-};
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const adminEmail =
-  process.env.ADMIN_EMAIL ||
-  process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
-  "worklife.wh@gmail.com";
-
-function normalizeEmail(value: string | null | undefined) {
-  return value?.trim().toLowerCase() || "";
+function since(days: number) {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 }
 
-function createErrorResponse(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status });
+function startOfToday() {
+  const value = new Date();
+  value.setHours(0, 0, 0, 0);
+  return value;
 }
 
-async function countRows(
-  tableName: string,
-  filters?: (query: ReturnType<typeof serviceClientForCount>) => ReturnType<
-    typeof serviceClientForCount
-  >,
-) {
-  const query = serviceClientForCount(tableName);
-  const filteredQuery = filters ? filters(query) : query;
-  const { count, error } = await filteredQuery;
-
-  if (error) {
-    throw error;
-  }
-
-  return count ?? 0;
+function countAfter(values: Array<string | null | undefined>, threshold: Date) {
+  return values.filter((value) => value && new Date(value) >= threshold).length;
 }
 
-function serviceClientForCount(tableName: string) {
-  return createServiceClient()
-    .from(tableName)
-    .select("*", { count: "exact", head: true });
-}
-
-function createServiceClient() {
-  if (!supabaseUrl || !supabaseServiceRoleKey) {
-    throw new Error("Supabase service role configuration is missing.");
-  }
-
-  return createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-}
-
-async function countRegisteredUsers() {
-  const serviceClient = createServiceClient();
-  const perPage = 1000;
-  let page = 1;
-  let total = 0;
-
-  while (true) {
-    const { data, error } = await serviceClient.auth.admin.listUsers({
-      page,
-      perPage,
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    const users = data.users || [];
-    total += users.length;
-
-    if (users.length < perPage) {
-      return total;
-    }
-
-    page += 1;
-  }
-}
-
-async function getLeadClicksByCategory() {
-  const serviceClient = createServiceClient();
-  const { data, error } = await serviceClient
-    .from("lead_clicks")
-    .select("category");
-
-  if (error) {
-    throw error;
-  }
-
-  const counts = ((data || []) as LeadClickRow[]).reduce<
-    Record<string, number>
-  >((acc, row) => {
-    const category = row.category || "unknown";
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
+function rankBy<T>(rows: T[], getKey: (row: T) => string, limit = 5) {
+  const counts = rows.reduce<Record<string, number>>((result, row) => {
+    const key = getKey(row) || "未設定";
+    result[key] = (result[key] || 0) + 1;
+    return result;
   }, {});
-
   return Object.entries(counts)
-    .map(([category, count]) => ({ category, count }))
-    .sort((a, b) => b.count - a.count);
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
 }
 
 export async function GET(request: NextRequest) {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return createErrorResponse("Supabase configuration is missing.", 500);
-  }
-
-  if (!supabaseServiceRoleKey) {
-    return createErrorResponse("SUPABASE_SERVICE_ROLE_KEY is missing.", 500);
-  }
-
-  const authorization = request.headers.get("authorization");
-  const token = authorization?.replace("Bearer ", "");
-
-  if (!token) {
-    return createErrorResponse("Unauthorized.", 401);
-  }
-
-  const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  const {
-    data: { user },
-    error: userError,
-  } = await authClient.auth.getUser(token);
-
-  if (userError || !user) {
-    return createErrorResponse("Unauthorized.", 401);
-  }
-
-  if (normalizeEmail(user.email) !== normalizeEmail(adminEmail)) {
-    return createErrorResponse("Forbidden.", 403);
-  }
+  const admin = await getAdminContext(request);
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
+  const client = admin.serviceClient;
 
   try {
-    const [
-      registeredUsers,
-      savedJobs,
-      savedProperties,
-      completedChecklistItems,
-      activePartners,
-      pendingListingSubmissions,
-      leadClicksByCategory,
-    ] = await Promise.all([
-      countRegisteredUsers(),
-      countRows("saved_jobs"),
-      countRows("saved_properties"),
-      countRows("user_checklist_items", (query) =>
-        query.eq("is_completed", true),
-      ),
-      countRows("partners", (query) => query.eq("is_active", true)),
-      countRows("listing_submissions", (query) =>
-        query.eq("status", "pending"),
-      ),
-      getLeadClicksByCategory(),
-    ]);
+    const users = [];
+    for (let page = 1; ; page += 1) {
+      const { data, error } = await client.auth.admin.listUsers({ page, perPage: 1000 });
+      if (error) throw error;
+      users.push(...data.users);
+      if (data.users.length < 1000) break;
+    }
 
-    const metrics: MetricResponse = {
-      registeredUsers,
-      savedJobs,
-      savedProperties,
-      completedChecklistItems,
-      activePartners,
-      pendingListingSubmissions,
-      leadClicksByCategory,
+    const safeCount = async (
+      table: string,
+      filter?: { column: string; value: string | boolean },
+    ) => {
+      let query = client.from(table).select("*", { count: "exact", head: true });
+      if (filter) query = query.eq(filter.column, filter.value);
+      const { count, error } = await query;
+      return error ? 0 : count || 0;
     };
 
-    return NextResponse.json(metrics);
+    const [savedJobs, savedProperties, checklistRows, pendingSubmissions] = await Promise.all([
+      safeCount("saved_jobs"),
+      safeCount("saved_properties"),
+      safeCount("user_checklist_items"),
+      safeCount("listing_submissions", { column: "status", value: "pending" }),
+    ]);
+
+    const [eventsResult, articlesResult, leadsResult, affiliateResult, pageViewsResult] = await Promise.all([
+      client.from("admin_metrics_events").select("event_name,user_id,created_at"),
+      client.from("articles").select("title,slug,status,views"),
+      client.from("lead_clicks").select("partner_name,category,destination_url"),
+      client.from("affiliate_clicks").select("service_name,service_category,target_url,created_at"),
+      client.from("page_views").select("visitor_id,user_id,page_path,created_at").gte("created_at", since(30).toISOString()),
+    ]);
+
+    const events = (eventsResult.error ? [] : eventsResult.data || []) as EventRow[];
+    const articles = (articlesResult.error ? [] : articlesResult.data || []) as ArticleRow[];
+    const leads = (leadsResult.error ? [] : leadsResult.data || []) as LeadRow[];
+    const affiliateClicks = (affiliateResult.error ? [] : affiliateResult.data || []) as AffiliateRow[];
+    const pageViews = pageViewsResult.error ? [] : pageViewsResult.data || [];
+    const today = startOfToday();
+    const week = since(7);
+    const month = since(30);
+    const createdDates = users.map((user) => user.created_at);
+    const loginDates = users.map((user) => user.last_sign_in_at);
+    const recentEvents = events.filter((event) => new Date(event.created_at) >= month);
+    const activeIds = new Set([
+      ...users.filter((user) => user.last_sign_in_at && new Date(user.last_sign_in_at) >= month).map((user) => user.id),
+      ...recentEvents.map((event) => event.user_id).filter((id): id is string => Boolean(id)),
+    ]);
+    const eventCount = (name: string) => events.filter((event) => event.event_name === name).length;
+    const uniqueVisitors = new Set(pageViews.map((row) => row.visitor_id || row.user_id).filter(Boolean)).size;
+    const newUsers30 = countAfter(createdDates, month);
+    const affiliate30 = affiliateClicks.filter((click) => new Date(click.created_at) >= month).length;
+    const partnerViews30 = pageViews.filter((row) => row.page_path === "/partners").length;
+
+    return NextResponse.json({
+      totalMembers: users.length,
+      newUsers: { today: countAfter(createdDates, today), days7: countAfter(createdDates, week), days30: newUsers30 },
+      loginUsers: { today: countAfter(loginDates, today), days7: countAfter(loginDates, week), days30: countAfter(loginDates, month) },
+      activeUsers30: activeIds.size,
+      activeRate: users.length ? (activeIds.size / users.length) * 100 : 0,
+      featureUsage: {
+        planner: eventCount("planner_calculation"),
+        properties: savedProperties,
+        jobs: savedJobs,
+        checklist: Math.max(checklistRows, eventCount("checklist_used")),
+        emailTemplates: eventCount("email_template_generated"),
+        partnerViews: eventCount("partners_viewed"),
+        partnerClicks: leads.length,
+        affiliateClicks: affiliateClicks.length,
+      },
+      articles: {
+        total: articles.length,
+        published: articles.filter((article) => article.status === "published").length,
+        drafts: articles.filter((article) => article.status === "draft").length,
+      },
+      popularArticles: [...articles]
+        .filter((article) => article.status === "published")
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 5)
+        .map((article) => ({ name: article.title, count: article.views, href: `/articles/${article.slug}` })),
+      popularPartners: rankBy(leads, (row) => row.partner_name || row.category || "未設定"),
+      popularAffiliateLinks: rankBy(affiliateClicks, (row) => row.service_name || row.target_url || "未設定"),
+      conversion: {
+        visitorToSignup: uniqueVisitors ? (newUsers30 / uniqueVisitors) * 100 : 0,
+        partnerViewToAffiliate: partnerViews30 ? (affiliate30 / partnerViews30) * 100 : 0,
+      },
+      pendingSubmissions,
+    });
   } catch (error) {
     console.error(error);
-    return createErrorResponse("Failed to load admin metrics.", 500);
+    const message = error instanceof Error ? error.message : "管理指標を取得できませんでした。";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

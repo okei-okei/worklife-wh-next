@@ -56,6 +56,7 @@ const mypageCards = [
 export default function MyPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -69,6 +70,19 @@ export default function MyPage() {
       }
 
       setEmail(user.email || "");
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        const response = await fetch("/api/admin/access", {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+        setIsAdmin(response.ok);
+      }
     };
 
     checkUser();
@@ -89,6 +103,28 @@ export default function MyPage() {
             {email}
           </p>
         </div>
+
+        {isAdmin ? (
+          <section className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4 md:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-blue-700">運営管理</p>
+                <h2 className="mt-1 text-xl font-bold text-gray-900">
+                  掲載申請の審査
+                </h2>
+                <p className="mt-1 text-sm font-medium leading-6 text-gray-800">
+                  審査待ちの求人・物件を確認し、承認または却下できます。
+                </p>
+              </div>
+              <Link
+                href="/admin/submissions"
+                className="w-full shrink-0 rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white hover:bg-blue-800 sm:w-auto"
+              >
+                掲載申請を審査
+              </Link>
+            </div>
+          </section>
+        ) : null}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {mypageCards.map((card) => (

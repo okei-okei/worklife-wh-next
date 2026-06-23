@@ -184,7 +184,7 @@ export default function DemoPlannerPage() {
             海外の暮らしを設計する
           </h1>
           <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-gray-800">
-            公開求人と公開物件を選んで、NZで月いくら残るかを簡単に試せます。保存・応募支援・履歴書PDF管理は会員登録後に使えます。
+            公開求人と公開物件を選んで、NZで月いくら残るかを簡単に試せます。保存・応募支援・履歴書情報管理は会員登録後に使えます。
           </p>
         </section>
 
@@ -364,7 +364,7 @@ export default function DemoPlannerPage() {
                 このプランを保存するには会員登録
               </h2>
               <p className="mt-2 font-medium leading-7">
-                会員登録すると、この組み合わせを保存し、応募メール・カバーレター作成や履歴書PDF管理につなげられます。
+                会員登録すると、この組み合わせを保存し、応募メール・カバーレター作成や履歴書情報管理につなげられます。
               </p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <Link

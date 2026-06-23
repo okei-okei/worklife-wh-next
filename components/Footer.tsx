@@ -5,13 +5,7 @@ const legalLinks = [
   { href: "/legal/terms", label: "利用規約" },
   { href: "/legal/privacy", label: "プライバシーポリシー" },
   { href: "/legal/cookies", label: "Cookieポリシー" },
-  { href: "/legal/affiliate-disclosure", label: "広告・アフィリエイト開示" },
-  { href: "/legal/ai-policy", label: "AI利用ポリシー" },
-  { href: "/legal/job-listing-terms", label: "求人掲載規約" },
-  { href: "/legal/property-listing-terms", label: "物件掲載規約" },
-  { href: "/legal/community-guidelines", label: "コミュニティガイドライン" },
-  { href: "/legal/data-policy", label: "データ利用ポリシー" },
-  { href: "/legal/business-terms", label: "企業向け利用規約" },
+  { href: "/legal", label: "法務一覧" },
 ];
 
 export default function Footer() {
@@ -36,7 +30,7 @@ export default function Footer() {
           </p>
         </div>
 
-        <nav className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <nav className="flex min-w-0 flex-wrap gap-x-4 gap-y-2">
           {legalLinks.map((link) => (
             <Link
               key={link.href}

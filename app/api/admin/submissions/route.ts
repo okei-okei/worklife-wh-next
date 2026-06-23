@@ -185,6 +185,7 @@ async function approveSubmission(
         pets_allowed: details.pets_allowed,
         furnished: details.furnished,
         bills_included: details.utilities_included,
+        utilities_included: details.utilities_included,
         image_urls: submission.image_urls || [],
         is_active: true,
       },

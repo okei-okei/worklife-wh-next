@@ -3,8 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-const resumeBucketName = "resumes";
-
 type ResumePayload = {
   full_name?: string;
   email?: string;
@@ -90,7 +88,7 @@ function sanitizeResumePayload(payload: ResumePayload, userId: string) {
 
 function formatSupabaseErrorMessage(message: string) {
   if (message.includes("permission denied")) {
-    return `${message}。Supabase SQL Editorで resume_structured_fields.sql と resume_files.sql を再実行してください。`;
+    return `${message}。Supabase SQL Editorで resume_structured_fields.sql を再実行してください。`;
   }
 
   return message;
@@ -126,35 +124,8 @@ export async function GET(request: Request) {
     );
   }
 
-  const filesResponse = await adminClient
-    .from("resume_files")
-    .select("id,user_id,file_name,file_path,file_url,created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (filesResponse.error) {
-    return NextResponse.json(
-      { message: formatSupabaseErrorMessage(filesResponse.error.message) },
-      { status: 500 },
-    );
-  }
-
-  const files = await Promise.all(
-    (filesResponse.data || []).map(async (file) => {
-      const { data } = await adminClient.storage
-        .from(resumeBucketName)
-        .createSignedUrl(file.file_path, 60 * 60);
-
-      return {
-        ...file,
-        signed_url: data?.signedUrl || file.file_url,
-      };
-    }),
-  );
-
   return NextResponse.json({
     resume: resumeResponse.data || null,
-    files,
     email: user.email || "",
   });
 }

@@ -236,7 +236,7 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     key: "resume_saved",
     phase: "応募・問い合わせ準備",
     label: "履歴書情報を保存する",
-    description: "応募文作成で使う氏名、経験、スキル、PDF履歴書を保存します。",
+    description: "応募文作成で使う氏名、職歴、スキルを保存します。",
     primaryHref: "/mypage/resume",
     primaryLabel: "履歴書を保存する",
     urgency: "high",
@@ -500,7 +500,7 @@ export default function ChecklistPage() {
         <div className="flex justify-end">
           <Link
             href="/mypage"
-            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
           >
             マイページホームへ戻る
           </Link>

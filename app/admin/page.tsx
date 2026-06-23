@@ -42,6 +42,6 @@ export default function AdminPage() {
       <Group title="地域・分類" values={[["求人カテゴリ数", m?.jobs.categories.length ?? 0], ["求人地域数", m?.jobs.regions.length ?? 0], ["物件地域数", m?.properties.regions.length ?? 0], ["比較→紹介CVR", `${(m?.conversion.partnerToAffiliate ?? 0).toFixed(1)}%`]]} />
     </section>
     <section><h2 className="mb-3 text-lg font-bold">人気コンテンツ</h2><div className="grid grid-cols-1 gap-4 lg:grid-cols-3"><Ranking title="人気記事" items={m?.articles.popular || []} /><Ranking title="人気比較サービス" items={m?.popularPartners || []} /><Ranking title="広告リンククリック上位" items={m?.popularAffiliateLinks || []} /></div></section>
-    <div className="flex justify-end"><Link href="/mypage" className="w-full rounded-md bg-slate-800 px-4 py-3 text-center font-bold text-white sm:w-auto">マイページへ戻る</Link></div>
+    <div className="flex justify-end"><Link href="/mypage" className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto">マイページへ戻る</Link></div>
   </div></main>;
 }

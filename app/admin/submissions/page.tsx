@@ -334,7 +334,7 @@ export default function AdminSubmissionsPage() {
         <div className="flex justify-end">
           <Link
             href="/mypage"
-            className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
           >
             ← マイページホームへ戻る
           </Link>

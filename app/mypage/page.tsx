@@ -19,7 +19,7 @@ const mypageCards = [
   {
     href: "/mypage/resume",
     title: "履歴書管理",
-    description: "応募に使う基本情報とPDFを保存できます。",
+    description: "応募に使う基本情報、職歴、スキルを保存できます。",
   },
   {
     href: "/mypage/job-application",

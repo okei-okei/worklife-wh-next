@@ -68,6 +68,7 @@ alter table public_properties add column if not exists address text null;
 alter table public_properties add column if not exists rent_weekly numeric null;
 alter table public_properties add column if not exists description text null;
 alter table public_properties add column if not exists url text null;
+alter table public_properties add column if not exists utilities_included boolean null;
 alter table public_properties add column if not exists country text not null default 'NZ';
 alter table public_properties add column if not exists latitude double precision null;
 alter table public_properties add column if not exists longitude double precision null;

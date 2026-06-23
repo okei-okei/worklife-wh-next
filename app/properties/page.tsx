@@ -786,15 +786,6 @@ export default function PropertiesPage() {
                 className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
               />
             </label>
-            <label className="flex min-h-[74px] items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900">
-              <input
-                type="checkbox"
-                checked={petsAllowedOnly}
-                onChange={(event) => setPetsAllowedOnly(event.target.checked)}
-                className="h-5 w-5"
-              />
-              ペット可
-            </label>
             <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
               <span className="text-sm font-bold text-gray-900">
                 光熱費込み
@@ -812,6 +803,15 @@ export default function PropertiesPage() {
                 <option value="included">光熱費込み</option>
                 <option value="excluded">光熱費別</option>
               </select>
+            </label>
+            <label className="flex min-h-[74px] items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900">
+              <input
+                type="checkbox"
+                checked={petsAllowedOnly}
+                onChange={(event) => setPetsAllowedOnly(event.target.checked)}
+                className="h-5 w-5"
+              />
+              ペット可
             </label>
           </div>
 
@@ -934,12 +934,12 @@ export default function PropertiesPage() {
                     }
                   />
                   <PropertyFact
-                    label="ペット"
-                    value={property.pets_allowed ? "可" : "要確認"}
-                  />
-                  <PropertyFact
                     label="光熱費"
                     value={formatUtilitiesIncluded(property)}
+                  />
+                  <PropertyFact
+                    label="ペット"
+                    value={property.pets_allowed ? "可" : "要確認"}
                   />
                 </div>
 

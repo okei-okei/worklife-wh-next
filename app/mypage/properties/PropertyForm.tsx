@@ -3,13 +3,21 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { geocodeAddress } from "@/lib/geocoder";
+import NzLocationPicker from "@/components/NzLocationPicker";
 
 export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
-  const [location, setLocation] = useState("Auckland CBD");
+  const [location, setLocation] = useState("");
   const [address, setAddress] = useState("");
   const [rent, setRent] = useState("");
+  const [bedrooms, setBedrooms] = useState("");
+  const [bathrooms, setBathrooms] = useState("");
+  const [parkingSpaces, setParkingSpaces] = useState("");
+  const [availableFrom, setAvailableFrom] = useState("");
+  const [utilitiesIncluded, setUtilitiesIncluded] = useState("");
+  const [petsAllowed, setPetsAllowed] = useState("");
+  const [imageUrls, setImageUrls] = useState("");
   const [isFetchingLink, setIsFetchingLink] = useState(false);
 
   const handleFetchFromUrl = async () => {
@@ -70,6 +78,19 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
       location,
       address,
       rent_weekly: rent ? Number(rent) : null,
+      bedrooms: bedrooms ? Number(bedrooms) : null,
+      bathrooms: bathrooms ? Number(bathrooms) : null,
+      parking_spaces: parkingSpaces ? Number(parkingSpaces) : null,
+      available_from: availableFrom || null,
+      utilities_included:
+        utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
+      bills_included:
+        utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
+      pets_allowed: petsAllowed === "" ? null : petsAllowed === "true",
+      image_urls: imageUrls
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
       status: "気になる",
       latitude: geo.latitude,
       longitude: geo.longitude,
@@ -79,9 +100,16 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
 
     setTitle("");
     setUrl("");
-    setLocation("Auckland CBD");
+    setLocation("");
     setAddress("");
     setRent("");
+    setBedrooms("");
+    setBathrooms("");
+    setParkingSpaces("");
+    setAvailableFrom("");
+    setUtilitiesIncluded("");
+    setPetsAllowed("");
+    setImageUrls("");
 
     onSaved();
   };
@@ -89,23 +117,38 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
   return (
     <form
       onSubmit={handleSave}
-      className="space-y-4 rounded-2xl bg-white p-4 text-gray-900 shadow md:p-6"
+      className="space-y-5 rounded-2xl bg-white p-4 text-gray-900 shadow md:p-6"
     >
-      <input
-        className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
-        placeholder="物件名"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-      />
+      <div>
+        <h2 className="text-xl font-bold text-gray-900">物件を保存する</h2>
+        <p className="mt-1 text-sm font-medium text-gray-700">
+          外部サイトで見つけた物件を、公開物件カードと近い項目で保存できます。
+        </p>
+      </div>
 
-      <input
-        className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
-        placeholder="URL"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        required
-      />
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">物件名</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            placeholder="例: City flat near station"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">物件URL</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            placeholder="https://..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            required
+          />
+        </label>
+      </div>
 
       <button
         type="button"
@@ -116,39 +159,127 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         {isFetchingLink ? "取得中..." : "URLから物件内容を取得"}
       </button>
 
-      {/* エリア（選択式） */}
-      <select
-        className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900"
+      <NzLocationPicker
+        label="地域"
         value={location}
-        onChange={(e) => setLocation(e.target.value)}
-      >
-        <option>Auckland CBD</option>
-        <option>North Shore</option>
-        <option>Mount Eden</option>
-        <option>Newmarket</option>
-        <option>Onehunga</option>
-        <option>Wellington</option>
-        <option>Christchurch</option>
-        <option>Hamilton</option>
-      </select>
-
-      <input
-        className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
-        placeholder="詳細住所"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
+        onChange={setLocation}
+        onSelectionChange={(selection) => setLocation(selection.label)}
+        showCurrentLocation={false}
       />
 
-      <input
-        className="w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
-        placeholder="家賃（週）"
-        type="number"
-        value={rent}
-        onChange={(e) => setRent(e.target.value)}
-      />
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">住所</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            placeholder="地図・通勤計算に使う住所"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">週家賃</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            placeholder="300"
+            type="number"
+            min="0"
+            step="0.01"
+            value={rent}
+            onChange={(e) => setRent(e.target.value)}
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">ベッド</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900"
+            type="number"
+            min="0"
+            step="0.5"
+            value={bedrooms}
+            onChange={(e) => setBedrooms(e.target.value)}
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">バス</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900"
+            type="number"
+            min="0"
+            step="0.5"
+            value={bathrooms}
+            onChange={(e) => setBathrooms(e.target.value)}
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">駐車場</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900"
+            type="number"
+            min="0"
+            step="1"
+            value={parkingSpaces}
+            onChange={(e) => setParkingSpaces(e.target.value)}
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">入居可能日</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900"
+            type="date"
+            value={availableFrom}
+            onChange={(e) => setAvailableFrom(e.target.value)}
+          />
+        </label>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">光熱費込み</span>
+          <select
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
+            value={utilitiesIncluded}
+            onChange={(e) => setUtilitiesIncluded(e.target.value)}
+          >
+            <option value="">要確認</option>
+            <option value="true">光熱費込み</option>
+            <option value="false">光熱費別</option>
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">ペット可</span>
+          <select
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
+            value={petsAllowed}
+            onChange={(e) => setPetsAllowed(e.target.value)}
+          >
+            <option value="">要確認</option>
+            <option value="true">可</option>
+            <option value="false">不可</option>
+          </select>
+        </label>
+      </div>
+
+      <label className="block">
+        <span className="text-sm font-bold text-gray-900">画像URL</span>
+        <textarea
+          className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+          placeholder="任意。複数ある場合は1行に1つずつ入力"
+          value={imageUrls}
+          onChange={(e) => setImageUrls(e.target.value)}
+        />
+      </label>
 
       <button className="w-full rounded-lg bg-blue-600 px-6 py-3 font-bold text-white sm:w-auto">
-        保存
+        物件を保存
       </button>
     </form>
   );

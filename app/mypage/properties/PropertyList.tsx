@@ -151,6 +151,10 @@ export default function PropertyList({
                 value={p.available_from || "要確認"}
               />
               <PropertyFact
+                label="光熱費"
+                value={formatUtilitiesIncluded(p)}
+              />
+              <PropertyFact
                 label="ペット"
                 value={
                   p.pets_allowed === true
@@ -159,10 +163,6 @@ export default function PropertyList({
                       ? "不可"
                       : "要確認"
                 }
-              />
-              <PropertyFact
-                label="光熱費"
-                value={formatUtilitiesIncluded(p)}
               />
             </div>
 

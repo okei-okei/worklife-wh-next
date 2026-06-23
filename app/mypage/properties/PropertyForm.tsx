@@ -17,7 +17,6 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
   const [availableFrom, setAvailableFrom] = useState("");
   const [utilitiesIncluded, setUtilitiesIncluded] = useState("");
   const [petsAllowed, setPetsAllowed] = useState("");
-  const [imageUrls, setImageUrls] = useState("");
   const [isFetchingLink, setIsFetchingLink] = useState(false);
 
   const handleFetchFromUrl = async () => {
@@ -87,10 +86,6 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
       bills_included:
         utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
       pets_allowed: petsAllowed === "" ? null : petsAllowed === "true",
-      image_urls: imageUrls
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean),
       status: "気になる",
       latitude: geo.latitude,
       longitude: geo.longitude,
@@ -109,7 +104,6 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
     setAvailableFrom("");
     setUtilitiesIncluded("");
     setPetsAllowed("");
-    setImageUrls("");
 
     onSaved();
   };
@@ -267,16 +261,6 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
           </select>
         </label>
       </div>
-
-      <label className="block">
-        <span className="text-sm font-bold text-gray-900">画像URL</span>
-        <textarea
-          className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
-          placeholder="任意。複数ある場合は1行に1つずつ入力"
-          value={imageUrls}
-          onChange={(e) => setImageUrls(e.target.value)}
-        />
-      </label>
 
       <button className="w-full rounded-lg bg-blue-600 px-6 py-3 font-bold text-white sm:w-auto">
         物件を保存

@@ -27,7 +27,6 @@ export default function EditJobModal({
   const [hourlyRate, setHourlyRate] = useState("");
   const [workHours, setWorkHours] = useState("");
   const [accommodationAvailable, setAccommodationAvailable] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [status, setStatus] = useState("");
   const [address, setAddress] = useState("");
 
@@ -47,7 +46,6 @@ export default function EditJobModal({
           ? ""
           : String(job.accommodation_available),
       );
-      setImageUrl(job.image_urls?.[0] || "");
       setStatus(job.status || "気になる");
       setAddress(job.address || "");
     }, 0);
@@ -92,7 +90,6 @@ export default function EditJobModal({
           accommodationAvailable === ""
             ? null
             : accommodationAvailable === "true",
-        image_urls: imageUrl ? [imageUrl] : null,
         status,
         address,
         latitude,
@@ -216,25 +213,14 @@ export default function EditJobModal({
           </label>
         </div>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <label className="block">
-            <span className="text-sm font-bold text-gray-900">住所</span>
-            <input
-              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-bold text-gray-900">画像URL</span>
-            <input
-              className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-            />
-          </label>
-        </div>
+        <label className="mt-4 block">
+          <span className="text-sm font-bold text-gray-900">住所</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+        </label>
 
         <label className="mt-4 block">
           <span className="text-sm font-bold text-gray-900">ステータス</span>

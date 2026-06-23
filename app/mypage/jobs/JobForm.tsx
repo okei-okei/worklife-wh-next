@@ -14,7 +14,6 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
   const [hourlyRate, setHourlyRate] = useState("");
   const [workHours, setWorkHours] = useState("");
   const [accommodationAvailable, setAccommodationAvailable] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [status, setStatus] = useState("気になる");
   const [address, setAddress] = useState("");
   const [isFetchingLink, setIsFetchingLink] = useState(false);
@@ -83,7 +82,6 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
         accommodationAvailable === ""
           ? null
           : accommodationAvailable === "true",
-      image_urls: imageUrl ? [imageUrl] : null,
       status,
       address,
       latitude: geo.latitude,
@@ -100,7 +98,6 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
     setHourlyRate("");
     setWorkHours("");
     setAccommodationAvailable("");
-    setImageUrl("");
     setStatus("気になる");
     setAddress("");
 
@@ -228,27 +225,15 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
         </label>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="block">
-          <span className="text-sm font-bold text-gray-900">住所</span>
-          <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
-            placeholder="地図・通勤計算に使う住所"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-        </label>
-
-        <label className="block">
-          <span className="text-sm font-bold text-gray-900">画像URL</span>
-          <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
-            placeholder="任意。カード上部に表示します"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-          />
-        </label>
-      </div>
+      <label className="block">
+        <span className="text-sm font-bold text-gray-900">住所</span>
+        <input
+          className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+          placeholder="地図・通勤計算に使う住所"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+        />
+      </label>
 
       <label className="block">
         <span className="text-sm font-bold text-gray-900">ステータス</span>

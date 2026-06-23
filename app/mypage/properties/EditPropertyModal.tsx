@@ -30,7 +30,6 @@ export default function EditPropertyModal({
   const [availableFrom, setAvailableFrom] = useState("");
   const [utilitiesIncluded, setUtilitiesIncluded] = useState("");
   const [petsAllowed, setPetsAllowed] = useState("");
-  const [imageUrls, setImageUrls] = useState("");
 
   useEffect(() => {
     if (!property) return;
@@ -53,7 +52,6 @@ export default function EditPropertyModal({
       setPetsAllowed(
         property.pets_allowed == null ? "" : String(property.pets_allowed),
       );
-      setImageUrls(property.image_urls?.join("\n") || "");
     }, 0);
 
     return () => window.clearTimeout(timer);
@@ -97,10 +95,6 @@ export default function EditPropertyModal({
         bills_included:
           utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
         pets_allowed: petsAllowed === "" ? null : petsAllowed === "true",
-        image_urls: imageUrls
-          .split("\n")
-          .map((item) => item.trim())
-          .filter(Boolean),
         latitude,
         longitude,
       })
@@ -258,16 +252,6 @@ export default function EditPropertyModal({
             </select>
           </label>
         </div>
-
-        <label className="mt-4 block">
-          <span className="text-sm font-bold text-gray-900">画像URL</span>
-          <textarea
-            className="mt-2 min-h-24 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
-            value={imageUrls}
-            onChange={(e) => setImageUrls(e.target.value)}
-            placeholder="複数ある場合は1行に1つずつ入力"
-          />
-        </label>
 
         <div className="mt-6 flex flex-col justify-end gap-2 sm:flex-row">
           <button

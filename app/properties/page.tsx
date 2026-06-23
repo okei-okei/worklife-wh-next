@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
@@ -149,6 +150,7 @@ function PropertyFact({
 
 export default function PropertiesPage() {
   const router = useRouter();
+  useEffect(() => { trackMetric("public_property_view", { eventType: "page_view", pagePath: "/properties" }); }, []);
   const [properties, setProperties] = useState<PublicProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");

@@ -44,7 +44,7 @@ export function LeadPartnerButton({
       return;
     }
 
-    trackMetric(destinationUrl ? "affiliate_clicked" : "partner_clicked", {
+    trackMetric(destinationUrl ? "affiliate_link_click" : "comparison_card_click", {
       eventType: "conversion",
       pagePath: sourcePage,
       metadata: {

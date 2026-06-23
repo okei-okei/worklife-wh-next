@@ -52,7 +52,7 @@ function PartnersPageContent() {
   const selectedCategory = categoryFromQuery;
 
   useEffect(() => {
-    trackMetric("partners_viewed", {
+    trackMetric("comparison_page_view", {
       eventType: "page_view",
       pagePath: "/partners",
       metadata: { category: categoryFromQuery },
@@ -126,6 +126,12 @@ function PartnersPageContent() {
     );
   }, [partners, selectedCategory]);
 
+  useEffect(() => {
+    if (!isLoading && filteredPartners.length) {
+      trackMetric("comparison_card_view", { eventType: "content", pagePath: "/partners", metadata: { category: selectedCategory, count: filteredPartners.length } });
+    }
+  }, [filteredPartners.length, isLoading, selectedCategory]);
+
   const selectedCategoryDefinition = PARTNER_CATEGORIES.find(
     (category) => category.key === selectedCategory,
   );
@@ -161,12 +167,6 @@ function PartnersPageContent() {
               className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
             >
               チェックリストへ戻る
-            </Link>
-            <Link
-              href="/mypage"
-              className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto"
-            >
-              マイページへ戻る
             </Link>
           </div>
         </section>
@@ -316,6 +316,12 @@ function PartnersPageContent() {
             </div>
           )}
         </section>
+
+        <AdDisclosureNotice detail />
+
+        <div className="flex justify-end">
+          <Link href="/mypage" className="w-full rounded-lg bg-gray-700 px-4 py-3 text-center font-bold text-white sm:w-auto">マイページへ戻る</Link>
+        </div>
       </div>
     </main>
   );

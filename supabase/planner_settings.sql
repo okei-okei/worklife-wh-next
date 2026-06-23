@@ -4,10 +4,14 @@ create table if not exists planner_settings (
   monthly_transport_cost numeric not null default 150,
   monthly_phone_cost numeric not null default 40,
   monthly_other_cost numeric not null default 300,
+  initial_cost numeric not null default 0,
   planned_stay_months numeric not null default 6,
   created_at timestamp with time zone not null default now(),
   updated_at timestamp with time zone not null default now()
 );
+
+alter table planner_settings
+add column if not exists initial_cost numeric not null default 0;
 
 alter table planner_settings enable row level security;
 

@@ -380,7 +380,7 @@ export default function ChecklistPage() {
       }));
       alert(error.message);
     } else {
-      trackMetric("checklist_used", {
+      trackMetric(nextChecked ? "checklist_item_complete" : "checklist_used", {
         eventType: "feature",
         pagePath: "/mypage/checklist",
         metadata: { itemKey: item.key, completed: nextChecked },

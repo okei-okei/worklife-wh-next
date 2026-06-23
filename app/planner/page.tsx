@@ -26,6 +26,7 @@ import {
   type RouteMode,
 } from "@/lib/services/routeService";
 import { trackMetric } from "@/lib/analytics";
+import ReturnBalanceSimulator from "@/components/simulator/ReturnBalanceSimulator";
 
 const travelModeOptions: Array<{
   value: RouteMode;
@@ -64,6 +65,8 @@ export default function PlannerPage() {
   const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
   const [routeStatusMessage, setRouteStatusMessage] = useState("");
 
+  useEffect(() => { trackMetric("planner_view", { eventType: "page_view", pagePath: "/planner" }); }, []);
+
   const {
     currentUserId,
     jobs,
@@ -82,6 +85,8 @@ export default function PlannerPage() {
     setMonthlyPhoneCost,
     monthlyOtherCost,
     setMonthlyOtherCost,
+    initialCost,
+    setInitialCost,
     plannedStayMonths,
     setPlannedStayMonths,
     settingsSaveStatus,
@@ -392,6 +397,13 @@ export default function PlannerPage() {
       onChange: setMonthlyOtherCost,
     },
     {
+      id: "initial-cost",
+      label: "初期費用",
+      prefix: "$",
+      value: initialCost,
+      onChange: setInitialCost,
+    },
+    {
       id: "stay-months",
       label: "滞在予定",
       suffix: "か月",
@@ -441,7 +453,7 @@ export default function PlannerPage() {
         <PlannerInputPanel
           title="生活費シミュレーション"
           inputs={livingCostInputs}
-          columnsClassName="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
+          columnsClassName="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
           action={
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
               <div className="text-sm font-bold text-blue-700">
@@ -453,6 +465,19 @@ export default function PlannerPage() {
               </div>
             </div>
           }
+        />
+
+        <ReturnBalanceSimulator
+          key={`${selectedResult?.job.id || "none"}-${selectedResult?.property.id || "none"}-${plannedStayMonths}-${initialCost}`}
+          compact
+          showInputs={false}
+          initialStayMonths={stayMonths || 6}
+          initialWeeklyIncome={(selectedResult?.monthlyNetIncome || 0) / 4.33}
+          initialWeeklyRent={selectedResult?.property.rent_weekly || 0}
+          initialWeeklyFood={Number(monthlyFoodCost || 0) / 4.33}
+          initialWeeklyTransport={Number(monthlyTransportCost || 0) / 4.33}
+          initialWeeklyOther={(Number(monthlyPhoneCost || 0) + Number(monthlyOtherCost || 0)) / 4.33}
+          initialCost={Number(initialCost || 0)}
         />
 
         <section className="mb-6 rounded-2xl bg-white p-4 text-gray-900 shadow md:p-6">

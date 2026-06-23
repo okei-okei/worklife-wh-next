@@ -317,7 +317,7 @@ function PropertyInquiryPageContent() {
       propertyDetails,
     });
 
-    trackMetric("email_template_generated", {
+    trackMetric("property_inquiry_template_generate", {
       eventType: "feature",
       pagePath: "/mypage/property-inquiry",
       metadata: { documentType: "property_inquiry", aiRequested: useAi },

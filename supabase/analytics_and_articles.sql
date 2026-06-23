@@ -64,6 +64,35 @@ create table if not exists public.articles (
   published_at timestamptz
 );
 
+-- Add review, disclosure, and relationship fields without replacing existing articles.
+alter table public.articles
+  add column if not exists country_code text default 'NZ',
+  add column if not exists region text,
+  add column if not exists article_type text not null default 'general',
+  add column if not exists is_user_submitted boolean not null default false,
+  add column if not exists submitted_by uuid references auth.users(id) on delete set null,
+  add column if not exists approved_by uuid references auth.users(id) on delete set null,
+  add column if not exists approved_at timestamptz,
+  add column if not exists rejected_reason text,
+  add column if not exists is_sponsored boolean not null default false,
+  add column if not exists is_affiliate boolean not null default false,
+  add column if not exists sponsor_name text,
+  add column if not exists related_checklist_items jsonb not null default '[]'::jsonb,
+  add column if not exists related_service_ids jsonb not null default '[]'::jsonb;
+
+alter table public.articles drop constraint if exists articles_status_check;
+alter table public.articles add constraint articles_status_check
+  check (status in ('draft', 'pending', 'approved', 'rejected', 'published'));
+alter table public.articles drop constraint if exists articles_category_check;
+alter table public.articles add constraint articles_category_check check (category in (
+  '渡航前準備', 'ビザ', 'IRDナンバー', '銀行口座', 'SIM', '保険', '仕事探し',
+  '家探し', '電気・インターネット', '生活費', '交通', '注意喚起', '体験談',
+  'お金', '渡航準備', 'SIM・通信', '銀行・送金', '現地生活'
+));
+alter table public.articles drop constraint if exists articles_article_type_check;
+alter table public.articles add constraint articles_article_type_check
+  check (article_type in ('general', 'experience'));
+
 create index if not exists admin_metrics_events_name_created_idx
 on public.admin_metrics_events (event_name, created_at desc);
 create index if not exists admin_metrics_events_user_created_idx
@@ -83,7 +112,8 @@ alter table public.affiliate_clicks enable row level security;
 alter table public.articles enable row level security;
 alter table public.profiles enable row level security;
 
-grant select on public.articles to anon, authenticated;
+grant select, insert on public.articles to authenticated;
+grant select on public.articles to anon;
 grant select on public.profiles to authenticated;
 
 drop policy if exists "Users can read own profile" on public.profiles;
@@ -92,9 +122,24 @@ on public.profiles for select to authenticated
 using (auth.uid() = id);
 
 drop policy if exists "Public can read published articles" on public.articles;
-create policy "Public can read published articles"
+drop policy if exists "Public can read approved articles" on public.articles;
+create policy "Public can read approved articles"
 on public.articles for select to anon, authenticated
-using (status = 'published');
+using (status in ('published', 'approved'));
+
+drop policy if exists "Users can create own article submissions" on public.articles;
+create policy "Users can create own article submissions"
+on public.articles for insert to authenticated
+with check (
+  auth.uid() = submitted_by
+  and is_user_submitted = true
+  and status = 'pending'
+);
+
+drop policy if exists "Users can read own article submissions" on public.articles;
+create policy "Users can read own article submissions"
+on public.articles for select to authenticated
+using (auth.uid() = submitted_by);
 
 -- Analytics writes and article management are performed by server API routes
 -- with the service role. No direct client write policy is intentionally added.
@@ -107,7 +152,7 @@ as $$
 begin
   if tg_op = 'INSERT' then
     new.updated_at = now();
-    if new.status = 'published' and new.published_at is null then
+    if new.status in ('published', 'approved') and new.published_at is null then
       new.published_at = now();
     end if;
   else
@@ -120,9 +165,9 @@ begin
     ) then
       new.updated_at = now();
     end if;
-    if new.status is distinct from old.status and new.status = 'published' then
+    if new.status is distinct from old.status and new.status in ('published', 'approved') then
       new.published_at = coalesce(new.published_at, now());
-    elsif new.status is distinct from old.status and new.status = 'draft' then
+    elsif new.status is distinct from old.status and new.status in ('draft', 'pending', 'rejected') then
       new.published_at = null;
     end if;
   end if;
@@ -143,7 +188,7 @@ set search_path = public
 as $$
   update public.articles
   set views = views + 1
-  where id = article_id and status = 'published';
+  where id = article_id and status in ('published', 'approved');
 $$;
 
 revoke all on function public.increment_article_views(uuid)

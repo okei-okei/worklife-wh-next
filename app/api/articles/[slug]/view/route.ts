@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, context: Context) {
     .from("articles")
     .select("id")
     .eq("slug", slug)
-    .eq("status", "published")
+    .in("status", ["published", "approved"])
     .maybeSingle();
   if (error || !article) return NextResponse.json({ recorded: false }, { status: 404 });
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, context: Context) {
     serviceClient.rpc("increment_article_views", { article_id: article.id }),
     serviceClient.from("admin_metrics_events").insert({
       user_id: userId,
-      event_name: "article_viewed",
+      event_name: "article_view",
       event_type: "content",
       page_path: `/articles/${slug}`,
       metadata: { articleId: article.id, slug },

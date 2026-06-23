@@ -56,7 +56,7 @@ export function PlanRankingList({
 
                   {isSelected ? (
                     <span className="rounded-full bg-blue-600 px-3 py-1 text-sm font-bold text-white">
-                      選択中
+                      選択中のプラン
                     </span>
                   ) : null}
                 </div>
@@ -105,7 +105,7 @@ export function PlanRankingList({
                     スコア: {result.score.toFixed(0)}
                   </p>
                   <p>
-                    経路: {result.travelMode}
+                    移動手段: {result.travelMode}
                     {result.isRouteFallback ? " / フォールバック" : ""}
                   </p>
                 </div>
@@ -125,7 +125,7 @@ export function PlanRankingList({
                   }
                   className="w-full rounded-lg bg-gray-900 px-4 py-3 font-bold text-white sm:w-auto sm:py-2"
                 >
-                  経路を表示
+                  このプランを選択
                 </button>
               </div>
             </div>

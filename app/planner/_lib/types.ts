@@ -60,6 +60,7 @@ export type PlannerSettings = {
   monthlyTransportCost: string;
   monthlyPhoneCost: string;
   monthlyOtherCost: string;
+  initialCost: string;
   plannedStayMonths: string;
 };
 
@@ -68,6 +69,7 @@ export type PlannerSettingsRow = {
   monthly_transport_cost: number | null;
   monthly_phone_cost: number | null;
   monthly_other_cost: number | null;
+  initial_cost: number | null;
   planned_stay_months: number | null;
 };
 

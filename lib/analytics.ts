@@ -14,7 +14,27 @@ export type MetricEventName =
   | "partner_clicked"
   | "affiliate_clicked"
   | "article_viewed"
-  | "page_view";
+  | "page_view"
+  | "public_job_view"
+  | "public_property_view"
+  | "job_save"
+  | "property_save"
+  | "job_application_template_generate"
+  | "property_inquiry_template_generate"
+  | "planner_view"
+  | "planner_trial_view"
+  | "planner_map_view"
+  | "checklist_view"
+  | "checklist_item_complete"
+  | "checklist_partner_transition"
+  | "comparison_page_view"
+  | "comparison_card_view"
+  | "comparison_card_click"
+  | "affiliate_link_click"
+  | "article_view"
+  | "article_submit"
+  | "article_partner_transition"
+  | "content_report_submit";
 
 function getVisitorId() {
   if (typeof window === "undefined") return undefined;
@@ -65,4 +85,3 @@ export async function trackMetric(
     console.warn("Metric tracking failed", error);
   }
 }
-

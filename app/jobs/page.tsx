@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
+import { trackMetric } from "@/lib/analytics";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
@@ -72,6 +73,7 @@ function calculateDistanceKm(
 export default function JobsPage() {
   const router = useRouter();
   const [jobs, setJobs] = useState<PublicJob[]>([]);
+  useEffect(() => { trackMetric("public_job_view", { eventType: "page_view", pagePath: "/jobs" }); }, []);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [savingJobId, setSavingJobId] = useState<string | null>(null);

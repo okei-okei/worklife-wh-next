@@ -12,8 +12,17 @@ const emptyForm: ArticleInput = {
   excerpt: "",
   content: "",
   category: "渡航準備",
+  country_code: "NZ",
+  region: "",
+  article_type: "general",
   cover_image_url: "",
   status: "draft",
+  is_sponsored: false,
+  is_affiliate: false,
+  sponsor_name: "",
+  related_checklist_items: [],
+  related_service_ids: [],
+  rejected_reason: "",
 };
 
 export default function ArticleEditorForm({ articleId }: { articleId?: string }) {
@@ -22,6 +31,7 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
   const [accessToken, setAccessToken] = useState("");
   const [isLoading, setIsLoading] = useState(Boolean(articleId));
   const [isSaving, setIsSaving] = useState(false);
+  const [isUserSubmitted, setIsUserSubmitted] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -46,14 +56,24 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
         setErrorMessage(data?.error || "記事を読み込めませんでした。");
       } else {
         const article = data.article;
+        setIsUserSubmitted(article.is_user_submitted);
         setForm({
           title: article.title,
           slug: article.slug,
           excerpt: article.excerpt || "",
           content: article.content,
           category: article.category,
+          country_code: article.country_code || "NZ",
+          region: article.region || "",
+          article_type: article.article_type || "general",
           cover_image_url: article.cover_image_url || "",
           status: article.status,
+          is_sponsored: article.is_sponsored,
+          is_affiliate: article.is_affiliate,
+          sponsor_name: article.sponsor_name || "",
+          related_checklist_items: article.related_checklist_items || [],
+          related_service_ids: article.related_service_ids || [],
+          rejected_reason: article.rejected_reason || "",
         });
       }
       setIsLoading(false);
@@ -73,7 +93,7 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
     }));
   };
 
-  const handleSubmit = async (status: "draft" | "published") => {
+  const handleSubmit = async (status: "draft" | "approved" | "published") => {
     if (!accessToken || !form.title.trim() || !form.slug.trim()) {
       setErrorMessage("タイトルとslugを入力してください。");
       return;
@@ -116,6 +136,16 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
           <input value={form.slug} onChange={(event) => update("slug", normalizeArticleSlug(event.target.value))} className={inputClass} placeholder="working-holiday-budget" />
         </label>
         <label>
+          <span className="text-sm font-bold">関連国</span>
+          <select value={form.country_code || "NZ"} onChange={(event) => update("country_code", event.target.value)} className={inputClass}>
+            <option value="NZ">ニュージーランド</option><option value="AU">オーストラリア</option><option value="CA">カナダ</option>
+          </select>
+        </label>
+        <label>
+          <span className="text-sm font-bold">関連地域（任意）</span>
+          <input value={form.region || ""} onChange={(event) => update("region", event.target.value)} className={inputClass} />
+        </label>
+        <label>
           <span className="text-sm font-bold">カテゴリー</span>
           <select value={form.category} onChange={(event) => update("category", event.target.value as ArticleInput["category"])} className={inputClass}>
             {ARTICLE_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
@@ -125,6 +155,13 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
           <span className="text-sm font-bold">概要</span>
           <textarea rows={3} value={form.excerpt || ""} onChange={(event) => update("excerpt", event.target.value)} className={inputClass} />
         </label>
+        <div className="grid gap-3 rounded-md bg-gray-50 p-4 md:col-span-2 md:grid-cols-2">
+          <label className="flex items-center gap-3"><input type="checkbox" checked={form.is_sponsored} onChange={(event) => update("is_sponsored", event.target.checked)} className="h-5 w-5" /><span className="text-sm font-bold">PR・広告記事</span></label>
+          <label className="flex items-center gap-3"><input type="checkbox" checked={form.is_affiliate} onChange={(event) => update("is_affiliate", event.target.checked)} className="h-5 w-5" /><span className="text-sm font-bold">アフィリエイトリンクを含む</span></label>
+          <label className="md:col-span-2"><span className="text-sm font-bold">スポンサー名（任意）</span><input value={form.sponsor_name || ""} onChange={(event) => update("sponsor_name", event.target.value)} className={inputClass} /></label>
+          <label><span className="text-sm font-bold">関連チェック項目（1行1件）</span><textarea rows={4} value={form.related_checklist_items.join("\n")} onChange={(event) => update("related_checklist_items", event.target.value.split("\n").filter(Boolean))} className={inputClass} /></label>
+          <label><span className="text-sm font-bold">関連サービスID（1行1件）</span><textarea rows={4} value={form.related_service_ids.join("\n")} onChange={(event) => update("related_service_ids", event.target.value.split("\n").filter(Boolean))} className={inputClass} /></label>
+        </div>
         <label className="md:col-span-2">
           <span className="text-sm font-bold">本文</span>
           <textarea rows={16} value={form.content} onChange={(event) => update("content", event.target.value)} className={inputClass} placeholder="段落の間を空行で区切って入力してください。" />
@@ -139,10 +176,9 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
         <Link href="/admin/articles" className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 sm:w-auto">記事一覧へ戻る</Link>
         <div className="flex flex-col gap-3 sm:flex-row">
           <button type="button" onClick={() => handleSubmit("draft")} disabled={isSaving} className="w-full rounded-md border border-slate-800 bg-white px-4 py-3 font-bold text-slate-900 disabled:opacity-50 sm:w-auto">下書き保存</button>
-          <button type="button" onClick={() => handleSubmit("published")} disabled={isSaving} className="w-full rounded-md bg-emerald-700 px-4 py-3 font-bold text-white disabled:opacity-50 sm:w-auto">{isSaving ? "保存中..." : "公開する"}</button>
+          <button type="button" onClick={() => handleSubmit(isUserSubmitted ? "approved" : "published")} disabled={isSaving} className="w-full rounded-md bg-emerald-700 px-4 py-3 font-bold text-white disabled:opacity-50 sm:w-auto">{isSaving ? "保存中..." : "公開する"}</button>
         </div>
       </div>
     </div>
   );
 }
-

@@ -469,7 +469,7 @@ function JobApplicationPageContent() {
             jobDetails,
           });
 
-    trackMetric("email_template_generated", {
+    trackMetric("job_application_template_generate", {
       eventType: "feature",
       pagePath: "/mypage/job-application",
       metadata: { documentType, aiRequested: useAi },

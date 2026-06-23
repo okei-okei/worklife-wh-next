@@ -58,6 +58,8 @@ export default function DemoPlannerPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  useEffect(() => { trackMetric("planner_trial_view", { eventType: "page_view", pagePath: "/demo-planner" }); }, []);
+
   useEffect(() => {
     const loadPublicData = async () => {
       setIsLoading(true);

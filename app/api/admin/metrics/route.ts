@@ -1,134 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/server/adminAuth";
 
-type EventRow = { event_name: string; user_id: string | null; created_at: string };
-type ArticleRow = { title: string; slug: string; status: string; views: number };
-type LeadRow = { partner_name: string | null; category: string | null; destination_url: string | null };
-type AffiliateRow = { service_name: string | null; service_category: string | null; target_url: string | null; created_at: string };
-
-function since(days: number) {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-}
-
-function startOfToday() {
-  const value = new Date();
-  value.setHours(0, 0, 0, 0);
-  return value;
-}
-
-function countAfter(values: Array<string | null | undefined>, threshold: Date) {
-  return values.filter((value) => value && new Date(value) >= threshold).length;
-}
-
-function rankBy<T>(rows: T[], getKey: (row: T) => string, limit = 5) {
-  const counts = rows.reduce<Record<string, number>>((result, row) => {
-    const key = getKey(row) || "未設定";
-    result[key] = (result[key] || 0) + 1;
-    return result;
-  }, {});
-  return Object.entries(counts)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, limit);
-}
+type Row = Record<string, unknown>;
+type EventRow = { event_name: string; user_id: string | null; metadata: Row | null; created_at: string };
+const since = (days: number) => new Date(Date.now() - days * 86400000);
+const startOfToday = () => { const date = new Date(); date.setHours(0, 0, 0, 0); return date; };
+const countAfter = (values: Array<string | null | undefined>, date: Date) => values.filter((value) => value && new Date(value) >= date).length;
+const rank = (values: string[], limit = 5) => Object.entries(values.reduce<Record<string, number>>((a, value) => ({ ...a, [value || "未設定"]: (a[value || "未設定"] || 0) + 1 }), {})).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, limit);
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminContext(request);
   if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
   const client = admin.serviceClient;
-
   try {
     const users = [];
-    for (let page = 1; ; page += 1) {
-      const { data, error } = await client.auth.admin.listUsers({ page, perPage: 1000 });
-      if (error) throw error;
-      users.push(...data.users);
-      if (data.users.length < 1000) break;
-    }
-
-    const safeCount = async (
-      table: string,
-      filter?: { column: string; value: string | boolean },
-    ) => {
-      let query = client.from(table).select("*", { count: "exact", head: true });
-      if (filter) query = query.eq(filter.column, filter.value);
-      const { count, error } = await query;
-      return error ? 0 : count || 0;
-    };
-
-    const [savedJobs, savedProperties, checklistRows, pendingSubmissions] = await Promise.all([
-      safeCount("saved_jobs"),
-      safeCount("saved_properties"),
-      safeCount("user_checklist_items"),
-      safeCount("listing_submissions", { column: "status", value: "pending" }),
+    for (let page = 1; ; page++) { const { data, error } = await client.auth.admin.listUsers({ page, perPage: 1000 }); if (error) throw error; users.push(...data.users); if (data.users.length < 1000) break; }
+    const rows = async (table: string) => { const result = await client.from(table).select("*"); return (result.error ? [] : result.data || []) as Row[]; };
+    const [eventsRaw, jobs, properties, savedJobs, savedProperties, checklist, submissions, articles, leads, affiliates, pageViews, reports, contacts, privacy] = await Promise.all([
+      rows("admin_metrics_events"), rows("public_jobs"), rows("public_properties"), rows("saved_jobs"), rows("saved_properties"), rows("user_checklist_items"), rows("listing_submissions"), rows("articles"), rows("lead_clicks"), rows("affiliate_clicks"), rows("page_views"), rows("content_reports"), rows("contact_requests"), rows("privacy_requests"),
     ]);
-
-    const [eventsResult, articlesResult, leadsResult, affiliateResult, pageViewsResult] = await Promise.all([
-      client.from("admin_metrics_events").select("event_name,user_id,created_at"),
-      client.from("articles").select("title,slug,status,views"),
-      client.from("lead_clicks").select("partner_name,category,destination_url"),
-      client.from("affiliate_clicks").select("service_name,service_category,target_url,created_at"),
-      client.from("page_views").select("visitor_id,user_id,page_path,created_at").gte("created_at", since(30).toISOString()),
-    ]);
-
-    const events = (eventsResult.error ? [] : eventsResult.data || []) as EventRow[];
-    const articles = (articlesResult.error ? [] : articlesResult.data || []) as ArticleRow[];
-    const leads = (leadsResult.error ? [] : leadsResult.data || []) as LeadRow[];
-    const affiliateClicks = (affiliateResult.error ? [] : affiliateResult.data || []) as AffiliateRow[];
-    const pageViews = pageViewsResult.error ? [] : pageViewsResult.data || [];
-    const today = startOfToday();
-    const week = since(7);
-    const month = since(30);
-    const createdDates = users.map((user) => user.created_at);
-    const loginDates = users.map((user) => user.last_sign_in_at);
-    const recentEvents = events.filter((event) => new Date(event.created_at) >= month);
-    const activeIds = new Set([
-      ...users.filter((user) => user.last_sign_in_at && new Date(user.last_sign_in_at) >= month).map((user) => user.id),
-      ...recentEvents.map((event) => event.user_id).filter((id): id is string => Boolean(id)),
-    ]);
-    const eventCount = (name: string) => events.filter((event) => event.event_name === name).length;
+    const events = eventsRaw as unknown as EventRow[];
+    const eventCount = (...names: string[]) => events.filter((event) => names.includes(event.event_name)).length;
+    const eventValues = (name: string, key: string) => events.filter((event) => event.event_name === name).map((event) => String(event.metadata?.[key] || "未設定"));
+    const today = startOfToday(), week = since(7), month = since(30);
+    const created = users.map((user) => user.created_at), logins = users.map((user) => user.last_sign_in_at);
+    const active7 = new Set([...users.filter((u) => u.last_sign_in_at && new Date(u.last_sign_in_at) >= week).map((u) => u.id), ...events.filter((e) => new Date(e.created_at) >= week && e.user_id).map((e) => e.user_id!)]).size;
+    const active30 = new Set([...users.filter((u) => u.last_sign_in_at && new Date(u.last_sign_in_at) >= month).map((u) => u.id), ...events.filter((e) => new Date(e.created_at) >= month && e.user_id).map((e) => e.user_id!)]).size;
+    const countries = users.map((user) => String(user.user_metadata?.country_code || user.user_metadata?.country || "OTHER").toUpperCase());
+    const statusCount = (values: Row[], status: string) => values.filter((row) => row.status === status).length;
+    const submissionCount = (type: string, status: string) => submissions.filter((row) => row.type === type && row.status === status).length;
+    const numeric = (value: unknown) => typeof value === "number" ? value : Number(value) || 0;
+    const rents = properties.map((row) => numeric(row.rent_weekly)).filter((value) => value > 0);
+    const checklistUsers = new Set(checklist.map((row) => row.user_id).filter(Boolean)).size;
+    const completedChecklist = checklist.filter((row) => row.is_completed === true || row.completed === true).length;
+    const partnerViews = eventCount("comparison_page_view", "partners_viewed");
+    const cardClicks = eventCount("comparison_card_click", "partner_clicked") + leads.length;
+    const affiliateClicks = Math.max(affiliates.length, eventCount("affiliate_link_click", "affiliate_clicked"));
+    const publishedArticles = articles.filter((a) => a.status === "published" || a.status === "approved");
     const uniqueVisitors = new Set(pageViews.map((row) => row.visitor_id || row.user_id).filter(Boolean)).size;
-    const newUsers30 = countAfter(createdDates, month);
-    const affiliate30 = affiliateClicks.filter((click) => new Date(click.created_at) >= month).length;
-    const partnerViews30 = pageViews.filter((row) => row.page_path === "/partners").length;
-
+    const articleRanking = [...publishedArticles].sort((a, b) => numeric(b.views) - numeric(a.views)).slice(0, 5).map((a) => ({ name: String(a.title), count: numeric(a.views), href: `/articles/${a.slug}` }));
+    const regionRank = (values: Row[]) => rank(values.map((row) => String(row.region || row.district || row.city || "未設定")));
+    const categoryRank = (values: Row[]) => rank(values.map((row) => String(row.category || row.employment_type || "未設定")));
     return NextResponse.json({
-      totalMembers: users.length,
-      newUsers: { today: countAfter(createdDates, today), days7: countAfter(createdDates, week), days30: newUsers30 },
-      loginUsers: { today: countAfter(loginDates, today), days7: countAfter(loginDates, week), days30: countAfter(loginDates, month) },
-      activeUsers30: activeIds.size,
-      activeRate: users.length ? (activeIds.size / users.length) * 100 : 0,
-      featureUsage: {
-        planner: eventCount("planner_calculation"),
-        properties: savedProperties,
-        jobs: savedJobs,
-        checklist: Math.max(checklistRows, eventCount("checklist_used")),
-        emailTemplates: eventCount("email_template_generated"),
-        partnerViews: eventCount("partners_viewed"),
-        partnerClicks: leads.length,
-        affiliateClicks: affiliateClicks.length,
-      },
-      articles: {
-        total: articles.length,
-        published: articles.filter((article) => article.status === "published").length,
-        drafts: articles.filter((article) => article.status === "draft").length,
-      },
-      popularArticles: [...articles]
-        .filter((article) => article.status === "published")
-        .sort((a, b) => b.views - a.views)
-        .slice(0, 5)
-        .map((article) => ({ name: article.title, count: article.views, href: `/articles/${article.slug}` })),
-      popularPartners: rankBy(leads, (row) => row.partner_name || row.category || "未設定"),
-      popularAffiliateLinks: rankBy(affiliateClicks, (row) => row.service_name || row.target_url || "未設定"),
-      conversion: {
-        visitorToSignup: uniqueVisitors ? (newUsers30 / uniqueVisitors) * 100 : 0,
-        partnerViewToAffiliate: partnerViews30 ? (affiliate30 / partnerViews30) * 100 : 0,
-      },
-      pendingSubmissions,
+      users: { total: users.length, newUsers: { today: countAfter(created, today), days7: countAfter(created, week), days30: countAfter(created, month) }, active7, active30, loggedIn: logins.filter(Boolean).length, activeRate: users.length ? active30 / users.length * 100 : 0, countries: { NZ: countries.filter((c) => c === "NZ").length, AU: countries.filter((c) => c === "AU").length, CA: countries.filter((c) => c === "CA").length, other: countries.filter((c) => !["NZ", "AU", "CA"].includes(c)).length } },
+      jobs: { publicTotal: jobs.length, active: jobs.filter((j) => j.is_active !== false).length, pending: submissionCount("job", "pending"), rejected: submissionCount("job", "rejected"), saved: savedJobs.length, applicationSupport: eventCount("job_application_template_generate", "email_template_generated"), categories: categoryRank(jobs), regions: regionRank(jobs) },
+      properties: { publicTotal: properties.length, active: properties.filter((p) => p.is_active !== false).length, pending: submissionCount("property", "pending"), rejected: submissionCount("property", "rejected"), saved: savedProperties.length, inquirySupport: eventCount("property_inquiry_template_generate"), regions: regionRank(properties), averageWeeklyRent: rents.length ? rents.reduce((a, b) => a + b, 0) / rents.length : 0 },
+      planner: { uses: eventCount("planner_calculation", "planner_view"), combinations: savedJobs.length * savedProperties.length, mapViews: eventCount("planner_map_view"), trialUses: eventCount("planner_trial_view") },
+      checklist: { users: checklistUsers, completionRate: checklist.length ? completedChecklist / checklist.length * 100 : 0, itemClicks: rank(eventValues("checklist_item_complete", "itemKey")), partnerTransitions: eventCount("checklist_partner_transition") },
+      comparison: { cardViews: eventCount("comparison_card_view"), cardClicks, externalClicks: affiliateClicks, affiliateClicks, categoryClicks: rank([...eventValues("comparison_card_click", "category"), ...leads.map((row) => String(row.category || "未設定"))], 8), ctr: eventCount("comparison_card_view") ? cardClicks / eventCount("comparison_card_view") * 100 : 0 },
+      articles: { published: publishedArticles.length, drafts: statusCount(articles, "draft"), pending: statusCount(articles, "pending"), rejected: statusCount(articles, "rejected"), totalViews: publishedArticles.reduce((sum, row) => sum + numeric(row.views), 0), partnerTransitions: eventCount("article_partner_transition"), popular: articleRanking },
+      risk: { reports: reports.length, unresolvedReports: reports.filter((r) => !r.status || r.status === "pending").length, deletedPosts: eventCount("article_deleted"), pendingPosts: statusCount(articles, "pending"), contacts: contacts.length, privacyRequests: privacy.length },
+      popularPartners: rank(leads.map((row) => String(row.partner_name || row.category || "未設定"))),
+      popularAffiliateLinks: rank(affiliates.map((row) => String(row.service_name || row.target_url || "未設定"))),
+      conversion: { visitorToSignup: uniqueVisitors ? countAfter(created, month) / uniqueVisitors * 100 : 0, partnerToAffiliate: partnerViews ? affiliateClicks / partnerViews * 100 : 0 },
     });
-  } catch (error) {
-    console.error(error);
-    const message = error instanceof Error ? error.message : "管理指標を取得できませんでした。";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  } catch (error) { console.error(error); return NextResponse.json({ error: error instanceof Error ? error.message : "管理指標を取得できませんでした。" }, { status: 500 }); }
 }

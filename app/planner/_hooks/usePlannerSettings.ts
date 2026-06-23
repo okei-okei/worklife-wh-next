@@ -15,6 +15,7 @@ export function usePlannerSettings(currentUserId: string | null) {
   const [monthlyTransportCost, setMonthlyTransportCost] = useState("150");
   const [monthlyPhoneCost, setMonthlyPhoneCost] = useState("40");
   const [monthlyOtherCost, setMonthlyOtherCost] = useState("300");
+  const [initialCost, setInitialCost] = useState("0");
   const [plannedStayMonths, setPlannedStayMonths] = useState("6");
   const [hasLoadedPlannerSettings, setHasLoadedPlannerSettings] =
     useState(false);
@@ -37,6 +38,10 @@ export function usePlannerSettings(currentUserId: string | null) {
 
       if (settings.monthlyOtherCost !== undefined) {
         setMonthlyOtherCost(settings.monthlyOtherCost);
+      }
+
+      if (settings.initialCost !== undefined) {
+        setInitialCost(settings.initialCost);
       }
 
       if (settings.plannedStayMonths !== undefined) {
@@ -66,7 +71,7 @@ export function usePlannerSettings(currentUserId: string | null) {
         const { data, error } = await supabase
           .from("planner_settings")
           .select(
-            "monthly_food_cost, monthly_transport_cost, monthly_phone_cost, monthly_other_cost, planned_stay_months",
+            "monthly_food_cost, monthly_transport_cost, monthly_phone_cost, monthly_other_cost, initial_cost, planned_stay_months",
           )
           .eq("user_id", currentUserId)
           .maybeSingle<PlannerSettingsRow>();
@@ -83,6 +88,7 @@ export function usePlannerSettings(currentUserId: string | null) {
             monthlyTransportCost: String(data.monthly_transport_cost ?? 150),
             monthlyPhoneCost: String(data.monthly_phone_cost ?? 40),
             monthlyOtherCost: String(data.monthly_other_cost ?? 300),
+            initialCost: String(data.initial_cost ?? 0),
             plannedStayMonths: String(data.planned_stay_months ?? 6),
           });
         }
@@ -105,6 +111,7 @@ export function usePlannerSettings(currentUserId: string | null) {
       monthlyTransportCost,
       monthlyPhoneCost,
       monthlyOtherCost,
+      initialCost,
       plannedStayMonths,
     };
 
@@ -120,6 +127,7 @@ export function usePlannerSettings(currentUserId: string | null) {
           monthly_transport_cost: Number(monthlyTransportCost || 0),
           monthly_phone_cost: Number(monthlyPhoneCost || 0),
           monthly_other_cost: Number(monthlyOtherCost || 0),
+          initial_cost: Number(initialCost || 0),
           planned_stay_months: Number(plannedStayMonths || 0),
           updated_at: new Date().toISOString(),
         },
@@ -139,6 +147,7 @@ export function usePlannerSettings(currentUserId: string | null) {
     monthlyTransportCost,
     monthlyPhoneCost,
     monthlyOtherCost,
+    initialCost,
     plannedStayMonths,
   ]);
 
@@ -151,6 +160,8 @@ export function usePlannerSettings(currentUserId: string | null) {
     setMonthlyPhoneCost,
     monthlyOtherCost,
     setMonthlyOtherCost,
+    initialCost,
+    setInitialCost,
     plannedStayMonths,
     setPlannedStayMonths,
     settingsSaveStatus,

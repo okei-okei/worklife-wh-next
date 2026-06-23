@@ -28,6 +28,10 @@ function yesNo(value: boolean) {
   return value ? "可" : "要確認";
 }
 
+function markLabel(value: boolean) {
+  return value ? "○" : "—";
+}
+
 function typeLabel(type: SimService["type"]) {
   if (type === "Physical SIM") return "物理SIM";
   if (type === "Both") return "両方";
@@ -64,6 +68,29 @@ function ServiceFact({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl bg-gray-50 px-3 py-2">
       <p className="text-xs font-bold text-gray-600">{label}</p>
       <p className="mt-1 text-sm font-bold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function BooleanBadge({ value }: { value: boolean }) {
+  return (
+    <span
+      className={`inline-flex min-w-16 justify-center rounded-full px-3 py-1 text-sm font-bold ${
+        value ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-600"
+      }`}
+    >
+      {markLabel(value)}
+    </span>
+  );
+}
+
+function ComparisonItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[112px_1fr] gap-3 rounded-xl bg-gray-50 p-3">
+      <p className="font-bold text-gray-700">{label}</p>
+      <p className="min-w-0 break-words font-medium leading-6 text-gray-900">
+        {value}
+      </p>
     </div>
   );
 }
@@ -243,67 +270,179 @@ export default function SimEsimComparison() {
       <section className="rounded-2xl bg-white p-4 shadow md:p-6">
         <div className="mb-4">
           <h2 className="text-xl font-bold text-gray-900">比較表</h2>
-          <p className="mt-1 text-sm font-medium text-gray-700">
-            スマホでは横にスクロールして確認できます。
+          <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+            各サービスの特徴を横並びで比較できます。料金や対応内容は変更される場合があるため、申込前に公式サイトで最新情報を確認してください。
+          </p>
+          <p className="mt-2 text-sm font-medium leading-6 text-gray-700 md:hidden">
+            スマホでは見やすいようにサービスごとの比較カードで表示しています。
+          </p>
+          <p className="mt-2 hidden text-sm font-medium text-gray-600 md:block">
+            横にスクロールできます。
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-[1100px] border-collapse text-left text-sm">
+        <div className="space-y-4 md:hidden">
+          {filteredServices.map((service) => (
+            <article
+              key={`mobile-${service.id}`}
+              className="rounded-2xl border border-gray-200 bg-white p-4"
+            >
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+                    {typeLabel(service.type)}
+                  </span>
+                  <span className="rounded-full bg-green-50 px-3 py-1 text-sm font-bold text-green-700">
+                    {service.coverage}
+                  </span>
+                  {service.canBuyBeforeDeparture ? (
+                    <span className="rounded-full bg-purple-50 px-3 py-1 text-sm font-bold text-purple-700">
+                      出発前購入可
+                    </span>
+                  ) : null}
+                  {service.hasUnlimitedData ? (
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">
+                      データ多め
+                    </span>
+                  ) : null}
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900">
+                  {service.name}
+                </h3>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <ComparisonItem label="料金目安" value={service.priceNote} />
+                <ComparisonItem label="データ容量" value={service.dataNote} />
+                <ComparisonItem label="利用期間" value={service.durationNote} />
+                <ComparisonItem
+                  label="出発前購入"
+                  value={yesNo(service.canBuyBeforeDeparture)}
+                />
+                <ComparisonItem
+                  label="通話/SMS"
+                  value={yesNo(service.hasCallSms)}
+                />
+                <ComparisonItem
+                  label="テザリング"
+                  value={yesNo(service.allowsTethering)}
+                />
+              </div>
+
+              <div className="mt-4">
+                <p className="font-bold text-gray-900">おすすめ対象</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {service.recommendedFor.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <p className="font-bold text-gray-900">注意点</p>
+                <ul className="mt-2 space-y-1 font-medium leading-6 text-gray-700">
+                  {service.cautions.map((caution) => (
+                    <li key={caution}>・{caution}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <a
+                href={getDestinationUrl(service)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 block w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white hover:bg-blue-800"
+              >
+                公式サイトを見る
+              </a>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto rounded-xl border border-gray-200 md:block">
+          <table className="min-w-[1180px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-gray-900">
-                <th className="px-3 py-3 font-bold">サービス</th>
-                <th className="px-3 py-3 font-bold">種別</th>
-                <th className="px-3 py-3 font-bold">対応国</th>
-                <th className="px-3 py-3 font-bold">出発前購入</th>
-                <th className="px-3 py-3 font-bold">データ容量</th>
-                <th className="px-3 py-3 font-bold">利用期間</th>
-                <th className="px-3 py-3 font-bold">通話/SMS</th>
-                <th className="px-3 py-3 font-bold">テザリング</th>
-                <th className="px-3 py-3 font-bold">アプリ</th>
-                <th className="px-3 py-3 font-bold">料金目安</th>
-                <th className="px-3 py-3 font-bold">広告</th>
-                <th className="px-3 py-3 font-bold">確認日</th>
+                <th className="sticky left-0 top-0 z-20 min-w-44 bg-gray-50 px-4 py-4 font-bold">
+                  サービス
+                </th>
+                <th className="sticky top-0 z-10 bg-gray-50 px-4 py-4 font-bold">
+                  種別
+                </th>
+                <th className="sticky top-0 z-10 bg-gray-50 px-4 py-4 font-bold">
+                  対応国
+                </th>
+                <th className="sticky top-0 z-10 bg-blue-50 px-4 py-4 font-bold">
+                  出発前購入
+                </th>
+                <th className="sticky top-0 z-10 bg-blue-50 px-4 py-4 font-bold">
+                  データ容量
+                </th>
+                <th className="sticky top-0 z-10 bg-blue-50 px-4 py-4 font-bold">
+                  利用期間
+                </th>
+                <th className="sticky top-0 z-10 bg-blue-50 px-4 py-4 font-bold">
+                  通話/SMS
+                </th>
+                <th className="sticky top-0 z-10 bg-blue-50 px-4 py-4 font-bold">
+                  テザリング
+                </th>
+                <th className="sticky top-0 z-10 bg-blue-50 px-4 py-4 font-bold">
+                  料金目安
+                </th>
+                <th className="sticky top-0 z-10 bg-gray-50 px-4 py-4 font-bold">
+                  公式
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredServices.map((service) => (
-                <tr key={service.id} className="border-b border-gray-100">
-                  <td className="px-3 py-3 font-bold text-gray-900">
+                <tr
+                  key={service.id}
+                  className="border-b border-gray-100 align-top hover:bg-gray-50"
+                >
+                  <td className="sticky left-0 z-10 min-w-44 bg-white px-4 py-5 font-bold text-gray-900">
                     {service.name}
                   </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
+                  <td className="px-4 py-5 font-medium text-gray-800">
                     {typeLabel(service.type)}
                   </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
+                  <td className="px-4 py-5 font-medium text-gray-800">
                     {service.coverage}
                   </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
-                    {yesNo(service.canBuyBeforeDeparture)}
+                  <td className="bg-blue-50/40 px-4 py-5 font-medium text-gray-800">
+                    <BooleanBadge value={service.canBuyBeforeDeparture} />
                   </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
+                  <td className="bg-blue-50/40 px-4 py-5 font-medium leading-6 text-gray-800">
                     {service.dataNote}
                   </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
+                  <td className="bg-blue-50/40 px-4 py-5 font-medium leading-6 text-gray-800">
                     {service.durationNote}
                   </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
-                    {yesNo(service.hasCallSms)}
+                  <td className="bg-blue-50/40 px-4 py-5 font-medium text-gray-800">
+                    <BooleanBadge value={service.hasCallSms} />
                   </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
-                    {yesNo(service.allowsTethering)}
+                  <td className="bg-blue-50/40 px-4 py-5 font-medium text-gray-800">
+                    <BooleanBadge value={service.allowsTethering} />
                   </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
-                    {yesNo(service.appManagement)}
-                  </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
+                  <td className="bg-blue-50/40 px-4 py-5 font-medium leading-6 text-gray-800">
                     {service.priceNote}
                   </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
-                    {service.isAffiliate ? "あり" : "なし"}
-                  </td>
-                  <td className="px-3 py-3 font-medium text-gray-800">
-                    {service.lastCheckedAt}
+                  <td className="px-4 py-5">
+                    <a
+                      href={getDestinationUrl(service)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex rounded-lg border border-gray-300 bg-white px-3 py-2 font-bold text-gray-900 hover:bg-gray-50"
+                    >
+                      見る
+                    </a>
                   </td>
                 </tr>
               ))}

@@ -76,6 +76,8 @@ export default function PartnerCategoryPage({
     });
   };
 
+  const hasServices = services.length > 0;
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -93,32 +95,40 @@ export default function PartnerCategoryPage({
           掲載サービスには広告・紹介リンクが含まれる場合があります。契約前に必ず公式サイトで最新情報をご確認ください。
         </section>
 
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <h2 className="text-xl font-bold text-gray-900">目的別おすすめ</h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {recommendations.map((recommendation) => (
-              <button
-                key={recommendation.title}
-                type="button"
-                onClick={() => {
-                  if (recommendation.filterKey) {
-                    setActiveFilters([recommendation.filterKey]);
-                  }
-                }}
-                className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-left hover:bg-blue-50"
-              >
-                <p className="font-bold text-gray-900">
-                  {recommendation.title}
-                </p>
-                <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
-                  {recommendation.description}
-                </p>
-              </button>
-            ))}
-          </div>
-        </section>
+        {hasServices ? (
+          <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+            <h2 className="text-xl font-bold text-gray-900">目的別おすすめ</h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {recommendations.map((recommendation) => (
+                <button
+                  key={recommendation.title}
+                  type="button"
+                  onClick={() => {
+                    if (recommendation.filterKey) {
+                      setActiveFilters([recommendation.filterKey]);
+                    }
+                  }}
+                  className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-left hover:bg-blue-50"
+                >
+                  <p className="font-bold text-gray-900">
+                    {recommendation.title}
+                  </p>
+                  <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+                    {recommendation.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+            <p className="font-medium leading-7 text-gray-800">
+              現在、このカテゴリの掲載情報を準備中です。契約前には必ず公式サイトで最新情報をご確認ください。
+            </p>
+          </section>
+        )}
 
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+        {hasServices ? <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">絞り込み</h2>
@@ -159,9 +169,9 @@ export default function PartnerCategoryPage({
               </button>
             ) : null}
           </div>
-        </section>
+        </section> : null}
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {hasServices ? <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filteredServices.map((service) => (
             <article
               key={service.id}
@@ -252,9 +262,9 @@ export default function PartnerCategoryPage({
               </a>
             </article>
           ))}
-        </section>
+        </section> : null}
 
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+        {hasServices ? <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <div className="mb-4">
             <h2 className="text-xl font-bold text-gray-900">比較表</h2>
             <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
@@ -407,7 +417,7 @@ export default function PartnerCategoryPage({
               </tbody>
             </table>
           </div>
-        </section>
+        </section> : null}
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-700 md:p-5">
           WorkLife WHでは、契約前に条件を比較・確認しやすい形で情報を整理しています。掲載サービスには広告・紹介リンクが含まれる場合があります。掲載内容は料金、利用条件、対応エリア、ワーホリ・海外生活との相性などをもとに整理しています。実際に契約・申込みを行う前には、必ず各サービスの公式サイトで最新情報をご確認ください。

@@ -59,7 +59,7 @@ export function LeadPartnerButton({
       return;
     }
 
-    setMessage("準備中です。提携サービス案内を整備中です。");
+    setMessage("リンクを記録しました。契約前に公式サイトで最新情報をご確認ください。");
   };
 
   return (

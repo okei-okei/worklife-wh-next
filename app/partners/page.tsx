@@ -120,6 +120,13 @@ function PartnersPageContent() {
   }, [categoryFromQuery]);
 
   useEffect(() => {
+    const comparisonPage = comparisonPageLinks[selectedCategory];
+    if (comparisonPage) {
+      router.replace(comparisonPage.href);
+    }
+  }, [router, selectedCategory]);
+
+  useEffect(() => {
     const loadPartners = async () => {
       setIsLoading(true);
 
@@ -202,6 +209,12 @@ function PartnersPageContent() {
       return;
     }
 
+    const comparisonPage = comparisonPageLinks[category];
+    if (comparisonPage) {
+      router.push(comparisonPage.href);
+      return;
+    }
+
     router.replace(`/partners?category=${category}`);
   };
 
@@ -251,7 +264,7 @@ function PartnersPageContent() {
               <button
                 key={category.key}
                 type="button"
-                onClick={() => handleSelectCategory(category.key)}
+            onClick={() => handleSelectCategory(category.key)}
                 className={`rounded-lg px-4 py-3 text-sm font-bold ${
                   selectedCategory === category.key
                     ? "bg-blue-700 text-white"
@@ -301,11 +314,8 @@ function PartnersPageContent() {
             <p className="font-medium text-gray-700">読み込み中...</p>
           ) : filteredPartners.length === 0 ? (
             <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
-              <div className="mb-3 inline-flex rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
-                準備中
-              </div>
               <p className="font-medium leading-7 text-gray-800">
-                このカテゴリの掲載サービスは準備中です。まずはチェックリストで必要な準備を確認し、公式情報もあわせて確認してください。
+                現在、このカテゴリの掲載情報を準備中です。契約前には必ず公式サイトで最新情報をご確認ください。
               </p>
             </div>
           ) : (
@@ -342,7 +352,8 @@ function PartnersPageContent() {
                       </div>
 
                       <p className="text-sm font-medium leading-6 text-gray-800">
-                        {partner.description || "サービス説明を準備中です。"}
+                        {partner.description ||
+                          "サービス内容は公式サイトで最新情報をご確認ください。"}
                       </p>
 
                       <div className="space-y-2 text-sm font-medium leading-6 text-gray-800">

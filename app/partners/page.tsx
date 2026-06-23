@@ -220,6 +220,23 @@ function PartnersPageContent() {
             </p>
           </div>
 
+          {selectedCategory === "sim" ? (
+            <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <h3 className="text-lg font-bold text-gray-900">
+                SIM・eSIM比較ページを用意しました
+              </h3>
+              <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
+                eSIMとNZ現地SIMを、出発前購入、通話/SMS、データ容量、料金目安などで比較できます。
+              </p>
+              <Link
+                href="/partners/sim-esim"
+                className="mt-3 inline-flex w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
+              >
+                SIM・eSIM比較を見る
+              </Link>
+            </div>
+          ) : null}
+
           {isLoading ? (
             <p className="font-medium text-gray-700">読み込み中...</p>
           ) : filteredPartners.length === 0 ? (

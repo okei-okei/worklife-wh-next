@@ -70,6 +70,7 @@ add column if not exists room_type text null,
 add column if not exists available_from date null,
 add column if not exists furnished boolean not null default false,
 add column if not exists bills_included boolean not null default false,
+add column if not exists utilities_included boolean,
 add column if not exists bedrooms numeric null,
 add column if not exists bathrooms numeric null,
 add column if not exists parking_spaces numeric null,
@@ -81,7 +82,8 @@ add column if not exists district text null;
 
 alter table public.saved_properties
 add column if not exists region text null,
-add column if not exists district text null;
+add column if not exists district text null,
+add column if not exists utilities_included boolean;
 
 create index if not exists public_jobs_region_district_idx
 on public.public_jobs (region, district);

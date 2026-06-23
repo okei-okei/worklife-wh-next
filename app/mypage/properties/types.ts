@@ -6,6 +6,14 @@ export type Property = {
   location: string | null;
   address: string | null;
   rent_weekly: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  parking_spaces?: number | null;
+  available_from?: string | null;
+  pets_allowed?: boolean | null;
+  utilities_included?: boolean | null;
+  bills_included?: boolean | null;
+  image_urls?: string[] | null;
   status: string | null;
   latitude: number | null;
   longitude: number | null;

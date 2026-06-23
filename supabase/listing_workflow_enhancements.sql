@@ -47,6 +47,7 @@ alter table public.public_properties
   add column if not exists pets_allowed boolean not null default false,
   add column if not exists furnished boolean not null default false,
   add column if not exists bills_included boolean not null default false,
+  add column if not exists utilities_included boolean,
   add column if not exists image_urls jsonb not null default '[]'::jsonb;
 
 create index if not exists public_jobs_location_idx

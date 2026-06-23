@@ -33,14 +33,6 @@ type SavedJob = {
   address: string | null;
 };
 
-type ResumeFile = {
-  id: string;
-  file_name: string;
-  file_path: string;
-  file_url: string | null;
-  signed_url?: string | null;
-};
-
 type DraftRow = {
   form_data: Partial<JobApplicationDetails> | null;
 };
@@ -68,7 +60,6 @@ const emptyJobDetails: JobApplicationDetails = {
   skillsList: [],
   selfPromotion: "",
   motivation: "",
-  attachResume: true,
   interviewAvailability: "",
   additionalMessage: "",
 };
@@ -104,9 +95,6 @@ function JobApplicationPageContent() {
   const [documentType, setDocumentType] =
     useState<DocumentType>("application_email");
   const [resume, setResume] = useState<ApplicationResume | null>(null);
-  const [latestResumeFile, setLatestResumeFile] = useState<ResumeFile | null>(
-    null,
-  );
   const [manualJob, setManualJob] = useState(emptyManualJob);
   const [jobDetails, setJobDetails] =
     useState<JobApplicationDetails>(emptyJobDetails);
@@ -176,20 +164,13 @@ function JobApplicationPageContent() {
               .maybeSingle<ApplicationResume>()
           : extendedResumeResult;
 
-      const [savedJobsResult, resumeFileResult, draftResult] =
+      const [savedJobsResult, draftResult] =
         await Promise.all([
         supabase
           .from("saved_jobs")
           .select("id,title,url,hourly_rate,work_hours,status,address")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false }),
-        supabase
-          .from("resume_files")
-          .select("id,file_name,file_path,file_url")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle<ResumeFile>(),
         supabase
           .from("user_form_drafts")
           .select("form_data")
@@ -228,21 +209,6 @@ function JobApplicationPageContent() {
           });
         } else {
           setJobDetails(resumeDefaults);
-        }
-      }
-
-      if (resumeFileResult.error) {
-        setErrorMessage(resumeFileResult.error.message);
-      } else if (resumeFileResult.data) {
-        const { data } = await supabase.storage
-          .from("resumes")
-          .createSignedUrl(resumeFileResult.data.file_path, 60 * 60);
-
-        if (isMounted) {
-          setLatestResumeFile({
-            ...resumeFileResult.data,
-            signed_url: data?.signedUrl || resumeFileResult.data.file_url,
-          });
         }
       }
 
@@ -1082,20 +1048,6 @@ function JobApplicationPageContent() {
                 placeholder="例: 接客経験を活かしながら、英語環境で働きたいため。"
               />
             </label>
-            <label className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 font-bold text-gray-900 md:col-span-2">
-              <input
-                type="checkbox"
-                checked={jobDetails.attachResume ?? true}
-                onChange={(event) =>
-                  setJobDetails({
-                    ...jobDetails,
-                    attachResume: event.target.checked,
-                  })
-                }
-                className="h-5 w-5"
-              />
-              履歴書を添付する
-            </label>
             <label className="block md:col-span-2">
               <span className="text-sm font-bold text-gray-900">
                 面接可能日時
@@ -1162,7 +1114,7 @@ function JobApplicationPageContent() {
         </section>
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <h2 className="text-xl font-bold text-gray-900">4. 履歴書情報</h2>
+          <h2 className="text-xl font-bold text-gray-900">4. プロフィール情報</h2>
           {resume ? (
             <div className="mt-4 space-y-2 text-sm font-medium leading-6 text-gray-800">
               <p>
@@ -1173,23 +1125,9 @@ function JobApplicationPageContent() {
               </p>
               <p>ビザ: {resume.visa_type || "未設定"}</p>
               <p>勤務開始可能日: {resume.available_from || "未設定"}</p>
-              {latestResumeFile ? (
-                <p>
-                  添付予定の履歴書:{" "}
-                  <a
-                    href={latestResumeFile.signed_url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="break-all font-bold text-blue-700"
-                  >
-                    {latestResumeFile.file_name}
-                  </a>
-                </p>
-              ) : (
-                <p className="font-bold text-amber-700">
-                  PDF履歴書は未アップロードです。
-                </p>
-              )}
+              <p className="font-bold text-gray-900">
+                必要に応じてCVを提出できます。
+              </p>
             </div>
           ) : (
             <div className="mt-4 rounded-xl bg-amber-50 p-4 text-sm font-medium leading-6 text-amber-900">

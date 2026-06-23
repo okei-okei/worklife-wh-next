@@ -26,6 +26,7 @@ type PublicProperty = {
   available_from?: string | null;
   furnished?: boolean | null;
   bills_included?: boolean | null;
+  utilities_included?: boolean | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
   parking_spaces?: number | null;
@@ -148,6 +149,14 @@ function PropertyFact({
   );
 }
 
+function formatUtilitiesIncluded(property: PublicProperty) {
+  const value = property.utilities_included ?? property.bills_included;
+
+  if (value === true) return "込み";
+  if (value === false) return "別";
+  return "要確認";
+}
+
 export default function PropertiesPage() {
   const router = useRouter();
   useEffect(() => { trackMetric("public_property_view", { eventType: "page_view", pagePath: "/properties" }); }, []);
@@ -171,6 +180,9 @@ export default function PropertiesPage() {
   const [maxParkingSpaces, setMaxParkingSpaces] = useState("");
   const [availableFrom, setAvailableFrom] = useState("");
   const [petsAllowedOnly, setPetsAllowedOnly] = useState(false);
+  const [utilitiesFilter, setUtilitiesFilter] = useState<
+    "all" | "included" | "excluded"
+  >("all");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
@@ -185,7 +197,7 @@ export default function PropertiesPage() {
       const extendedResult = await supabase
         .from("public_properties")
         .select(
-          "id, title, city, area, address, rent_weekly, description, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, available_from, country_code, region, district, suburb, image_urls",
+          "id, title, city, area, address, rent_weekly, description, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, image_urls",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -263,8 +275,15 @@ export default function PropertiesPage() {
       status: "気になる",
       latitude: property.latitude,
       longitude: property.longitude,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      parking_spaces: property.parking_spaces,
+      available_from: property.available_from,
+      pets_allowed: property.pets_allowed,
       source_type: "public",
       public_property_id: property.id,
+      utilities_included:
+        property.utilities_included ?? property.bills_included ?? null,
     };
 
     const { data: insertedProperty, error } = await supabase
@@ -568,6 +587,17 @@ export default function PropertiesPage() {
         return false;
       }
 
+      const utilitiesIncluded =
+        property.utilities_included ?? property.bills_included ?? null;
+
+      if (utilitiesFilter === "included" && utilitiesIncluded !== true) {
+        return false;
+      }
+
+      if (utilitiesFilter === "excluded" && utilitiesIncluded !== false) {
+        return false;
+      }
+
       return true;
     });
   }, [
@@ -585,6 +615,7 @@ export default function PropertiesPage() {
     petsAllowedOnly,
     properties,
     searchQuery,
+    utilitiesFilter,
   ]);
 
   const resetFilters = () => {
@@ -601,6 +632,7 @@ export default function PropertiesPage() {
     setMaxParkingSpaces("");
     setAvailableFrom("");
     setPetsAllowedOnly(false);
+    setUtilitiesFilter("all");
   };
 
   const mapProperties = useMemo(
@@ -724,7 +756,7 @@ export default function PropertiesPage() {
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
             <RangeNumberInput
               label="バスルーム数"
               minValue={minBathrooms}
@@ -762,6 +794,24 @@ export default function PropertiesPage() {
                 className="h-5 w-5"
               />
               ペット可
+            </label>
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <span className="text-sm font-bold text-gray-900">
+                光熱費込み
+              </span>
+              <select
+                value={utilitiesFilter}
+                onChange={(event) =>
+                  setUtilitiesFilter(
+                    event.target.value as "all" | "included" | "excluded",
+                  )
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+              >
+                <option value="all">全て</option>
+                <option value="included">光熱費込み</option>
+                <option value="excluded">光熱費別</option>
+              </select>
             </label>
           </div>
 
@@ -886,6 +936,10 @@ export default function PropertiesPage() {
                   <PropertyFact
                     label="ペット"
                     value={property.pets_allowed ? "可" : "要確認"}
+                  />
+                  <PropertyFact
+                    label="光熱費"
+                    value={formatUtilitiesIncluded(property)}
                   />
                 </div>
 

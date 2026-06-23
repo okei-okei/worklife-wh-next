@@ -62,7 +62,6 @@ export type JobApplicationDetails = {
   skillsList?: string[];
   selfPromotion?: string;
   motivation?: string;
-  attachResume?: boolean;
   interviewAvailability?: string;
   additionalMessage?: string;
   currentLatitude?: number | null;
@@ -256,7 +255,6 @@ function mergeJobDetails(
       resume?.self_introduction || "",
     ),
     motivation: valueOrPlaceholder(details?.motivation, ""),
-    attachResume: details?.attachResume ?? true,
     interviewAvailability: valueOrPlaceholder(details?.interviewAvailability, ""),
     additionalMessage: valueOrPlaceholder(details?.additionalMessage, ""),
     currentLatitude: details?.currentLatitude ?? null,
@@ -364,9 +362,7 @@ function buildJobApplicationEmailTemplate(
   const availabilityLine = input.availability
     ? ` I am available to work ${input.availability}.`
     : "";
-  const resumeLine = input.attachResume
-    ? "I have attached my resume for your review."
-    : "I can provide my resume or any further information if needed.";
+  const resumeLine = "I would be happy to provide my CV if needed.";
   const motivationLine = input.motivation
     ? `\nI am interested in this role because ${input.motivation}\n`
     : "";
@@ -417,9 +413,7 @@ function buildJobCoverLetterTemplate(
   const currentCityLine = input.currentCity
     ? ` I am currently based in ${input.currentCity}.`
     : "";
-  const resumeLine = input.attachResume
-    ? "I have attached my resume for your review."
-    : "I can provide my resume or additional information upon request.";
+  const resumeLine = "I can send my CV or additional information upon request.";
   const motivationLine = input.motivation
     ? `\nWhat interests me about this role is ${input.motivation}\n`
     : "";

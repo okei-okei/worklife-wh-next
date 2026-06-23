@@ -42,6 +42,66 @@ function normalizeCategory(category: string | null) {
   return category || "all";
 }
 
+const comparisonPageLinks: Record<
+  string,
+  { href: string; label: string; description: string }
+> = {
+  sim: {
+    href: "/partners/sim-esim",
+    label: "SIM・eSIM比較を見る",
+    description:
+      "eSIMとNZ現地SIMを、出発前購入、通話/SMS、データ容量、料金目安などで比較できます。",
+  },
+  insurance: {
+    href: "/partners/insurance",
+    label: "海外保険比較を見る",
+    description:
+      "医療補償、携行品、ワーホリ対応、日本語対応などを比較できます。",
+  },
+  bank: {
+    href: "/partners/bank",
+    label: "銀行口座比較を見る",
+    description:
+      "NZ銀行、オンライン開設、給与受取、送金との相性を比較できます。",
+  },
+  money_transfer: {
+    href: "/partners/money-transfer",
+    label: "海外送金比較を見る",
+    description:
+      "手数料、為替レート、着金速度、高額/少額送金向きかを比較できます。",
+  },
+  power: {
+    href: "/partners/electricity",
+    label: "電気サービス比較を見る",
+    description:
+      "基本料金、契約期間、アプリ管理、フラット向きかを比較できます。",
+  },
+  internet: {
+    href: "/partners/internet",
+    label: "インターネット比較を見る",
+    description:
+      "月額、回線タイプ、データ無制限、契約期間を比較できます。",
+  },
+  furniture: {
+    href: "/partners/furniture",
+    label: "家具・生活用品比較を見る",
+    description:
+      "新品/中古、価格帯、配送、到着直後に揃えやすいものを比較できます。",
+  },
+  school: {
+    href: "/partners/language-school",
+    label: "語学学校比較を見る",
+    description:
+      "都市、学費目安、コース、IELTS、仕事探しサポートを比較できます。",
+  },
+  travel: {
+    href: "/partners/flights-transport",
+    label: "航空券・移動比較を見る",
+    description:
+      "航空券、NZ国内移動、市内移動を価格や荷物条件で比較できます。",
+  },
+};
+
 function PartnersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -220,19 +280,19 @@ function PartnersPageContent() {
             </p>
           </div>
 
-          {selectedCategory === "sim" ? (
+          {comparisonPageLinks[selectedCategory] ? (
             <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
               <h3 className="text-lg font-bold text-gray-900">
-                SIM・eSIM比較ページを用意しました
+                詳細比較ページを用意しました
               </h3>
               <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
-                eSIMとNZ現地SIMを、出発前購入、通話/SMS、データ容量、料金目安などで比較できます。
+                {comparisonPageLinks[selectedCategory].description}
               </p>
               <Link
-                href="/partners/sim-esim"
+                href={comparisonPageLinks[selectedCategory].href}
                 className="mt-3 inline-flex w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
               >
-                SIM・eSIM比較を見る
+                {comparisonPageLinks[selectedCategory].label}
               </Link>
             </div>
           ) : null}

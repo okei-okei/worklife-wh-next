@@ -1,5 +1,8 @@
-import { redirect } from "next/navigation";
+import LegalDocumentPage from "../_components/LegalDocumentPage";
+import { getLegalDocument } from "../_data/legalDocuments";
 
-export default function PropertyListingTermsAliasPage() {
-  redirect("/legal/property-posting");
+export default function PropertyListingTermsPage() {
+  return (
+    <LegalDocumentPage document={getLegalDocument("property-listing-terms")!} />
+  );
 }

@@ -1,6 +1,5 @@
-import LegalDocumentPage from "../_components/LegalDocumentPage";
-import { getLegalDocument } from "../_data/legalDocuments";
+import { redirect } from "next/navigation";
 
 export default function DataTransferPage() {
-  return <LegalDocumentPage document={getLegalDocument("data-transfer")!} />;
+  redirect("/legal/data-policy");
 }

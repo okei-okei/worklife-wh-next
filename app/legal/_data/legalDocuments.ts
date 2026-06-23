@@ -16,7 +16,7 @@ export type LegalDocument = {
 };
 
 export const LEGAL_VERSION = "1.0.0";
-export const LEGAL_LAST_UPDATED = "2026-06-17";
+export const LEGAL_LAST_UPDATED = siteConfig.legalUpdatedAt;
 
 export const OPERATOR_NAME = siteConfig.operatorName;
 export const OPERATOR_EMAIL = siteConfig.supportEmail;
@@ -270,7 +270,7 @@ export const legalDocuments: LegalDocument[] = [
   },
   {
     key: "job_posting",
-    slug: "job-posting",
+    slug: "job-listing-terms",
     title: "求人掲載規約",
     description: "求人掲載者が守るべき条件と禁止事項です。",
     version: LEGAL_VERSION,
@@ -320,7 +320,7 @@ export const legalDocuments: LegalDocument[] = [
   },
   {
     key: "property_posting",
-    slug: "property-posting",
+    slug: "property-listing-terms",
     title: "物件掲載規約",
     description: "物件掲載者が守るべき条件と禁止事項です。",
     version: LEGAL_VERSION,
@@ -445,8 +445,8 @@ export const legalDocuments: LegalDocument[] = [
   },
   {
     key: "data_transfer",
-    slug: "data-transfer",
-    title: "データ移転・第三者提供方針",
+    slug: "data-policy",
+    title: "データ利用ポリシー",
     description: "国外サービス、委託、事業譲渡時のデータ扱いです。",
     version: LEGAL_VERSION,
     lastUpdated: LEGAL_LAST_UPDATED,

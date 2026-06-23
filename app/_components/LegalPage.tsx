@@ -33,12 +33,7 @@ export function LegalPage({ title, lead, sections }: LegalPageProps) {
         </div>
 
         <div className="rounded-2xl bg-white p-6 shadow">
-          <p className="rounded-xl bg-blue-50 p-4 text-sm leading-7 text-blue-900">
-            このページは、サービス開始初期のドラフトです。正式運用、法人提携、
-            有料掲載、広告・送客機能の開始前に、必要に応じて専門家確認を行います。
-          </p>
-
-          <div className="mt-6 space-y-8">
+          <div className="space-y-8">
             {sections.map((section) => (
               <section key={section.title}>
                 <h2 className="mb-3 text-2xl font-bold">{section.title}</h2>

@@ -51,7 +51,7 @@ export default function LegalIndexPage() {
         <div className="flex justify-end">
           <Link
             href="/"
-            className="w-full rounded-lg bg-gray-800 px-4 py-3 text-center font-bold text-white sm:w-auto"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
           >
             TOPへ戻る
           </Link>

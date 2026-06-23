@@ -4,7 +4,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="プライバシーポリシー"
-      lead="WorkLife WHにおけるユーザー情報の取得、利用、管理に関する初期版ドラフトです。"
+      lead="WorkLife WHにおけるユーザー情報の取得、利用、管理に関する方針です。"
       sections={[
         {
           title: "1. 取得する情報",

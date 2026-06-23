@@ -4,7 +4,7 @@ export default function CompanyTermsPage() {
   return (
     <LegalPage
       title="掲載者向け規約"
-      lead="求人掲載企業、物件掲載者、提携サービス提供者向けの基本ルールです。掲載機能を拡張する前提の初期版ドラフトです。"
+      lead="求人掲載企業、物件掲載者、提携サービス提供者向けの基本ルールです。"
       sections={[
         {
           title: "1. 対象",

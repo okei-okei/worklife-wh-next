@@ -578,14 +578,14 @@ export default function CompanySubmitPage() {
                   label:
                     type === "job" ? (
                       <>
-                        <LegalLink href="/legal/job-posting">
+                        <LegalLink href="/legal/job-listing-terms">
                           求人掲載規約
                         </LegalLink>
                         に同意します
                       </>
                     ) : (
                       <>
-                        <LegalLink href="/legal/property-posting">
+                        <LegalLink href="/legal/property-listing-terms">
                           物件掲載規約
                         </LegalLink>
                         に同意します

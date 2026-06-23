@@ -7,11 +7,15 @@ type LegalDocumentPageProps = {
 
 const relatedLinks = [
   { href: "/legal/terms", label: "利用規約" },
-  { href: "/legal/privacy", label: "プライバシー" },
-  { href: "/legal/ai-policy", label: "AI利用" },
-  { href: "/legal/cookies", label: "Cookie" },
-  { href: "/legal/affiliate-disclosure", label: "広告開示" },
-  { href: "/legal/data-transfer", label: "データ移転" },
+  { href: "/legal/privacy", label: "プライバシーポリシー" },
+  { href: "/legal/cookies", label: "Cookieポリシー" },
+  { href: "/legal/affiliate-disclosure", label: "広告・アフィリエイト開示" },
+  { href: "/legal/ai-policy", label: "AI利用ポリシー" },
+  { href: "/legal/job-listing-terms", label: "求人掲載規約" },
+  { href: "/legal/property-listing-terms", label: "物件掲載規約" },
+  { href: "/legal/community-guidelines", label: "コミュニティガイドライン" },
+  { href: "/legal/data-policy", label: "データ利用ポリシー" },
+  { href: "/legal/business-terms", label: "企業向け利用規約" },
 ];
 
 export default function LegalDocumentPage({
@@ -38,7 +42,7 @@ export default function LegalDocumentPage({
 
           <Link
             href="/legal"
-            className="w-full rounded-lg bg-gray-800 px-4 py-3 text-center font-bold text-white sm:w-auto"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 sm:w-auto"
           >
             法務一覧へ
           </Link>
@@ -75,7 +79,7 @@ export default function LegalDocumentPage({
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-bold text-gray-900 hover:bg-gray-200"
+                className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-200"
               >
                 {link.label}
               </Link>

@@ -4,7 +4,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="利用規約"
-      lead="WorkLife WHを利用する個人ユーザー向けの基本ルールです。求人、物件、生活設計に関する情報を安全に扱うための初期版ドラフトです。"
+      lead="WorkLife WHを利用するユーザー向けの基本ルールです。求人、物件、生活設計に関する情報を安全に扱うための方針をまとめています。"
       sections={[
         {
           title: "1. サービスの位置づけ",

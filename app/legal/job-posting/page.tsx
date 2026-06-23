@@ -1,6 +1,5 @@
-import LegalDocumentPage from "../_components/LegalDocumentPage";
-import { getLegalDocument } from "../_data/legalDocuments";
+import { redirect } from "next/navigation";
 
 export default function JobPostingPage() {
-  return <LegalDocumentPage document={getLegalDocument("job-posting")!} />;
+  redirect("/legal/job-listing-terms");
 }

@@ -70,3 +70,18 @@ textarea {
 ::placeholder {
   color: #6b7280;
 }
+
+.a8-ad-slot {
+  text-align: center;
+}
+
+.a8-ad-slot img {
+  height: auto;
+  max-width: 100%;
+}
+
+.a8-ad-slot a {
+  color: #1d4ed8;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}

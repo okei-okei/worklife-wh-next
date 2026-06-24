@@ -18,7 +18,13 @@ export default function SimEsimComparisonPage() {
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm font-medium leading-6 text-gray-700">
-          料金・データ容量・対応エリアは変更される場合があります。契約前に必ず公式サイトで最新情報をご確認ください。
+          <p>
+            このページには広告・紹介リンクが含まれる場合があります。掲載サービスの一部は、申込・購入によりWorkLife
+            WHが報酬を受け取ることがあります。
+          </p>
+          <p className="mt-2">
+            料金・データ容量・対応エリアは変更される場合があります。契約前に必ず公式サイトで最新情報をご確認ください。
+          </p>
         </section>
 
         <SimEsimComparison />

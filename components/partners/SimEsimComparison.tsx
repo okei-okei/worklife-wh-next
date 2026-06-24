@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import A8AdSlot from "@/components/partners/A8AdSlot";
+import { getA8AdHtml } from "@/lib/constants/partners/a8Ads";
 import { simServices, type SimService } from "@/lib/constants/simServices";
 
 type FilterKey =
@@ -40,6 +42,12 @@ function typeLabel(type: SimService["type"]) {
 
 function getDestinationUrl(service: SimService) {
   return service.affiliateUrl || service.officialUrl;
+}
+
+function affiliateStatusLabel(service: SimService) {
+  if (service.affiliateStatus === "available") return "広告・紹介リンク";
+  if (service.affiliateStatus === "pending") return "提携申請中";
+  return null;
 }
 
 function matchesFilter(service: SimService, filter: FilterKey) {
@@ -97,6 +105,10 @@ function ComparisonItem({ label, value }: { label: string; value: string }) {
 
 export default function SimEsimComparison() {
   const [activeFilters, setActiveFilters] = useState<FilterKey[]>([]);
+  const japanGlobalWideAd = getA8AdHtml(
+    simServices.find((service) => service.id === "japan-global-esim")
+      ?.wideAdKey,
+  );
 
   const filteredServices = useMemo(() => {
     if (activeFilters.length === 0) return simServices;
@@ -172,9 +184,15 @@ export default function SimEsimComparison() {
                   <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
                     {typeLabel(service.type)}
                   </span>
-                  {service.isAffiliate ? (
-                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
-                      広告・紹介リンク
+                  {affiliateStatusLabel(service) ? (
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        service.affiliateStatus === "available"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {affiliateStatusLabel(service)}
                     </span>
                   ) : null}
                 </div>
@@ -249,6 +267,22 @@ export default function SimEsimComparison() {
               </ul>
             </div>
 
+            {service.primaryAdKey ? (
+              <div className="mt-4">
+                <A8AdSlot
+                  html={getA8AdHtml(service.primaryAdKey) ?? ""}
+                  size="banner300x250"
+                />
+                {service.textAdKey ? (
+                  <A8AdSlot
+                    html={getA8AdHtml(service.textAdKey) ?? ""}
+                    size="text"
+                    className="mt-3"
+                  />
+                ) : null}
+              </div>
+            ) : null}
+
             <p className="mt-4 rounded-xl bg-gray-50 p-3 text-xs font-medium leading-5 text-gray-700">
               料金・データ容量・対応エリアは変更される場合があります。契約前に必ず公式サイトで最新情報をご確認ください。
             </p>
@@ -262,6 +296,11 @@ export default function SimEsimComparison() {
               >
                 公式サイトを見る
               </a>
+              {service.affiliateStatus === "pending" ? (
+                <p className="mt-2 text-xs font-medium leading-5 text-gray-600">
+                  現在は提携申請中のため、広告リンクではなく公式サイトのみを案内しています。
+                </p>
+              ) : null}
             </div>
           </article>
         ))}
@@ -303,6 +342,17 @@ export default function SimEsimComparison() {
                   {service.hasUnlimitedData ? (
                     <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">
                       データ多め
+                    </span>
+                  ) : null}
+                  {affiliateStatusLabel(service) ? (
+                    <span
+                      className={`rounded-full px-3 py-1 text-sm font-bold ${
+                        service.affiliateStatus === "available"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {affiliateStatusLabel(service)}
                     </span>
                   ) : null}
                 </div>
@@ -450,6 +500,12 @@ export default function SimEsimComparison() {
           </table>
         </div>
       </section>
+
+      {japanGlobalWideAd ? (
+        <section className="hidden rounded-2xl bg-white p-4 shadow md:block md:p-6">
+          <A8AdSlot html={japanGlobalWideAd} size="banner728x120" />
+        </section>
+      ) : null}
     </div>
   );
 }

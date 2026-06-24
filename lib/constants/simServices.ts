@@ -1,3 +1,5 @@
+import type { A8AdKey } from "@/lib/constants/partners/a8Ads";
+
 export type SimService = {
   id: string;
   name: string;
@@ -16,6 +18,13 @@ export type SimService = {
   officialUrl: string;
   isAffiliate: boolean;
   affiliateUrl?: string;
+  affiliateStatus?: "available" | "pending" | "none";
+  affiliateNetwork?: string;
+  programId?: string;
+  availableAdTypes?: Array<"text" | "banner300x250" | "banner120x60" | "banner728x120">;
+  primaryAdKey?: A8AdKey;
+  textAdKey?: A8AdKey;
+  wideAdKey?: A8AdKey;
   lastCheckedAt: string;
   audienceTags: Array<
     | "short_term"
@@ -28,6 +37,73 @@ export type SimService = {
 };
 
 export const simServices: SimService[] = [
+  {
+    id: "trifa",
+    name: "トリファ（trifa）",
+    type: "eSIM",
+    coverage: "Global",
+    canBuyBeforeDeparture: true,
+    hasUnlimitedData: false,
+    hasCallSms: false,
+    allowsTethering: true,
+    appManagement: true,
+    priceNote: "渡航先・容量・日数ごとの目安料金を公式サイトで確認できます。",
+    dataNote: "国別・地域別のデータプランを確認できます。",
+    durationNote: "短期旅行から中期滞在向けの期間を選べる場合があります。",
+    recommendedFor: [
+      "日本語で準備したい人向け",
+      "初めてのeSIM向け",
+      "出発前に通信を準備したい人向け",
+    ],
+    cautions: [
+      "スマホがeSIM対応か事前に確認してください。",
+      "通話/SMSの有無、テザリング条件、対応エリアはプランごとに公式サイトで確認してください。",
+    ],
+    officialUrl: "https://www.trifa.co/ja",
+    isAffiliate: true,
+    affiliateStatus: "available",
+    affiliateNetwork: "A8.net",
+    programId: "s00000027266001",
+    availableAdTypes: ["text", "banner300x250", "banner120x60"],
+    primaryAdKey: "trifa.banner300x250",
+    textAdKey: "trifa.text",
+    lastCheckedAt: "2026-06-24",
+    audienceTags: ["short_term", "pre_departure", "esim"],
+  },
+  {
+    id: "japan-global-esim",
+    name: "JAPAN&GLOBAL eSIM",
+    type: "eSIM",
+    coverage: "Global",
+    canBuyBeforeDeparture: true,
+    hasUnlimitedData: false,
+    hasCallSms: false,
+    allowsTethering: true,
+    appManagement: false,
+    priceNote: "世界各地向けのプラン料金を公式サイトで確認できます。",
+    dataNote: "渡航先別・容量別のeSIMプランを確認できます。",
+    durationNote: "短期から中期利用向けの期間設定を確認できます。",
+    recommendedFor: [
+      "複数国で使いたい人向け",
+      "日本出発前に準備したい人向け",
+      "シンプルにeSIMを探したい人向け",
+    ],
+    cautions: [
+      "対象国、通信容量、利用期間はプランにより異なります。",
+      "通話/SMSやテザリング条件は購入前に公式サイトで確認してください。",
+    ],
+    officialUrl: "https://japanandglobal.com/",
+    isAffiliate: true,
+    affiliateStatus: "available",
+    affiliateNetwork: "A8.net",
+    programId: "s00000025659001",
+    availableAdTypes: ["text", "banner300x250", "banner728x120"],
+    primaryAdKey: "japanGlobalEsim.banner300x250",
+    textAdKey: "japanGlobalEsim.text",
+    wideAdKey: "japanGlobalEsim.banner728x120",
+    lastCheckedAt: "2026-06-24",
+    audienceTags: ["short_term", "pre_departure", "esim"],
+  },
   {
     id: "airalo",
     name: "Airalo",
@@ -52,6 +128,7 @@ export const simServices: SimService[] = [
     ],
     officialUrl: "https://www.airalo.com/",
     isAffiliate: false,
+    affiliateStatus: "none",
     lastCheckedAt: "2026-06-23",
     audienceTags: ["short_term", "pre_departure", "esim"],
   },
@@ -75,6 +152,7 @@ export const simServices: SimService[] = [
     ],
     officialUrl: "https://esim.holafly.com/",
     isAffiliate: false,
+    affiliateStatus: "none",
     lastCheckedAt: "2026-06-23",
     audienceTags: ["short_term", "pre_departure", "esim"],
   },
@@ -98,7 +176,56 @@ export const simServices: SimService[] = [
     ],
     officialUrl: "https://www.getnomad.app/",
     isAffiliate: false,
+    affiliateStatus: "none",
     lastCheckedAt: "2026-06-23",
+    audienceTags: ["short_term", "pre_departure", "esim"],
+  },
+  {
+    id: "world-esim",
+    name: "World eSIM",
+    type: "eSIM",
+    coverage: "Global",
+    canBuyBeforeDeparture: true,
+    hasUnlimitedData: false,
+    hasCallSms: false,
+    allowsTethering: true,
+    appManagement: true,
+    priceNote: "渡航先・容量・期間ごとの目安料金を公式サイトで確認できます。",
+    dataNote: "国別・地域別のeSIMプランを確認できます。",
+    durationNote: "短期から中期利用向けの期間設定を確認できます。",
+    recommendedFor: ["出発前準備向け", "eSIM比較向け"],
+    cautions: [
+      "提携申請中のため、現在は公式サイトへのリンクのみ掲載しています。",
+      "対応端末、対象国、通信条件は購入前に確認してください。",
+    ],
+    officialUrl: "https://jp.world-esim.com/",
+    isAffiliate: false,
+    affiliateStatus: "pending",
+    lastCheckedAt: "2026-06-24",
+    audienceTags: ["short_term", "pre_departure", "esim"],
+  },
+  {
+    id: "glocal-esim",
+    name: "Glocal eSIM",
+    type: "eSIM",
+    coverage: "Global",
+    canBuyBeforeDeparture: true,
+    hasUnlimitedData: false,
+    hasCallSms: false,
+    allowsTethering: true,
+    appManagement: true,
+    priceNote: "渡航先・容量・期間ごとの目安料金を公式サイトで確認できます。",
+    dataNote: "海外渡航向けのeSIMプランを確認できます。",
+    durationNote: "短期から中期利用向けの期間設定を確認できます。",
+    recommendedFor: ["日本出発前の準備向け", "短期滞在向け"],
+    cautions: [
+      "提携申請中のため、現在は公式サイトへのリンクのみ掲載しています。",
+      "通信条件、キャンセル条件、対象端末は公式サイトで確認してください。",
+    ],
+    officialUrl: "https://glocalnet.jp/lp/esim/",
+    isAffiliate: false,
+    affiliateStatus: "pending",
+    lastCheckedAt: "2026-06-24",
     audienceTags: ["short_term", "pre_departure", "esim"],
   },
   {
@@ -121,6 +248,7 @@ export const simServices: SimService[] = [
     ],
     officialUrl: "https://www.ubigi.com/",
     isAffiliate: false,
+    affiliateStatus: "pending",
     lastCheckedAt: "2026-06-23",
     audienceTags: ["short_term", "pre_departure", "esim"],
   },
@@ -144,6 +272,7 @@ export const simServices: SimService[] = [
     ],
     officialUrl: "https://mobimatter.com/",
     isAffiliate: false,
+    affiliateStatus: "none",
     lastCheckedAt: "2026-06-23",
     audienceTags: ["short_term", "pre_departure", "esim"],
   },
@@ -167,6 +296,7 @@ export const simServices: SimService[] = [
     ],
     officialUrl: "https://www.spark.co.nz/",
     isAffiliate: false,
+    affiliateStatus: "none",
     lastCheckedAt: "2026-06-23",
     audienceTags: ["long_term", "nz_local", "local_sim"],
   },
@@ -190,6 +320,7 @@ export const simServices: SimService[] = [
     ],
     officialUrl: "https://one.nz/",
     isAffiliate: false,
+    affiliateStatus: "none",
     lastCheckedAt: "2026-06-23",
     audienceTags: ["long_term", "nz_local", "local_sim"],
   },
@@ -213,6 +344,7 @@ export const simServices: SimService[] = [
     ],
     officialUrl: "https://www.2degrees.nz/",
     isAffiliate: false,
+    affiliateStatus: "none",
     lastCheckedAt: "2026-06-23",
     audienceTags: ["long_term", "nz_local", "local_sim"],
   },
@@ -236,6 +368,7 @@ export const simServices: SimService[] = [
     ],
     officialUrl: "https://www.skinny.co.nz/",
     isAffiliate: false,
+    affiliateStatus: "none",
     lastCheckedAt: "2026-06-23",
     audienceTags: ["short_term", "long_term", "nz_local", "local_sim"],
   },

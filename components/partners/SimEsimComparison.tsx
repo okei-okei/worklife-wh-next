@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import A8AdSlot from "@/components/partners/A8AdSlot";
 import { getA8AdHtml } from "@/lib/constants/partners/a8Ads";
 import { simServices, type SimService } from "@/lib/constants/simServices";
@@ -56,14 +56,21 @@ function affiliateStatusLabel(service: SimService) {
 
 function affiliateNetworkLabel(service: SimService) {
   if (service.affiliateStatus === "available") return "A8提携中";
-  if (service.affiliateStatus === "none" && service.audienceTags.includes("local_sim")) {
+  if (
+    service.affiliateStatus === "none" &&
+    service.audienceTags.includes("local_sim")
+  ) {
     return "現地SIM";
   }
   return null;
 }
 
 function japaneseSupportLabel(service: SimService) {
-  if (["trifa", "japan-global-esim", "world-esim", "glocal-esim"].includes(service.id)) {
+  if (
+    ["trifa", "japan-global-esim", "world-esim", "glocal-esim"].includes(
+      service.id,
+    )
+  ) {
     return "要確認";
   }
   return service.coverage === "NZ" ? "英語中心" : "要確認";
@@ -154,18 +161,27 @@ function MobileComparisonItem({
 
 export default function SimEsimComparison() {
   const [activeFilters, setActiveFilters] = useState<FilterKey[]>([]);
+  const mobileBannerAds = simServices
+    .filter((service) => service.primaryAdKey)
+    .map((service) => ({
+      id: service.id,
+      name: service.name,
+      html: getA8AdHtml(service.primaryAdKey),
+    }))
+    .filter((ad): ad is { id: string; name: string; html: string } =>
+      Boolean(ad.html),
+    );
   const japanGlobalWideAd = getA8AdHtml(
     simServices.find((service) => service.id === "japan-global-esim")
       ?.wideAdKey,
   );
 
-  const filteredServices = useMemo(() => {
-    if (activeFilters.length === 0) return simServices;
-
-    return simServices.filter((service) =>
-      activeFilters.every((filter) => matchesFilter(service, filter)),
-    );
-  }, [activeFilters]);
+  const filteredServices =
+    activeFilters.length === 0
+      ? simServices
+      : simServices.filter((service) =>
+          activeFilters.every((filter) => matchesFilter(service, filter)),
+        );
 
   const toggleFilter = (filter: FilterKey) => {
     setActiveFilters((current) =>
@@ -177,6 +193,58 @@ export default function SimEsimComparison() {
 
   return (
     <div className="space-y-6">
+      <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">目的別おすすめ</h2>
+            <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+              出発前準備、長期滞在、現地SIMなど、使い方に合わせて候補を絞れます。
+            </p>
+          </div>
+          <span className="w-fit rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
+            広告・紹介リンクを含む場合があります
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+          {[
+            {
+              title: "出発前に準備したい",
+              body: "eSIMを日本出発前に購入し、到着直後から通信を使いたい方向けです。",
+              tags: ["trifa", "JAPAN&GLOBAL eSIM", "Airalo"],
+            },
+            {
+              title: "長期滞在・現地生活",
+              body: "通話/SMSや店舗サポートも含めて、NZ現地SIMを検討したい方向けです。",
+              tags: ["Spark", "One NZ", "2degrees"],
+            },
+            {
+              title: "価格やプランを比較したい",
+              body: "複数サービスの容量、期間、料金目安を見比べたい方向けです。",
+              tags: ["Nomad", "MobiMatter", "Skinny"],
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-xl bg-gray-50 p-3">
+              <h3 className="text-sm font-bold text-gray-900 md:text-base">
+                {item.title}
+              </h3>
+              <p className="mt-1 text-xs font-medium leading-5 text-gray-700 md:text-sm md:leading-6">
+                {item.body}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {item.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-gray-700"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="rounded-2xl bg-white p-4 shadow md:p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
@@ -418,7 +486,11 @@ export default function SimEsimComparison() {
                 />
                 <MobileComparisonItem
                   label="長期滞在向き"
-                  value={service.audienceTags.includes("long_term") ? "向き" : "要確認"}
+                  value={
+                    service.audienceTags.includes("long_term")
+                      ? "向き"
+                      : "要確認"
+                  }
                 />
                 <MobileComparisonItem
                   label="通話/SMS"
@@ -450,6 +522,64 @@ export default function SimEsimComparison() {
               </div>
             </article>
           ))}
+        </div>
+
+        <div className="mt-5 md:hidden">
+          <h3 className="text-base font-bold text-gray-900">詳細比較表</h3>
+          <p className="mt-1 text-xs font-medium leading-5 text-gray-700">
+            詳しく比較したい場合は、横にスクロールして各項目を確認できます。
+          </p>
+          <div className="mt-3 overflow-x-auto rounded-xl border border-gray-200 bg-white">
+            <table className="min-w-[760px] border-collapse text-left text-xs">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50 text-gray-900">
+                  <th className="sticky left-0 z-20 min-w-32 bg-gray-50 px-2 py-2 font-bold">
+                    サービス
+                  </th>
+                  <th className="px-2 py-2 font-bold">種別</th>
+                  <th className="px-2 py-2 font-bold">出発前</th>
+                  <th className="px-2 py-2 font-bold">長期</th>
+                  <th className="px-2 py-2 font-bold">通話/SMS</th>
+                  <th className="px-2 py-2 font-bold">テザリング</th>
+                  <th className="px-2 py-2 font-bold">データ</th>
+                  <th className="px-2 py-2 font-bold">公式</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredServices.map((service) => (
+                  <tr
+                    key={`mobile-table-${service.id}`}
+                    className="border-b border-gray-100 align-top"
+                  >
+                    <td className="sticky left-0 z-10 min-w-32 bg-white px-2 py-2 font-bold text-gray-900">
+                      {service.name}
+                    </td>
+                    <td className="px-2 py-2 font-medium text-gray-700">
+                      {typeLabel(service.type)}
+                    </td>
+                    <td className="px-2 py-2 font-medium text-gray-700">
+                      {markLabel(service.canBuyBeforeDeparture)}
+                    </td>
+                    <td className="px-2 py-2 font-medium text-gray-700">
+                      {service.audienceTags.includes("long_term") ? "○" : "—"}
+                    </td>
+                    <td className="px-2 py-2 font-medium text-gray-700">
+                      {markLabel(service.hasCallSms)}
+                    </td>
+                    <td className="px-2 py-2 font-medium text-gray-700">
+                      {markLabel(service.allowsTethering)}
+                    </td>
+                    <td className="px-2 py-2 font-medium leading-5 text-gray-700">
+                      {service.hasUnlimitedData ? "無制限系あり" : "容量別"}
+                    </td>
+                    <td className="min-w-40 px-2 py-2">
+                      <AffiliateAction service={service} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="hidden overflow-x-auto rounded-xl border border-gray-200 md:block">
@@ -550,6 +680,25 @@ export default function SimEsimComparison() {
           </table>
         </div>
       </section>
+
+      {mobileBannerAds.length > 0 ? (
+        <section className="rounded-2xl bg-white p-4 shadow md:hidden">
+          <h2 className="text-base font-bold text-gray-900">広告バナー</h2>
+          <p className="mt-1 text-xs font-medium leading-5 text-gray-700">
+            掲載サービスには広告・紹介リンクが含まれる場合があります。
+          </p>
+          <div className="mt-3 space-y-3">
+            {mobileBannerAds.map((ad) => (
+              <A8AdSlot
+                key={ad.id}
+                html={ad.html}
+                size="banner300x250"
+                className="mx-auto"
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {japanGlobalWideAd ? (
         <section className="hidden rounded-2xl bg-white p-4 shadow md:block md:p-6">

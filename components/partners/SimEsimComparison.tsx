@@ -44,10 +44,53 @@ function getDestinationUrl(service: SimService) {
   return service.affiliateUrl || service.officialUrl;
 }
 
+function isAffiliateAvailable(service: SimService) {
+  return service.affiliateStatus === "available" && Boolean(service.textAdKey);
+}
+
 function affiliateStatusLabel(service: SimService) {
   if (service.affiliateStatus === "available") return "広告・紹介リンク";
   if (service.affiliateStatus === "pending") return "提携申請中";
   return null;
+}
+
+function affiliateNetworkLabel(service: SimService) {
+  if (service.affiliateStatus === "available") return "A8提携中";
+  if (service.affiliateStatus === "none" && service.audienceTags.includes("local_sim")) {
+    return "現地SIM";
+  }
+  return null;
+}
+
+function japaneseSupportLabel(service: SimService) {
+  if (["trifa", "japan-global-esim", "world-esim", "glocal-esim"].includes(service.id)) {
+    return "要確認";
+  }
+  return service.coverage === "NZ" ? "英語中心" : "要確認";
+}
+
+function AffiliateAction({ service }: { service: SimService }) {
+  const textAdHtml = getA8AdHtml(service.textAdKey);
+
+  if (isAffiliateAvailable(service) && textAdHtml) {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs font-bold text-amber-700">広告・紹介リンク</p>
+        <A8AdSlot html={textAdHtml} size="text" variant="button" />
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={getDestinationUrl(service)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
+    >
+      公式サイトで確認する
+    </a>
+  );
 }
 
 function matchesFilter(service: SimService, filter: FilterKey) {
@@ -92,11 +135,17 @@ function BooleanBadge({ value }: { value: boolean }) {
   );
 }
 
-function ComparisonItem({ label, value }: { label: string; value: string }) {
+function MobileComparisonItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="grid grid-cols-[112px_1fr] gap-3 rounded-xl bg-gray-50 p-3">
-      <p className="font-bold text-gray-700">{label}</p>
-      <p className="min-w-0 break-words font-medium leading-6 text-gray-900">
+    <div className="rounded-lg bg-gray-50 px-2.5 py-2">
+      <p className="text-[11px] font-bold text-gray-600">{label}</p>
+      <p className="mt-0.5 text-xs font-bold leading-5 text-gray-900">
         {value}
       </p>
     </div>
@@ -172,7 +221,7 @@ export default function SimEsimComparison() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <section className="hidden grid-cols-1 gap-4 md:grid md:grid-cols-2">
         {filteredServices.map((service) => (
           <article
             key={service.id}
@@ -193,6 +242,11 @@ export default function SimEsimComparison() {
                       }`}
                     >
                       {affiliateStatusLabel(service)}
+                    </span>
+                  ) : null}
+                  {affiliateNetworkLabel(service) ? (
+                    <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+                      {affiliateNetworkLabel(service)}
                     </span>
                   ) : null}
                 </div>
@@ -268,18 +322,11 @@ export default function SimEsimComparison() {
             </div>
 
             {service.primaryAdKey ? (
-              <div className="mt-4">
+              <div className="mt-4 hidden md:block">
                 <A8AdSlot
                   html={getA8AdHtml(service.primaryAdKey) ?? ""}
                   size="banner300x250"
                 />
-                {service.textAdKey ? (
-                  <A8AdSlot
-                    html={getA8AdHtml(service.textAdKey) ?? ""}
-                    size="text"
-                    className="mt-3"
-                  />
-                ) : null}
               </div>
             ) : null}
 
@@ -288,14 +335,7 @@ export default function SimEsimComparison() {
             </p>
 
             <div className="mt-auto pt-4">
-              <a
-                href={getDestinationUrl(service)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
-              >
-                公式サイトを見る
-              </a>
+              <AffiliateAction service={service} />
               {service.affiliateStatus === "pending" ? (
                 <p className="mt-2 text-xs font-medium leading-5 text-gray-600">
                   現在は提携申請中のため、広告リンクではなく公式サイトのみを案内しています。
@@ -320,33 +360,23 @@ export default function SimEsimComparison() {
           </p>
         </div>
 
-        <div className="space-y-4 md:hidden">
+        <div className="space-y-3 md:hidden">
           {filteredServices.map((service) => (
             <article
               key={`mobile-${service.id}`}
-              className="rounded-2xl border border-gray-200 bg-white p-4"
+              className="rounded-2xl border border-gray-200 bg-white p-3"
             >
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
                     {typeLabel(service.type)}
                   </span>
-                  <span className="rounded-full bg-green-50 px-3 py-1 text-sm font-bold text-green-700">
+                  <span className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700">
                     {service.coverage}
                   </span>
-                  {service.canBuyBeforeDeparture ? (
-                    <span className="rounded-full bg-purple-50 px-3 py-1 text-sm font-bold text-purple-700">
-                      出発前購入可
-                    </span>
-                  ) : null}
-                  {service.hasUnlimitedData ? (
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">
-                      データ多め
-                    </span>
-                  ) : null}
                   {affiliateStatusLabel(service) ? (
                     <span
-                      className={`rounded-full px-3 py-1 text-sm font-bold ${
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
                         service.affiliateStatus === "available"
                           ? "bg-amber-50 text-amber-700"
                           : "bg-gray-100 text-gray-700"
@@ -355,62 +385,69 @@ export default function SimEsimComparison() {
                       {affiliateStatusLabel(service)}
                     </span>
                   ) : null}
+                  {affiliateNetworkLabel(service) ? (
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-700">
+                      {affiliateNetworkLabel(service)}
+                    </span>
+                  ) : null}
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900">
+                <h3 className="text-base font-bold text-gray-900">
                   {service.name}
                 </h3>
+                <p className="line-clamp-2 text-xs font-medium leading-5 text-gray-700">
+                  {service.dataNote}
+                </p>
               </div>
 
-              <div className="mt-4 space-y-2">
-                <ComparisonItem label="料金目安" value={service.priceNote} />
-                <ComparisonItem label="データ容量" value={service.dataNote} />
-                <ComparisonItem label="利用期間" value={service.durationNote} />
-                <ComparisonItem
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {service.recommendedFor.slice(0, 3).map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-bold text-gray-700"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <MobileComparisonItem
                   label="出発前購入"
                   value={yesNo(service.canBuyBeforeDeparture)}
                 />
-                <ComparisonItem
+                <MobileComparisonItem
+                  label="長期滞在向き"
+                  value={service.audienceTags.includes("long_term") ? "向き" : "要確認"}
+                />
+                <MobileComparisonItem
                   label="通話/SMS"
                   value={yesNo(service.hasCallSms)}
                 />
-                <ComparisonItem
+                <MobileComparisonItem
                   label="テザリング"
                   value={yesNo(service.allowsTethering)}
                 />
+                <MobileComparisonItem
+                  label="日本語サポート"
+                  value={japaneseSupportLabel(service)}
+                />
+                <MobileComparisonItem
+                  label="料金目安"
+                  value={service.priceNote}
+                />
               </div>
 
-              <div className="mt-4">
-                <p className="font-bold text-gray-900">おすすめ対象</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {service.recommendedFor.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
+              <div className="mt-3 rounded-lg bg-gray-50 p-2.5">
+                <p className="text-[11px] font-bold text-gray-700">注意点</p>
+                <p className="line-clamp-2 mt-1 text-xs font-medium leading-5 text-gray-700">
+                  {service.cautions.slice(0, 2).join(" / ")}
+                </p>
               </div>
 
-              <div className="mt-4">
-                <p className="font-bold text-gray-900">注意点</p>
-                <ul className="mt-2 space-y-1 font-medium leading-6 text-gray-700">
-                  {service.cautions.map((caution) => (
-                    <li key={caution}>・{caution}</li>
-                  ))}
-                </ul>
+              <div className="mt-3">
+                <AffiliateAction service={service} />
               </div>
-
-              <a
-                href={getDestinationUrl(service)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 block w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white hover:bg-blue-800"
-              >
-                公式サイトを見る
-              </a>
             </article>
           ))}
         </div>
@@ -485,14 +522,27 @@ export default function SimEsimComparison() {
                     {service.priceNote}
                   </td>
                   <td className="px-4 py-5">
-                    <a
-                      href={getDestinationUrl(service)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex rounded-lg border border-gray-300 bg-white px-3 py-2 font-bold text-gray-900 hover:bg-gray-50"
-                    >
-                      見る
-                    </a>
+                    {isAffiliateAvailable(service) ? (
+                      <div className="min-w-48">
+                        <p className="mb-2 text-xs font-bold text-amber-700">
+                          広告・紹介リンク
+                        </p>
+                        <A8AdSlot
+                          html={getA8AdHtml(service.textAdKey) ?? ""}
+                          size="text"
+                          variant="button"
+                        />
+                      </div>
+                    ) : (
+                      <a
+                        href={getDestinationUrl(service)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex rounded-lg border border-gray-300 bg-white px-3 py-2 font-bold text-gray-900 hover:bg-gray-50"
+                      >
+                        確認する
+                      </a>
+                    )}
                   </td>
                 </tr>
               ))}

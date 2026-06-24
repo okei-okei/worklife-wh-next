@@ -85,3 +85,27 @@ textarea {
   font-weight: 700;
   overflow-wrap: anywhere;
 }
+
+.a8-ad-slot--button a {
+  display: block;
+  width: 100%;
+  border-radius: 0.5rem;
+  background: #1d4ed8;
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  text-decoration: none;
+}
+
+.a8-ad-slot--button a:hover {
+  background: #1e40af;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

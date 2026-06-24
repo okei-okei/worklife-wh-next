@@ -3,7 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ARTICLE_CATEGORIES, normalizeArticleSlug, type Article, type ArticleInput } from "@/lib/articles";
+import {
+  ARTICLE_CATEGORIES,
+  ARTICLE_STATUS_LABELS,
+  normalizeArticleSlug,
+  type Article,
+  type ArticleInput,
+  type ArticleStatus,
+} from "@/lib/articles";
 import { supabase } from "@/lib/supabase";
 
 const emptyForm: ArticleInput = {
@@ -22,8 +29,12 @@ const emptyForm: ArticleInput = {
   sponsor_name: "",
   related_checklist_items: [],
   related_service_ids: [],
+  related_partner_url: "",
+  related_checklist_url: "",
   rejected_reason: "",
 };
+
+const editableStatuses: ArticleStatus[] = ["draft", "approved", "archived"];
 
 export default function ArticleEditorForm({ articleId }: { articleId?: string }) {
   const router = useRouter();
@@ -31,7 +42,6 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
   const [accessToken, setAccessToken] = useState("");
   const [isLoading, setIsLoading] = useState(Boolean(articleId));
   const [isSaving, setIsSaving] = useState(false);
-  const [isUserSubmitted, setIsUserSubmitted] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -56,7 +66,6 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
         setErrorMessage(data?.error || "記事を読み込めませんでした。");
       } else {
         const article = data.article;
-        setIsUserSubmitted(article.is_user_submitted);
         setForm({
           title: article.title,
           slug: article.slug,
@@ -73,6 +82,8 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
           sponsor_name: article.sponsor_name || "",
           related_checklist_items: article.related_checklist_items || [],
           related_service_ids: article.related_service_ids || [],
+          related_partner_url: article.related_partner_url || "",
+          related_checklist_url: article.related_checklist_url || "",
           rejected_reason: article.rejected_reason || "",
         });
       }
@@ -93,7 +104,7 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
     }));
   };
 
-  const handleSubmit = async (status: "draft" | "approved" | "published") => {
+  const handleSubmit = async (status: ArticleStatus = form.status) => {
     if (!accessToken || !form.title.trim() || !form.slug.trim()) {
       setErrorMessage("タイトルとslugを入力してください。");
       return;
@@ -113,7 +124,7 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
       return;
     }
     setForm((current) => ({ ...current, status: data.article!.status }));
-    setMessage(status === "published" ? "記事を公開しました。" : "下書きを保存しました。");
+    setMessage(status === "approved" || status === "published" ? "記事を公開しました。" : "記事を保存しました。");
     if (!articleId) router.replace(`/admin/articles/${data.article.id}/edit`);
   };
 
@@ -151,6 +162,16 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
             {ARTICLE_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
           </select>
         </label>
+        <label>
+          <span className="text-sm font-bold">ステータス</span>
+          <select value={form.status} onChange={(event) => update("status", event.target.value as ArticleStatus)} className={inputClass}>
+            {editableStatuses.map((status) => (
+              <option key={status} value={status}>
+                {ARTICLE_STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="md:col-span-2">
           <span className="text-sm font-bold">概要</span>
           <textarea rows={3} value={form.excerpt || ""} onChange={(event) => update("excerpt", event.target.value)} className={inputClass} />
@@ -159,6 +180,8 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
           <label className="flex items-center gap-3"><input type="checkbox" checked={form.is_sponsored} onChange={(event) => update("is_sponsored", event.target.checked)} className="h-5 w-5" /><span className="text-sm font-bold">PR・広告記事</span></label>
           <label className="flex items-center gap-3"><input type="checkbox" checked={form.is_affiliate} onChange={(event) => update("is_affiliate", event.target.checked)} className="h-5 w-5" /><span className="text-sm font-bold">アフィリエイトリンクを含む</span></label>
           <label className="md:col-span-2"><span className="text-sm font-bold">スポンサー名（任意）</span><input value={form.sponsor_name || ""} onChange={(event) => update("sponsor_name", event.target.value)} className={inputClass} /></label>
+          <label><span className="text-sm font-bold">関連比較ページURL</span><input value={form.related_partner_url || ""} onChange={(event) => update("related_partner_url", event.target.value)} className={inputClass} placeholder="/partners/sim-esim" /></label>
+          <label><span className="text-sm font-bold">関連チェックリストURL</span><input value={form.related_checklist_url || ""} onChange={(event) => update("related_checklist_url", event.target.value)} className={inputClass} placeholder="/mypage/checklist" /></label>
           <label><span className="text-sm font-bold">関連チェック項目（1行1件）</span><textarea rows={4} value={form.related_checklist_items.join("\n")} onChange={(event) => update("related_checklist_items", event.target.value.split("\n").filter(Boolean))} className={inputClass} /></label>
           <label><span className="text-sm font-bold">関連サービスID（1行1件）</span><textarea rows={4} value={form.related_service_ids.join("\n")} onChange={(event) => update("related_service_ids", event.target.value.split("\n").filter(Boolean))} className={inputClass} /></label>
         </div>
@@ -176,7 +199,8 @@ export default function ArticleEditorForm({ articleId }: { articleId?: string })
         <Link href="/admin/articles" className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 sm:w-auto">記事一覧へ戻る</Link>
         <div className="flex flex-col gap-3 sm:flex-row">
           <button type="button" onClick={() => handleSubmit("draft")} disabled={isSaving} className="w-full rounded-md border border-slate-800 bg-white px-4 py-3 font-bold text-slate-900 disabled:opacity-50 sm:w-auto">下書き保存</button>
-          <button type="button" onClick={() => handleSubmit(isUserSubmitted ? "approved" : "published")} disabled={isSaving} className="w-full rounded-md bg-emerald-700 px-4 py-3 font-bold text-white disabled:opacity-50 sm:w-auto">{isSaving ? "保存中..." : "公開する"}</button>
+          <button type="button" onClick={() => handleSubmit(form.status)} disabled={isSaving} className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 font-bold text-gray-900 disabled:opacity-50 sm:w-auto">現在の状態で保存</button>
+          <button type="button" onClick={() => handleSubmit("approved")} disabled={isSaving} className="w-full rounded-md bg-emerald-700 px-4 py-3 font-bold text-white disabled:opacity-50 sm:w-auto">{isSaving ? "保存中..." : "公開する"}</button>
         </div>
       </div>
     </div>

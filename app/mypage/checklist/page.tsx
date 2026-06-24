@@ -9,6 +9,7 @@ import { trackMetric } from "@/lib/analytics";
 type PhaseKey =
   | "渡航前"
   | "到着後すぐ"
+  | "英語・学習"
   | "仕事探し"
   | "物件探し"
   | "生活インフラ"
@@ -35,6 +36,7 @@ type ChecklistRow = {
 const PHASES: PhaseKey[] = [
   "渡航前",
   "到着後すぐ",
+  "英語・学習",
   "仕事探し",
   "物件探し",
   "生活インフラ",
@@ -73,14 +75,44 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     urgency: "high",
   },
   {
+    key: "sim_prepare_before_departure",
+    phase: "渡航前",
+    label: "SIM/eSIMを準備する",
+    description: "到着直後から地図や連絡が使えるように通信手段を確認します。",
+    primaryHref: "/partners/sim-esim",
+    primaryLabel: "比較を見る",
+    partnerCategory: "sim-esim",
+    urgency: "high",
+  },
+  {
     key: "insurance_compare",
     phase: "渡航前",
-    label: "海外保険を比較する",
+    label: "海外保険を確認する",
     description: "医療費や事故、盗難に備えて保険の条件を確認します。",
-    primaryHref: "/partners?category=insurance",
-    primaryLabel: "保険を比較する",
+    primaryHref: "/partners/insurance",
+    primaryLabel: "比較を見る",
     partnerCategory: "insurance",
     urgency: "high",
+  },
+  {
+    key: "flights_transport_compare",
+    phase: "渡航前",
+    label: "航空券・移動手段を確認する",
+    description: "日本からNZへの航空券や、到着後の長距離移動を確認します。",
+    primaryHref: "/partners/flights-transport",
+    primaryLabel: "比較を見る",
+    partnerCategory: "flights-transport",
+    urgency: "high",
+  },
+  {
+    key: "money_transfer_compare",
+    phase: "渡航前",
+    label: "海外送金手段を確認する",
+    description: "日本からNZへの送金や、生活資金の移動方法を確認します。",
+    primaryHref: "/partners/money-transfer",
+    primaryLabel: "比較を見る",
+    partnerCategory: "money-transfer",
+    urgency: "medium",
   },
   {
     key: "initial_costs",
@@ -95,7 +127,7 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     key: "resume_prepare",
     phase: "渡航前",
     label: "英文CVを準備する",
-    description: "応募に使う履歴書情報とPDFを保存します。",
+    description: "応募に使う履歴書情報、職歴、スキルを保存します。",
     primaryHref: "/mypage/resume",
     primaryLabel: "履歴書を準備する",
     urgency: "medium",
@@ -103,11 +135,11 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
   {
     key: "sim_compare",
     phase: "到着後すぐ",
-    label: "SIM / eSIMを比較する",
+    label: "現地SIMを検討する",
     description: "到着直後から連絡や地図が使えるように通信手段を確認します。",
-    primaryHref: "/partners?category=sim",
-    primaryLabel: "SIMを比較する",
-    partnerCategory: "sim",
+    primaryHref: "/partners/sim-esim",
+    primaryLabel: "比較を見る",
+    partnerCategory: "sim-esim",
     urgency: "high",
   },
   {
@@ -115,8 +147,8 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     phase: "到着後すぐ",
     label: "銀行口座を準備する",
     description: "給与受け取りや生活費管理に使う銀行口座を確認します。",
-    primaryHref: "/partners?category=bank",
-    primaryLabel: "銀行を確認する",
+    primaryHref: "/partners/bank",
+    primaryLabel: "比較を見る",
     partnerCategory: "bank",
     urgency: "high",
   },
@@ -134,10 +166,20 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     phase: "到着後すぐ",
     label: "交通手段を確認する",
     description: "通勤や内見に使う交通手段、交通カード、移動費を確認します。",
-    primaryHref: "/partners?category=travel",
-    primaryLabel: "移動手段を見る",
-    partnerCategory: "travel",
+    primaryHref: "/partners/flights-transport",
+    primaryLabel: "比較を見る",
+    partnerCategory: "flights-transport",
     urgency: "medium",
+  },
+  {
+    key: "language_school_compare",
+    phase: "英語・学習",
+    label: "語学学校を比較する",
+    description: "英語学習や仕事探し準備に使える語学学校を確認します。",
+    primaryHref: "/partners/language-school",
+    primaryLabel: "比較を見る",
+    partnerCategory: "language-school",
+    urgency: "low",
   },
   {
     key: "public_jobs",
@@ -207,9 +249,9 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     phase: "生活インフラ",
     label: "電気契約を確認する",
     description: "入居後に必要な電気契約の選択肢を確認します。",
-    primaryHref: "/partners?category=power",
-    primaryLabel: "電気を見る",
-    partnerCategory: "power",
+    primaryHref: "/partners/electricity",
+    primaryLabel: "比較を見る",
+    partnerCategory: "electricity",
     urgency: "medium",
   },
   {
@@ -217,8 +259,8 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     phase: "生活インフラ",
     label: "インターネット契約を確認する",
     description: "固定回線やホームインターネットの選択肢を確認します。",
-    primaryHref: "/partners?category=internet",
-    primaryLabel: "ネットを見る",
+    primaryHref: "/partners/internet",
+    primaryLabel: "比較を見る",
     partnerCategory: "internet",
     urgency: "medium",
   },
@@ -227,8 +269,8 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     phase: "生活インフラ",
     label: "家具・生活用品を準備する",
     description: "寝具、机、調理用品など生活開始に必要な用品を確認します。",
-    primaryHref: "/partners?category=furniture",
-    primaryLabel: "生活用品を見る",
+    primaryHref: "/partners/furniture",
+    primaryLabel: "比較を見る",
     partnerCategory: "furniture",
     urgency: "low",
   },
@@ -476,12 +518,8 @@ export default function ChecklistPage() {
                               : "余裕があれば"}
                         </span>
                         <Link
-                          href={
-                            item.partnerCategory
-                              ? `/partners?category=${item.partnerCategory}`
-                              : item.primaryHref
-                          }
-                          className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white sm:w-auto"
+                          href={item.primaryHref}
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
                         >
                           {item.primaryLabel}
                         </Link>

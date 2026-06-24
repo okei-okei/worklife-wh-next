@@ -78,15 +78,17 @@ alter table public.articles
   add column if not exists is_affiliate boolean not null default false,
   add column if not exists sponsor_name text,
   add column if not exists related_checklist_items jsonb not null default '[]'::jsonb,
-  add column if not exists related_service_ids jsonb not null default '[]'::jsonb;
+  add column if not exists related_service_ids jsonb not null default '[]'::jsonb,
+  add column if not exists related_partner_url text,
+  add column if not exists related_checklist_url text;
 
 alter table public.articles drop constraint if exists articles_status_check;
 alter table public.articles add constraint articles_status_check
-  check (status in ('draft', 'pending', 'approved', 'rejected', 'published'));
+  check (status in ('draft', 'pending', 'approved', 'rejected', 'published', 'archived'));
 alter table public.articles drop constraint if exists articles_category_check;
 alter table public.articles add constraint articles_category_check check (category in (
-  '渡航前準備', 'ビザ', 'IRDナンバー', '銀行口座', 'SIM', '保険', '仕事探し',
-  '家探し', '電気・インターネット', '生活費', '交通', '注意喚起', '体験談',
+  '渡航前準備', 'ビザ', 'IRDナンバー', '銀行口座', 'SIM', 'SIM/eSIM', '海外保険', '保険', '送金', '仕事探し',
+  '家探し', '物件探し', '電気・インターネット', '生活インフラ', '生活費', '交通', '注意喚起', '体験談',
   'お金', '渡航準備', 'SIM・通信', '銀行・送金', '現地生活'
 ));
 alter table public.articles drop constraint if exists articles_article_type_check;
@@ -112,7 +114,7 @@ alter table public.affiliate_clicks enable row level security;
 alter table public.articles enable row level security;
 alter table public.profiles enable row level security;
 
-grant select, insert on public.articles to authenticated;
+grant select on public.articles to authenticated;
 grant select on public.articles to anon;
 grant select on public.profiles to authenticated;
 
@@ -128,13 +130,9 @@ on public.articles for select to anon, authenticated
 using (status in ('published', 'approved'));
 
 drop policy if exists "Users can create own article submissions" on public.articles;
-create policy "Users can create own article submissions"
-on public.articles for insert to authenticated
-with check (
-  auth.uid() = submitted_by
-  and is_user_submitted = true
-  and status = 'pending'
-);
+-- User free posting is intentionally disabled for the MVP.
+-- Future information-request or experience-request flows should write through
+-- a server API and require admin review before publishing.
 
 drop policy if exists "Users can read own article submissions" on public.articles;
 create policy "Users can read own article submissions"

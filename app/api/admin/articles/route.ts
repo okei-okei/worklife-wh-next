@@ -34,6 +34,8 @@ export function validateArticleInput(body: Partial<ArticleInput>) {
     sponsor_name: body.sponsor_name?.trim() || null,
     related_checklist_items: stringArray(body.related_checklist_items),
     related_service_ids: stringArray(body.related_service_ids),
+    related_partner_url: body.related_partner_url?.trim() || null,
+    related_checklist_url: body.related_checklist_url?.trim() || null,
     rejected_reason: status === "rejected" ? body.rejected_reason?.trim() || null : null,
   };
 }

@@ -4,10 +4,15 @@ export const ARTICLE_CATEGORIES = [
   "IRDナンバー",
   "銀行口座",
   "SIM",
+  "SIM/eSIM",
+  "海外保険",
   "保険",
+  "送金",
   "仕事探し",
   "家探し",
+  "物件探し",
   "電気・インターネット",
+  "生活インフラ",
   "生活費",
   "交通",
   "注意喚起",
@@ -26,6 +31,7 @@ export const ARTICLE_STATUSES = [
   "approved",
   "rejected",
   "published",
+  "archived",
 ] as const;
 
 export type ArticleCategory = (typeof ARTICLE_CATEGORIES)[number];
@@ -53,6 +59,8 @@ export type Article = {
   sponsor_name: string | null;
   related_checklist_items: string[];
   related_service_ids: string[];
+  related_partner_url?: string | null;
+  related_checklist_url?: string | null;
   views: number;
   created_at: string;
   updated_at: string;
@@ -76,6 +84,8 @@ export type ArticleInput = Pick<
   | "sponsor_name"
   | "related_checklist_items"
   | "related_service_ids"
+  | "related_partner_url"
+  | "related_checklist_url"
   | "rejected_reason"
 >;
 
@@ -107,4 +117,5 @@ export const ARTICLE_STATUS_LABELS: Record<ArticleStatus, string> = {
   approved: "公開済み",
   rejected: "却下",
   published: "公開済み",
+  archived: "アーカイブ",
 };

@@ -3,43 +3,179 @@ import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import type { Article } from "@/lib/articles";
+import { getStaticArticleBySlug } from "@/lib/constants/articles";
 
 export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ slug: string }> };
-type Partner = { id: string; name: string; category: string; description: string | null; url: string | null; official_url?: string | null };
 
-const categoryMap: Record<string, string> = { SIM: "sim", "SIM・通信": "sim", 銀行口座: "bank", "銀行・送金": "bank", 保険: "insurance", "電気・インターネット": "internet" };
+function formatDate(value: string | null | undefined) {
+  if (!value) return "-";
+  return new Date(value).toLocaleDateString("ja-JP");
+}
 
-async function getData(slug: string) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL; const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return { article: null, partners: [] };
-  const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data } = await client.from("articles").select("*").eq("slug", slug).in("status", ["published", "approved"]).maybeSingle();
-  const article = data as Article | null;
-  if (!article) return { article: null, partners: [] };
-  let query = client.from("partners").select("id,name,category,description,url,official_url").eq("is_active", true).limit(4);
-  if (article.related_service_ids?.length) query = query.in("id", article.related_service_ids);
-  else if (categoryMap[article.category]) query = query.eq("category", categoryMap[article.category]);
-  else return { article, partners: [] };
-  const result = await query;
-  if (result.error?.message.includes("official_url")) {
-    const fallback = await client.from("partners").select("id,name,category,description,url").eq("is_active", true).eq("category", categoryMap[article.category] || "_").limit(4);
-    return { article, partners: (fallback.data || []) as Partner[] };
+async function getArticle(slug: string) {
+  const staticArticle = getStaticArticleBySlug(slug);
+  if (staticArticle) return staticArticle;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+
+  const client = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data } = await client
+    .from("articles")
+    .select("*")
+    .eq("slug", slug)
+    .in("status", ["published", "approved"])
+    .maybeSingle();
+
+  return (data as Article | null) || null;
+}
+
+function renderBlock(block: string, index: number) {
+  if (block.startsWith("# ")) {
+    return (
+      <h1 key={index} className="text-2xl font-bold leading-tight md:text-4xl">
+        {block.replace(/^# /, "")}
+      </h1>
+    );
   }
-  return { article, partners: (result.data || []) as Partner[] };
+
+  if (block.startsWith("## ")) {
+    return (
+      <h2 key={index} className="pt-4 text-xl font-bold leading-8 md:text-2xl">
+        {block.replace(/^## /, "")}
+      </h2>
+    );
+  }
+
+  if (block.startsWith("### ")) {
+    return (
+      <h3 key={index} className="pt-2 text-lg font-bold leading-7">
+        {block.replace(/^### /, "")}
+      </h3>
+    );
+  }
+
+  if (block.split("\n").every((line) => line.startsWith("* "))) {
+    return (
+      <ul key={index} className="list-disc space-y-2 pl-5 font-medium leading-8 text-gray-800">
+        {block.split("\n").map((line) => (
+          <li key={line}>{line.replace(/^\* /, "")}</li>
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <p key={index} className="whitespace-pre-wrap font-medium leading-8 text-gray-800">
+      {block}
+    </p>
+  );
 }
 
 export default async function ArticlePage({ params }: Props) {
-  const { slug } = await params; const { article, partners } = await getData(slug); if (!article) notFound();
-  const paragraphs = article.content.split(/\n{2,}/).filter(Boolean); const serviceCategory = categoryMap[article.category];
-  return <main className="min-h-screen bg-gray-100 px-4 py-8 text-gray-900 md:px-6 md:py-10"><ArticleViewTracker slug={slug} /><article className="mx-auto max-w-3xl overflow-hidden rounded-lg border border-gray-200 bg-white">
-    {article.cover_image_url ? <img src={article.cover_image_url} alt="" className="max-h-[420px] w-full object-cover" /> : null}
-    <div className="p-4 md:p-8"><div className="flex flex-wrap items-center gap-2"><span className="text-sm font-bold text-emerald-700">{article.category}</span>{article.is_sponsored || article.is_affiliate ? <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">PR・広告/紹介リンク</span> : null}</div><h1 className="mt-2 text-2xl font-bold leading-tight md:text-4xl">{article.title}</h1><p className="mt-3 text-sm font-medium text-gray-600">更新 {new Date(article.updated_at).toLocaleDateString("ja-JP")} ・ {article.views.toLocaleString()} views</p>
-      {article.is_sponsored || article.is_affiliate ? <p className="mt-5 rounded-md bg-gray-100 p-4 text-sm font-medium leading-6">この記事には広告・紹介リンクが含まれる場合があります。契約前には公式サイトで最新条件をご確認ください。{article.sponsor_name ? ` 提供・関連事業者: ${article.sponsor_name}` : ""}</p> : null}
-      {article.excerpt ? <p className="mt-6 border-l-4 border-emerald-600 pl-4 font-medium leading-7 text-gray-800">{article.excerpt}</p> : null}
-      <div className="mt-8 space-y-5">{paragraphs.map((paragraph, index) => <p key={index} className="whitespace-pre-wrap font-medium leading-8 text-gray-800">{paragraph}</p>)}</div>
-      {article.related_checklist_items?.length ? <section className="mt-10 border-t border-gray-200 pt-6"><h2 className="text-lg font-bold">関連するチェックリスト</h2><ul className="mt-3 space-y-2">{article.related_checklist_items.map((item) => <li key={item} className="rounded-md bg-gray-50 px-3 py-2 font-medium">{item}</li>)}</ul><Link href="/mypage/checklist" className="mt-4 inline-block font-bold text-emerald-700">チェックリストで確認する</Link></section> : null}
-      {partners.length || serviceCategory ? <section className="mt-8 border-t border-gray-200 pt-6"><h2 className="text-lg font-bold">関連する比較・おすすめサービス</h2><p className="mt-2 text-xs font-medium text-gray-600">このセクションには広告・紹介リンクが含まれる場合があります。</p>{partners.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{partners.map((partner) => <article key={partner.id} className="rounded-md border border-gray-200 p-4"><h3 className="font-bold">{partner.name}</h3>{partner.description ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-700">{partner.description}</p> : null}<a href={partner.official_url || partner.url || `/partners?category=${partner.category}`} target="_blank" rel="noopener noreferrer sponsored" className="mt-3 inline-block font-bold text-emerald-700">公式情報を見る</a></article>)}</div> : null}<Link href={`/partners${serviceCategory ? `?category=${serviceCategory}` : ""}`} className="mt-4 inline-block font-bold text-emerald-700">比較・おすすめを見る</Link></section> : null}
-      <div className="mt-10 space-y-4 border-t border-gray-200 pt-6"><Link href="/articles" className="inline-block font-bold text-emerald-700">役立ち情報一覧へ戻る</Link><div className="flex justify-end"><Link href="/mypage" className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto">マイページへ戻る</Link></div></div>
-    </div></article></main>;
+  const { slug } = await params;
+  const article = await getArticle(slug);
+  if (!article) notFound();
+
+  const blocks = article.content.split(/\n{2,}/).filter(Boolean);
+  const relatedPartnerUrl = article.related_partner_url || "/partners";
+  const relatedChecklistUrl = article.related_checklist_url || "/mypage/checklist";
+
+  return (
+    <main className="min-h-screen bg-gray-100 px-4 py-8 text-gray-900 md:px-6 md:py-10">
+      <ArticleViewTracker slug={slug} />
+      <article className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="p-4 md:p-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+              {article.category}
+            </span>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
+              {article.country_code || "NZ"}
+            </span>
+            {article.is_sponsored || article.is_affiliate ? (
+              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">
+                広告・紹介リンク
+              </span>
+            ) : null}
+          </div>
+
+          <h1 className="mt-3 text-2xl font-bold leading-tight md:text-4xl">
+            {article.title}
+          </h1>
+          <p className="mt-3 text-sm font-medium text-gray-600">
+            更新 {formatDate(article.updated_at)}
+          </p>
+
+          <p className="mt-5 rounded-xl bg-gray-50 p-4 text-sm font-medium leading-6 text-gray-700">
+            この記事には広告・紹介リンクが含まれる場合があります。料金、プラン、対応エリア、条件は変更される可能性があるため、申込前に必ず公式サイトで最新情報をご確認ください。
+          </p>
+
+          {article.excerpt ? (
+            <p className="mt-6 border-l-4 border-blue-600 pl-4 font-medium leading-7 text-gray-800">
+              {article.excerpt}
+            </p>
+          ) : null}
+
+          <div className="mt-8 space-y-5">{blocks.map(renderBlock)}</div>
+
+          <section className="mt-10 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+            <h2 className="text-lg font-bold">関連リンク</h2>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Link
+                href={relatedPartnerUrl}
+                className="rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800"
+              >
+                SIM/eSIM比較を見る
+              </Link>
+              <Link
+                href={relatedChecklistUrl}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
+              >
+                チェックリストへ
+              </Link>
+              <Link
+                href="/partners"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
+              >
+                比較トップへ
+              </Link>
+            </div>
+          </section>
+
+          {article.related_checklist_items?.length ? (
+            <section className="mt-8 border-t border-gray-200 pt-6">
+              <h2 className="text-lg font-bold">関連するチェックリスト</h2>
+              <ul className="mt-3 space-y-2">
+                {article.related_checklist_items.map((item) => (
+                  <li key={item} className="rounded-lg bg-gray-50 px-3 py-2 font-medium">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <div className="mt-10 space-y-4 border-t border-gray-200 pt-6">
+            <Link href="/articles" className="inline-block font-bold text-blue-700">
+              役立ち情報一覧へ戻る
+            </Link>
+            <div className="flex justify-end">
+              <Link
+                href="/mypage"
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+              >
+                マイページへ戻る
+              </Link>
+            </div>
+          </div>
+        </div>
+      </article>
+    </main>
+  );
 }

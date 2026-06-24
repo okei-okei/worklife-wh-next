@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { ARTICLE_STATUS_LABELS, type Article, type ArticleInput, type ArticleStatus } from "@/lib/articles";
 import { supabase } from "@/lib/supabase";
 
-const filters: Array<["all" | ArticleStatus, string]> = [["all", "すべて"], ["pending", "承認待ち"], ["draft", "下書き"], ["approved", "公開済み"], ["published", "管理者公開"], ["rejected", "却下"]];
+const filters: Array<["all" | ArticleStatus, string]> = [["all", "すべて"], ["draft", "下書き"], ["approved", "公開済み"], ["archived", "アーカイブ"], ["pending", "承認待ち"], ["rejected", "却下"], ["published", "旧公開"]];
 
 function payload(article: Article, status: ArticleStatus, rejectedReason = ""): ArticleInput {
-  return { title: article.title, slug: article.slug, excerpt: article.excerpt, content: article.content, category: article.category, country_code: article.country_code, region: article.region, article_type: article.article_type, cover_image_url: article.cover_image_url, status, is_sponsored: article.is_sponsored, is_affiliate: article.is_affiliate, sponsor_name: article.sponsor_name, related_checklist_items: article.related_checklist_items || [], related_service_ids: article.related_service_ids || [], rejected_reason: rejectedReason };
+  return { title: article.title, slug: article.slug, excerpt: article.excerpt, content: article.content, category: article.category, country_code: article.country_code, region: article.region, article_type: article.article_type, cover_image_url: article.cover_image_url, status, is_sponsored: article.is_sponsored, is_affiliate: article.is_affiliate, sponsor_name: article.sponsor_name, related_checklist_items: article.related_checklist_items || [], related_service_ids: article.related_service_ids || [], related_partner_url: article.related_partner_url || "", related_checklist_url: article.related_checklist_url || "", rejected_reason: rejectedReason };
 }
 
 export default function AdminArticlesPage() {

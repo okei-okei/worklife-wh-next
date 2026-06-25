@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type ListingSubmission = {
   id: string;
@@ -68,6 +69,36 @@ function createServiceClient() {
   });
 }
 
+function createUserClient(token: string) {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase configuration is missing.");
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
+function getAdminDbClients(token: string) {
+  const clients: Array<{ label: string; client: SupabaseClient }> = [];
+
+  if (supabaseUrl && supabaseServiceRoleKey) {
+    clients.push({ label: "service_role", client: createServiceClient() });
+  }
+
+  clients.push({ label: "admin_jwt", client: createUserClient(token) });
+
+  return clients;
+}
+
 async function verifyAdmin(request: NextRequest) {
   if (!supabaseUrl || !supabaseAnonKey) {
     return { error: createErrorResponse("Supabase configuration is missing.", 500) };
@@ -122,8 +153,9 @@ async function verifyAdmin(request: NextRequest) {
 async function approveSubmission(
   submission: ListingSubmission,
   approvedBy: string,
+  token: string,
 ) {
-  const serviceClient = createServiceClient();
+  const clients = getAdminDbClients(token);
   const details = submission.structured_data || {};
 
   if (submission.type === "job") {
@@ -156,93 +188,123 @@ async function approveSubmission(
       image_url: submission.image_urls?.[0] || null,
       is_active: true,
     };
-    const extended = await serviceClient
-      .from("public_jobs")
-      .upsert(extendedPayload, { onConflict: "source_submission_id" });
+    const fallbackPayload = {
+      source_submission_id: submission.id,
+      title: submission.title,
+      company: submission.company_or_owner,
+      contact_email: submission.email,
+      description: submission.description,
+      apply_url: submission.url,
+      country_code: details.country_code,
+      region: details.region,
+      city: details.district,
+      district: details.district,
+      suburb: details.suburb,
+      area: details.area,
+      address: details.address,
+      employment_type: details.employment_type,
+      japanese_ok: details.japanese_ok,
+      visa_support: details.visa_support,
+      hourly_rate: details.hourly_rate_min,
+      hourly_rate_min: details.hourly_rate_min,
+      hourly_rate_max: details.hourly_rate_max,
+      work_hours: details.weekly_hours,
+      weekly_hours: details.weekly_hours,
+      accommodation_available: details.accommodation_available,
+      start_date: details.start_date,
+      image_url: submission.image_urls?.[0] || null,
+      is_active: true,
+    };
+    const errors: string[] = [];
 
-    const result =
-      extended.error && isMissingColumnError(extended.error)
-        ? await serviceClient.from("public_jobs").upsert(
-            {
-              source_submission_id: submission.id,
-              title: submission.title,
-              company: submission.company_or_owner,
-              contact_email: submission.email,
-              description: submission.description,
-              apply_url: submission.url,
-              country_code: details.country_code,
-              region: details.region,
-              city: details.district,
-              district: details.district,
-              suburb: details.suburb,
-              area: details.area,
-              address: details.address,
-              employment_type: details.employment_type,
-              japanese_ok: details.japanese_ok,
-              visa_support: details.visa_support,
-              hourly_rate: details.hourly_rate_min,
-              hourly_rate_min: details.hourly_rate_min,
-              hourly_rate_max: details.hourly_rate_max,
-              work_hours: details.weekly_hours,
-              weekly_hours: details.weekly_hours,
-              accommodation_available: details.accommodation_available,
-              start_date: details.start_date,
-              image_url: submission.image_urls?.[0] || null,
-              is_active: true,
-            },
-            { onConflict: "source_submission_id" },
-          )
-        : extended;
+    for (const { label, client } of clients) {
+      const extended = await client
+        .from("public_jobs")
+        .upsert(extendedPayload, { onConflict: "source_submission_id" });
 
-    if (result.error) throw result.error;
+      if (!extended.error) {
+        errors.length = 0;
+        break;
+      }
+
+      errors.push(`${label}: ${extended.error.message}`);
+
+      if (isMissingColumnError(extended.error)) {
+        const fallback = await client
+          .from("public_jobs")
+          .upsert(fallbackPayload, { onConflict: "source_submission_id" });
+        if (!fallback.error) {
+          errors.length = 0;
+          break;
+        }
+        errors.push(`${label} fallback: ${fallback.error.message}`);
+      }
+    }
+
+    if (errors.length) throw new Error(errors.join(" / "));
   }
 
   if (submission.type === "property") {
-    const { error } = await serviceClient.from("public_properties").upsert(
-      {
-        source_submission_id: submission.id,
-        title: submission.title,
-        owner_name: submission.company_or_owner,
-        contact_email: submission.email,
-        description: submission.description,
-        url: submission.url,
-        country_code: details.country_code,
-        region: details.region,
-        city: details.district,
-        district: details.district,
-        suburb: details.suburb,
-        area: details.area,
-        address: details.address,
-        rent_weekly: details.rent_weekly,
-        bedrooms: details.bedrooms,
-        bathrooms: details.bathrooms,
-        parking_spaces: details.parking_spaces,
-        available_from: details.available_from,
-        pets_allowed: details.pets_allowed,
-        furnished: details.furnished,
-        bills_included: details.utilities_included,
-        utilities_included: details.utilities_included,
-        image_urls: submission.image_urls || [],
-        is_active: true,
-      },
-      {
-        onConflict: "source_submission_id",
-      },
-    );
+    const propertyPayload = {
+      source_submission_id: submission.id,
+      title: submission.title,
+      owner_name: submission.company_or_owner,
+      contact_email: submission.email,
+      description: submission.description,
+      url: submission.url,
+      country_code: details.country_code,
+      region: details.region,
+      city: details.district,
+      district: details.district,
+      suburb: details.suburb,
+      area: details.area,
+      address: details.address,
+      rent_weekly: details.rent_weekly,
+      bedrooms: details.bedrooms,
+      bathrooms: details.bathrooms,
+      parking_spaces: details.parking_spaces,
+      available_from: details.available_from,
+      pets_allowed: details.pets_allowed,
+      furnished: details.furnished,
+      bills_included: details.utilities_included,
+      utilities_included: details.utilities_included,
+      image_urls: submission.image_urls || [],
+      is_active: true,
+    };
+    const errors: string[] = [];
 
-    if (error) throw error;
+    for (const { label, client } of clients) {
+      const result = await client
+        .from("public_properties")
+        .upsert(propertyPayload, { onConflict: "source_submission_id" });
+
+      if (!result.error) {
+        errors.length = 0;
+        break;
+      }
+
+      errors.push(`${label}: ${result.error.message}`);
+    }
+
+    if (errors.length) throw new Error(errors.join(" / "));
   }
 
-  const { error } = await serviceClient
-    .from("listing_submissions")
-    .update({
-      status: "approved",
-      approved_at: new Date().toISOString(),
-      approved_by: approvedBy,
-    })
-    .eq("id", submission.id);
+  const errors: string[] = [];
+  for (const { label, client } of clients) {
+    const result = await client
+      .from("listing_submissions")
+      .update({
+        status: "approved",
+        approved_at: new Date().toISOString(),
+        approved_by: approvedBy,
+      })
+      .eq("id", submission.id);
 
-  if (error) throw error;
+    if (!result.error) return;
+    errors.push(`${label}: ${result.error.message}`);
+  }
+
+  throw new Error(errors.join(" / "));
 }
 
 export async function GET(request: NextRequest) {
@@ -361,17 +423,26 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (body.action === "approve") {
-      await approveSubmission(data, adminCheck.user.id);
+      await approveSubmission(data, adminCheck.user.id, adminCheck.token);
     } else {
-      const { error: updateError } = await serviceClient
-        .from("listing_submissions")
-        .update({
-          status: "rejected",
-          rejected_reason: body.rejectedReason?.trim() || null,
-        })
-        .eq("id", data.id);
+      const errors: string[] = [];
+      for (const { label, client } of getAdminDbClients(adminCheck.token)) {
+        const result = await client
+          .from("listing_submissions")
+          .update({
+            status: "rejected",
+            rejected_reason: body.rejectedReason?.trim() || null,
+          })
+          .eq("id", data.id);
 
-      if (updateError) throw updateError;
+        if (!result.error) {
+          errors.length = 0;
+          break;
+        }
+        errors.push(`${label}: ${result.error.message}`);
+      }
+
+      if (errors.length) throw new Error(errors.join(" / "));
     }
 
     return NextResponse.json({ ok: true });

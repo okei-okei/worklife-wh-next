@@ -34,6 +34,8 @@ add column if not exists longitude double precision null;
 grant usage on schema public to anon, authenticated;
 grant select, insert, update on public.listing_submissions to authenticated;
 grant insert on public.listing_submissions to anon;
+grant insert, update on public.public_jobs to authenticated;
+grant insert, update on public.public_properties to authenticated;
 
 drop policy if exists "Anyone can submit listing applications" on public.listing_submissions;
 create policy "Anyone can submit listing applications"
@@ -96,3 +98,81 @@ with check (
 
 create index if not exists listing_submissions_type_status_idx
 on public.listing_submissions (type, status, created_at desc);
+
+drop policy if exists "Admins can insert public jobs" on public.public_jobs;
+create policy "Admins can insert public jobs"
+on public.public_jobs
+for insert
+to authenticated
+with check (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+);
+
+drop policy if exists "Admins can update public jobs" on public.public_jobs;
+create policy "Admins can update public jobs"
+on public.public_jobs
+for update
+to authenticated
+using (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+)
+with check (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+);
+
+drop policy if exists "Admins can insert public properties" on public.public_properties;
+create policy "Admins can insert public properties"
+on public.public_properties
+for insert
+to authenticated
+with check (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+);
+
+drop policy if exists "Admins can update public properties" on public.public_properties;
+create policy "Admins can update public properties"
+on public.public_properties
+for update
+to authenticated
+using (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+)
+with check (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+);

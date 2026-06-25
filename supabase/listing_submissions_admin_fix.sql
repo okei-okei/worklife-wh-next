@@ -24,12 +24,14 @@ add column if not exists visa_conditions text null,
 add column if not exists application_method text null,
 add column if not exists visa_support boolean not null default false,
 add column if not exists address text null,
+add column if not exists image_url text null,
 add column if not exists latitude double precision null,
 add column if not exists longitude double precision null;
 
 alter table public.public_properties
 add column if not exists address text null,
 add column if not exists inquiry_method text null,
+add column if not exists image_urls text[] not null default '{}'::text[],
 add column if not exists latitude double precision null,
 add column if not exists longitude double precision null;
 

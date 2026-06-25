@@ -18,6 +18,8 @@ type UpdateBody = {
   inquiry_method?: string | null;
   apply_url?: string | null;
   url?: string | null;
+  image_url?: string | null;
+  image_urls?: string[] | null;
   hourly_rate_min?: number | null;
   hourly_rate_max?: number | null;
   hourly_rate?: number | null;
@@ -148,13 +150,13 @@ export async function GET(request: NextRequest) {
       selectListings(
         clients,
         "public_jobs",
-      "id, title, company, city, area, address, hourly_rate, hourly_rate_min, hourly_rate_max, work_hours, weekly_hours, description, application_method, apply_url, is_active, created_at",
+        "id, title, company, city, area, address, hourly_rate, hourly_rate_min, hourly_rate_max, work_hours, weekly_hours, description, application_method, apply_url, image_url, is_active, created_at",
         "id, title, company, city, address, hourly_rate, work_hours, description, apply_url, is_active, created_at",
       ),
       selectListings(
         clients,
         "public_properties",
-      "id, title, owner_name, city, area, address, rent_weekly, description, inquiry_method, url, is_active, created_at",
+        "id, title, owner_name, city, area, address, rent_weekly, description, inquiry_method, url, image_urls, is_active, created_at",
         "id, title, owner_name, city, area, address, rent_weekly, description, url, is_active, created_at",
       ),
     ]);
@@ -226,6 +228,7 @@ export async function PATCH(request: NextRequest) {
           work_hours: body.work_hours ?? body.weekly_hours ?? null,
           description: body.description?.trim() || null,
           apply_url: body.apply_url?.trim() || null,
+          image_url: body.image_url || null,
           is_active: body.is_active !== false,
         }
       : {
@@ -237,6 +240,7 @@ export async function PATCH(request: NextRequest) {
           rent_weekly: body.rent_weekly ?? null,
           description: body.description?.trim() || null,
           url: body.url?.trim() || null,
+          image_urls: body.image_urls || [],
           is_active: body.is_active !== false,
         };
 

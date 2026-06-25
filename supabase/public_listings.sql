@@ -54,6 +54,7 @@ alter table public_jobs add column if not exists accommodation_available boolean
 alter table public_jobs add column if not exists apply_url text null;
 alter table public_jobs add column if not exists contact_email text null;
 alter table public_jobs add column if not exists application_method text null;
+alter table public_jobs add column if not exists image_url text null;
 alter table public_jobs add column if not exists country text not null default 'NZ';
 alter table public_jobs add column if not exists latitude double precision null;
 alter table public_jobs add column if not exists longitude double precision null;
@@ -70,6 +71,7 @@ alter table public_properties add column if not exists rent_weekly numeric null;
 alter table public_properties add column if not exists description text null;
 alter table public_properties add column if not exists url text null;
 alter table public_properties add column if not exists inquiry_method text null;
+alter table public_properties add column if not exists image_urls text[] not null default '{}'::text[];
 alter table public_properties add column if not exists utilities_included boolean null;
 alter table public_properties add column if not exists country text not null default 'NZ';
 alter table public_properties add column if not exists latitude double precision null;

@@ -21,6 +21,7 @@ type AdminJob = {
   description: string | null;
   application_method?: string | null;
   apply_url: string | null;
+  image_url?: string | null;
   is_active: boolean | null;
 };
 
@@ -35,6 +36,7 @@ type AdminProperty = {
   description: string | null;
   inquiry_method?: string | null;
   url: string | null;
+  image_urls?: string[] | null;
   is_active: boolean | null;
 };
 
@@ -50,6 +52,8 @@ type EditForm = {
   description: string;
   method: string;
   url: string;
+  imageUrl: string;
+  imageUrls: string[];
   isActive: boolean;
 };
 
@@ -69,6 +73,8 @@ function jobToForm(job: AdminJob): EditForm {
     description: job.description || "",
     method: job.application_method || "",
     url: job.apply_url || "",
+    imageUrl: job.image_url || "",
+    imageUrls: job.image_url ? [job.image_url] : [],
     isActive: job.is_active !== false,
   };
 }
@@ -86,6 +92,8 @@ function propertyToForm(property: AdminProperty): EditForm {
     description: property.description || "",
     method: property.inquiry_method || "",
     url: property.url || "",
+    imageUrl: property.image_urls?.[0] || "",
+    imageUrls: property.image_urls || [],
     isActive: property.is_active !== false,
   };
 }
@@ -100,6 +108,7 @@ export default function AdminListingsPage() {
     id: string;
   } | null>(null);
   const [form, setForm] = useState<EditForm | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -156,11 +165,45 @@ export default function AdminListingsPage() {
     setForm(type === "job" ? jobToForm(item as AdminJob) : propertyToForm(item as AdminProperty));
     setMessage("");
     setErrorMessage("");
+    setImageFiles([]);
   };
 
   const cancelEdit = () => {
     setEditing(null);
     setForm(null);
+    setImageFiles([]);
+  };
+
+  const handleImageFiles = (files: FileList | null) => {
+    if (!files || !editing) return;
+    const accepted = Array.from(files).filter((file) =>
+      ["image/jpeg", "image/png", "image/webp"].includes(file.type),
+    );
+    setImageFiles(editing.type === "job" ? accepted.slice(0, 1) : accepted.slice(0, 10));
+  };
+
+  const uploadImages = async () => {
+    if (!editing || imageFiles.length === 0) {
+      return form?.imageUrls || [];
+    }
+
+    const uploadedUrls: string[] = [];
+    for (const [index, file] of imageFiles.entries()) {
+      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const filePath = `admin-listings/${editing.type}/${editing.id}/${Date.now()}-${index}.${extension}`;
+      const { error } = await supabase.storage
+        .from("listing-images")
+        .upload(filePath, file, { upsert: true });
+
+      if (error) throw error;
+
+      const { data } = supabase.storage
+        .from("listing-images")
+        .getPublicUrl(filePath);
+      uploadedUrls.push(data.publicUrl);
+    }
+
+    return editing.type === "job" ? uploadedUrls.slice(0, 1) : uploadedUrls;
   };
 
   const saveListing = async () => {
@@ -168,6 +211,19 @@ export default function AdminListingsPage() {
     setIsSaving(true);
     setMessage("");
     setErrorMessage("");
+
+    let uploadedImageUrls = form.imageUrls;
+    try {
+      uploadedImageUrls = await uploadImages();
+    } catch (error) {
+      setIsSaving(false);
+      setErrorMessage(
+        error instanceof Error
+          ? `画像のアップロードに失敗しました: ${error.message}`
+          : "画像のアップロードに失敗しました。",
+      );
+      return;
+    }
 
     const payload =
       editing.type === "job"
@@ -187,6 +243,7 @@ export default function AdminListingsPage() {
             description: form.description,
             application_method: form.method,
             apply_url: form.url,
+            image_url: uploadedImageUrls[0] || null,
             is_active: form.isActive,
           }
         : {
@@ -201,6 +258,7 @@ export default function AdminListingsPage() {
             description: form.description,
             inquiry_method: form.method,
             url: form.url,
+            image_urls: uploadedImageUrls,
             is_active: form.isActive,
           };
 
@@ -346,6 +404,16 @@ export default function AdminListingsPage() {
                     key={item.id}
                     className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
                   >
+                    {(isJob ? job.image_url : property.image_urls?.[0]) ? (
+                      <div className="mb-4 overflow-hidden rounded-xl bg-gray-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={(isJob ? job.image_url : property.image_urls?.[0]) || ""}
+                          alt=""
+                          className="aspect-[16/9] w-full object-cover"
+                        />
+                      </div>
+                    ) : null}
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
                         <div className="mb-2 flex flex-wrap gap-2">
@@ -554,6 +622,47 @@ export default function AdminListingsPage() {
                   className={inputClass}
                 />
               </label>
+              <div className="md:col-span-2">
+                <label className="block">
+                  <span className="text-sm font-bold">
+                    画像（{editing.type === "job" ? "1枚" : "最大10枚"}）
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple={editing.type === "property"}
+                    onChange={(event) => handleImageFiles(event.target.files)}
+                    className={inputClass}
+                  />
+                  <span className="mt-1 block text-xs font-medium text-gray-600">
+                    jpg/png/webp に対応しています。選択した画像で既存画像を置き換えます。
+                  </span>
+                </label>
+
+                {form.imageUrls.length || imageFiles.length ? (
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {imageFiles.length
+                      ? imageFiles.map((file) => (
+                          <div
+                            key={`${file.name}-${file.size}`}
+                            className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs font-bold text-blue-700"
+                          >
+                            新規: {file.name}
+                          </div>
+                        ))
+                      : form.imageUrls.map((imageUrl) => (
+                          <div key={imageUrl} className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imageUrl}
+                              alt=""
+                              className="aspect-[4/3] w-full object-cover"
+                            />
+                          </div>
+                        ))}
+                  </div>
+                ) : null}
+              </div>
               <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 font-bold">
                 <input
                   type="checkbox"

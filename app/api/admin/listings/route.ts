@@ -199,6 +199,7 @@ export async function PATCH(request: NextRequest) {
           description: body.description?.trim() || null,
           application_method: body.application_method?.trim() || null,
           apply_url: body.apply_url?.trim() || null,
+          image_url: body.image_url || null,
           is_active: body.is_active !== false,
         }
       : {
@@ -211,6 +212,7 @@ export async function PATCH(request: NextRequest) {
           description: body.description?.trim() || null,
           inquiry_method: body.inquiry_method?.trim() || null,
           url: body.url?.trim() || null,
+          image_urls: body.image_urls || [],
           is_active: body.is_active !== false,
         };
 

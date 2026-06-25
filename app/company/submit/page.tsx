@@ -251,24 +251,25 @@ export default function CompanySubmitPage() {
   };
 
   const uploadImages = async (submissionId: string) => {
-    const imageUrls: string[] = [];
+    if (!files.length) return [];
 
-    for (const [index, file] of files.entries()) {
-      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const filePath = `${submissionId}/${Date.now()}-${index}.${extension}`;
-      const { error } = await supabase.storage
-        .from("listing-images")
-        .upload(filePath, file, { upsert: false });
+    const formData = new FormData();
+    formData.append("prefix", `submissions/${submissionId}`);
+    files.forEach((file) => formData.append("files", file));
 
-      if (error) throw error;
+    const response = await fetch("/api/listing-images", {
+      method: "POST",
+      body: formData,
+    });
+    const data = (await response.json().catch(() => null)) as
+      | { imageUrls?: string[]; error?: string }
+      | null;
 
-      const { data } = supabase.storage
-        .from("listing-images")
-        .getPublicUrl(filePath);
-      imageUrls.push(data.publicUrl);
+    if (!response.ok || !data?.imageUrls) {
+      throw new Error(data?.error || "画像の保存に失敗しました。");
     }
 
-    return imageUrls;
+    return type === "job" ? data.imageUrls.slice(0, 1) : data.imageUrls;
   };
 
   const submitMinimalDirectly = async () => {
@@ -366,7 +367,13 @@ export default function CompanySubmitPage() {
           imageUrls = await uploadImages(`submission-${Date.now()}`);
         } catch (uploadError) {
           console.error(uploadError);
-          imageUrls = [];
+          setIsSubmitting(false);
+          setErrorMessage(
+            uploadError instanceof Error
+              ? uploadError.message
+              : "画像の保存に失敗しました。",
+          );
+          return;
         }
       }
 

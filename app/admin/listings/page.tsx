@@ -187,23 +187,24 @@ export default function AdminListingsPage() {
       return form?.imageUrls || [];
     }
 
-    const uploadedUrls: string[] = [];
-    for (const [index, file] of imageFiles.entries()) {
-      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const filePath = `admin-listings/${editing.type}/${editing.id}/${Date.now()}-${index}.${extension}`;
-      const { error } = await supabase.storage
-        .from("listing-images")
-        .upload(filePath, file, { upsert: true });
+    const formData = new FormData();
+    formData.append("prefix", `admin-listings/${editing.type}/${editing.id}`);
+    imageFiles.forEach((file) => formData.append("files", file));
 
-      if (error) throw error;
+    const response = await fetch("/api/listing-images", {
+      method: "POST",
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      body: formData,
+    });
+    const data = (await response.json().catch(() => null)) as
+      | { imageUrls?: string[]; error?: string }
+      | null;
 
-      const { data } = supabase.storage
-        .from("listing-images")
-        .getPublicUrl(filePath);
-      uploadedUrls.push(data.publicUrl);
+    if (!response.ok || !data?.imageUrls) {
+      throw new Error(data?.error || "画像の保存に失敗しました。");
     }
 
-    return editing.type === "job" ? uploadedUrls.slice(0, 1) : uploadedUrls;
+    return editing.type === "job" ? data.imageUrls.slice(0, 1) : data.imageUrls;
   };
 
   const saveListing = async () => {

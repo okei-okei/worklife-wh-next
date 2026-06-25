@@ -626,7 +626,7 @@ export default function AdminListingsPage() {
               <div className="md:col-span-2">
                 <label className="block">
                   <span className="text-sm font-bold">
-                    画像（{editing.type === "job" ? "1枚" : "最大10枚"}）
+                    画像（{editing.type === "job" ? "1枚" : "物件は最大10枚"}）
                   </span>
                   <input
                     type="file"
@@ -636,7 +636,7 @@ export default function AdminListingsPage() {
                     className={inputClass}
                   />
                   <span className="mt-1 block text-xs font-medium text-gray-600">
-                    jpg/png/webp に対応しています。選択した画像で既存画像を置き換えます。
+                    ファイルまたは写真フォルダから選択できます。選択した画像で既存画像を置き換えます。
                   </span>
                 </label>
 

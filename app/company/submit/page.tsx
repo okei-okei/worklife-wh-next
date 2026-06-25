@@ -823,7 +823,7 @@ export default function CompanySubmitPage() {
             </label>
             <label className="mt-4 block">
               <span className="text-sm font-bold">
-                画像（{type === "job" ? "任意・1枚" : "最大10枚"}）
+                画像（{type === "job" ? "任意・1枚" : "物件は最大10枚"}）
               </span>
               <input
                 type="file"
@@ -833,9 +833,26 @@ export default function CompanySubmitPage() {
                 className={inputClass}
               />
               <span className="mt-1 block text-xs font-medium text-gray-600">
-                jpg/png/webp、1枚5MB以下
+                ファイルまたは写真フォルダから選択できます。jpg/png/webp、1枚5MB以下。
               </span>
             </label>
+            {files.length ? (
+              <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
+                <p className="text-sm font-bold text-blue-800">
+                  選択中の画像: {files.length}枚
+                </p>
+                <div className="mt-2 flex gap-2 overflow-x-auto">
+                  {files.map((file) => (
+                    <span
+                      key={`${file.name}-${file.size}`}
+                      className="max-w-[180px] flex-none truncate rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-700"
+                    >
+                      {file.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </section>
 
           <section className="rounded-2xl bg-white p-4 shadow md:p-6">

@@ -729,7 +729,7 @@ export default function JobsPage() {
                   <img
                     src={job.image_url}
                     alt=""
-                    className="aspect-[16/9] w-full object-cover"
+                    className="h-28 w-full object-cover sm:h-32 md:h-36"
                   />
                 ) : null}
                 <div className="flex flex-1 flex-col p-4 md:p-5">

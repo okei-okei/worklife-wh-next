@@ -91,7 +91,7 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
             <img
               src={job.image_urls[0]}
               alt=""
-              className="aspect-[16/9] w-full object-cover"
+              className="h-28 w-full object-cover sm:h-32 md:h-36"
             />
           ) : null}
 

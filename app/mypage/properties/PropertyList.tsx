@@ -98,14 +98,23 @@ export default function PropertyList({
           key={p.id}
           className="overflow-hidden rounded-2xl bg-white text-gray-900 shadow"
         >
-          {p.image_urls?.[0] ? (
-            // Supabase Storage URLs are configured at runtime.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={p.image_urls[0]}
-              alt=""
-              className="aspect-[16/9] w-full object-cover"
-            />
+          {p.image_urls?.length ? (
+            <div className="flex gap-2 overflow-x-auto bg-gray-50 p-2">
+              {p.image_urls.map((imageUrl, index) => (
+                <div
+                  key={`${p.id}-${imageUrl}`}
+                  className="h-28 w-44 flex-none overflow-hidden rounded-xl bg-gray-100 sm:h-32 sm:w-52 md:h-36 md:w-56"
+                >
+                  {/* Supabase Storage URLs are configured at runtime. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt={`${p.title}の画像${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
           ) : null}
 
           <div className="p-4 md:p-5">

@@ -314,49 +314,45 @@ export default function CompanySubmitPage() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      const structuredData = {
+      const baseStructuredData = {
         country_code: countryCode,
         region: region || null,
         district: district || null,
         suburb: area || null,
         area: area || null,
         address: address || null,
-        employment_type: type === "job" ? employmentType || null : null,
-        japanese_ok: type === "job" ? japaneseOk : null,
-        english_level: type === "job" ? englishLevel || null : null,
-        visa_conditions: type === "job" ? visaConditions || null : null,
-        visa_support:
-          type === "job"
-            ? /ワーホリ|working holiday|work visa|就労/i.test(visaConditions)
-            : null,
-        hourly_rate_min:
-          type === "job" && hourlyRateMin ? Number(hourlyRateMin) : null,
-        hourly_rate_max:
-          type === "job" && hourlyRateMax ? Number(hourlyRateMax) : null,
-        weekly_hours:
-          type === "job" && weeklyHours ? Number(weeklyHours) : null,
-        accommodation_available:
-          type === "job" ? accommodationAvailable : null,
-        start_date: type === "job" ? startDate || null : null,
-        application_method:
-          type === "job" ? applicationMethod || null : null,
-        rent_weekly:
-          type === "property" && rentWeekly ? Number(rentWeekly) : null,
-        bedrooms:
-          type === "property" && bedrooms ? Number(bedrooms) : null,
-        bathrooms:
-          type === "property" && bathrooms ? Number(bathrooms) : null,
-        parking_spaces:
-          type === "property" && parkingSpaces
-            ? Number(parkingSpaces)
-            : null,
-        available_from:
-          type === "property" ? availableFrom || null : null,
-        pets_allowed: type === "property" ? petsAllowed : null,
-        furnished: type === "property" ? furnished : null,
-        utilities_included:
-          type === "property" ? utilitiesIncluded : null,
       };
+
+      const structuredData =
+        type === "job"
+          ? {
+              ...baseStructuredData,
+              employment_type: employmentType || null,
+              japanese_ok: japaneseOk,
+              english_level: englishLevel || null,
+              visa_conditions: visaConditions || null,
+              visa_support:
+                /ワーホリ|working holiday|work visa|就労/i.test(
+                  visaConditions,
+                ),
+              hourly_rate_min: hourlyRateMin ? Number(hourlyRateMin) : null,
+              hourly_rate_max: hourlyRateMax ? Number(hourlyRateMax) : null,
+              weekly_hours: weeklyHours ? Number(weeklyHours) : null,
+              accommodation_available: accommodationAvailable,
+              start_date: startDate || null,
+              application_method: applicationMethod || null,
+            }
+          : {
+              ...baseStructuredData,
+              rent_weekly: rentWeekly ? Number(rentWeekly) : null,
+              bedrooms: bedrooms ? Number(bedrooms) : null,
+              bathrooms: bathrooms ? Number(bathrooms) : null,
+              parking_spaces: parkingSpaces ? Number(parkingSpaces) : null,
+              available_from: availableFrom || null,
+              pets_allowed: petsAllowed,
+              furnished,
+              utilities_included: utilitiesIncluded,
+            };
 
       let imageUrls: string[] = [];
       if (files.length) {

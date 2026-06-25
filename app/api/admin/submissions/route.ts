@@ -154,7 +154,7 @@ async function approveSubmission(
   submission: ListingSubmission,
   approvedBy: string,
   token: string,
-) {
+): Promise<{ statusUpdated: boolean; warning?: string }> {
   const clients = getAdminDbClients(token);
   const details = submission.structured_data || {};
 
@@ -300,11 +300,51 @@ async function approveSubmission(
       })
       .eq("id", submission.id);
 
-    if (!result.error) return;
+    if (!result.error) return { statusUpdated: true };
     errors.push(`${label}: ${result.error.message}`);
   }
 
-  throw new Error(errors.join(" / "));
+  const warning = errors.join(" / ");
+  console.warn(
+    `Listing ${submission.id} was published, but listing_submissions status could not be updated: ${warning}`,
+  );
+
+  return { statusUpdated: false, warning };
+}
+
+async function filterAlreadyPublishedSubmissions(
+  submissions: ListingSubmission[],
+  token: string,
+) {
+  const ids = submissions.map((submission) => submission.id);
+  if (ids.length === 0) return submissions;
+
+  for (const { client } of getAdminDbClients(token)) {
+    const [jobsResult, propertiesResult] = await Promise.all([
+      client
+        .from("public_jobs")
+        .select("source_submission_id")
+        .in("source_submission_id", ids),
+      client
+        .from("public_properties")
+        .select("source_submission_id")
+        .in("source_submission_id", ids),
+    ]);
+
+    if (jobsResult.error && propertiesResult.error) continue;
+
+    const publishedIds = new Set<string>();
+    (jobsResult.data || []).forEach((item) => {
+      if (item.source_submission_id) publishedIds.add(item.source_submission_id);
+    });
+    (propertiesResult.data || []).forEach((item) => {
+      if (item.source_submission_id) publishedIds.add(item.source_submission_id);
+    });
+
+    return submissions.filter((submission) => !publishedIds.has(submission.id));
+  }
+
+  return submissions;
 }
 
 export async function GET(request: NextRequest) {
@@ -362,12 +402,21 @@ export async function GET(request: NextRequest) {
         .order("created_at", { ascending: false });
 
       if (fallback.error) throw fallback.error;
-      return NextResponse.json({ submissions: fallback.data || [] });
+      const submissions = await filterAlreadyPublishedSubmissions(
+        (fallback.data || []) as ListingSubmission[],
+        adminCheck.token,
+      );
+      return NextResponse.json({ submissions });
     }
 
     if (result.error) throw result.error;
 
-    return NextResponse.json({ submissions: result.data || [] });
+    const submissions = await filterAlreadyPublishedSubmissions(
+      (result.data || []) as ListingSubmission[],
+      adminCheck.token,
+    );
+
+    return NextResponse.json({ submissions });
   } catch (error) {
     console.error(error);
     const detail = getErrorDetail(error);
@@ -422,8 +471,14 @@ export async function PATCH(request: NextRequest) {
       return createErrorResponse("Submission is not pending.", 409);
     }
 
+    let warning: string | undefined;
     if (body.action === "approve") {
-      await approveSubmission(data, adminCheck.user.id, adminCheck.token);
+      const approvalResult = await approveSubmission(
+        data,
+        adminCheck.user.id,
+        adminCheck.token,
+      );
+      warning = approvalResult.warning;
     } else {
       const errors: string[] = [];
       for (const { label, client } of getAdminDbClients(adminCheck.token)) {
@@ -445,7 +500,7 @@ export async function PATCH(request: NextRequest) {
       if (errors.length) throw new Error(errors.join(" / "));
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, warning: warning || null });
   } catch (error) {
     console.error(error);
     const detail = getErrorDetail(error);

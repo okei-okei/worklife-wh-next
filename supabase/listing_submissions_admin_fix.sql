@@ -32,6 +32,7 @@ add column if not exists latitude double precision null,
 add column if not exists longitude double precision null;
 
 grant usage on schema public to anon, authenticated;
+grant select on public.profiles to authenticated;
 grant select, insert, update on public.listing_submissions to authenticated;
 grant insert on public.listing_submissions to anon;
 grant insert, update on public.public_jobs to authenticated;

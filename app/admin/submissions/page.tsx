@@ -19,6 +19,8 @@ type ListingSubmission = {
   image_urls?: string[] | null;
 };
 
+type DetailRow = [string, unknown];
+
 export default function AdminSubmissionsPage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -135,6 +137,45 @@ export default function AdminSubmissionsPage() {
     if (value === false) return "なし";
     if (value === null || value === undefined || value === "") return "-";
     return String(value);
+  };
+
+  const getStructuredDetails = (submission: ListingSubmission): DetailRow[] => {
+    const data = submission.structured_data || {};
+    const location = [data.region, data.district, data.area || data.suburb]
+      .filter(Boolean)
+      .join(" / ");
+    const common: DetailRow[] = [
+      ["地域", location],
+      ["住所", data.address],
+    ];
+
+    if (submission.type === "job") {
+      return [
+        ...common,
+        ["採用形態", data.employment_type],
+        ["日本語対応", data.japanese_ok],
+        ["英語レベル", data.english_level],
+        ["ビザ条件", data.visa_conditions],
+        ["時給下限", data.hourly_rate_min],
+        ["時給上限", data.hourly_rate_max],
+        ["週勤務時間", data.weekly_hours],
+        ["勤務開始日", data.start_date],
+        ["住み込み可", data.accommodation_available],
+        ["応募方法", data.application_method],
+      ];
+    }
+
+    return [
+      ...common,
+      ["週家賃", data.rent_weekly],
+      ["ベッドルーム数", data.bedrooms],
+      ["バスルーム数", data.bathrooms],
+      ["駐車場数", data.parking_spaces],
+      ["入居可能日", data.available_from],
+      ["ペット可", data.pets_allowed],
+      ["家具付き", data.furnished],
+      ["光熱費込み", data.utilities_included],
+    ];
   };
 
   if (isCheckingAuth) {
@@ -339,31 +380,15 @@ export default function AdminSubmissionsPage() {
                         詳細条件を確認
                       </summary>
                       <dl className="mt-4 grid gap-3 text-sm md:grid-cols-3">
-                        {[
-                          ["地域", [submission.structured_data.region, submission.structured_data.district, submission.structured_data.area].filter(Boolean).join(" / ")],
-                          ["住所", submission.structured_data.address],
-                          ["採用形態", submission.structured_data.employment_type],
-                          ["日本語対応", submission.structured_data.japanese_ok],
-                          ["英語レベル", submission.structured_data.english_level],
-                          ["ビザ条件", submission.structured_data.visa_conditions],
-                          ["時給下限", submission.structured_data.hourly_rate_min],
-                          ["時給上限", submission.structured_data.hourly_rate_max],
-                          ["週勤務時間", submission.structured_data.weekly_hours],
-                          ["週家賃", submission.structured_data.rent_weekly],
-                          ["入居可能日", submission.structured_data.available_from],
-                          ["光熱費込み", submission.structured_data.utilities_included],
-                        ].map(([label, value]) => (
-                          <div key={label as string} className="rounded-lg bg-white p-3">
-                            <dt className="font-bold text-gray-700">{label as string}</dt>
+                        {getStructuredDetails(submission).map(([label, value]) => (
+                          <div key={label} className="rounded-lg bg-white p-3">
+                            <dt className="font-bold text-gray-700">{label}</dt>
                             <dd className="mt-1 break-words text-gray-900">
                               {formatDetail(value)}
                             </dd>
                           </div>
                         ))}
                       </dl>
-                      <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-xs text-gray-800">
-                        {JSON.stringify(submission.structured_data, null, 2)}
-                      </pre>
                     </details>
                   ) : null}
 

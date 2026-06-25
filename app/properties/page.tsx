@@ -868,12 +868,12 @@ export default function PropertiesPage() {
             )}
           </section>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
             {filteredProperties.map((property) => (
               <article
                 id={`property-${property.id}`}
                 key={property.id}
-                className="flex min-h-full flex-col overflow-hidden rounded-2xl bg-white shadow"
+                className="flex flex-col overflow-hidden rounded-2xl bg-white shadow"
               >
                 {property.image_urls?.length ? (
                   <div className="flex gap-2 overflow-x-auto bg-gray-50 p-2">

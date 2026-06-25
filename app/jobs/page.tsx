@@ -716,12 +716,12 @@ export default function JobsPage() {
             )}
           </section>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
             {filteredJobs.map((job) => (
               <article
                 id={`job-${job.id}`}
                 key={job.id}
-                className="flex min-h-full flex-col overflow-hidden rounded-2xl bg-white shadow"
+                className="flex flex-col overflow-hidden rounded-2xl bg-white shadow"
               >
                 {job.image_url ? (
                   // Supabase Storage URLs are configured at runtime.

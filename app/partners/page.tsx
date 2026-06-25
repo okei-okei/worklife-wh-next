@@ -3,6 +3,7 @@ import AdDisclosureNotice from "@/components/AdDisclosureNotice";
 
 type PartnerCategoryCard = {
   title: string;
+  icon: string;
   description: string;
   href: string;
   buttonLabel: string;
@@ -13,6 +14,7 @@ type PartnerCategoryCard = {
 const partnerCategoryCards: PartnerCategoryCard[] = [
   {
     title: "SIM/eSIM",
+    icon: "📱",
     description:
       "渡航前に準備しやすいeSIMと、NZ現地で使いやすいSIMを比較できます。",
     href: "/partners/sim-esim",
@@ -28,8 +30,8 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   },
   {
     title: "海外保険",
-    description:
-      "ワーホリ・留学・海外生活に備える保険を比較できます。",
+    icon: "🛡️",
+    description: "ワーホリ・留学向け海外保険を比較",
     href: "/partners/insurance",
     buttonLabel: "海外保険を比較する",
     services: [
@@ -49,6 +51,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   },
   {
     title: "銀行口座",
+    icon: "🏦",
     description:
       "NZ到着後の給与受取や生活費管理に使う銀行口座を比較できます。",
     href: "/partners/bank",
@@ -64,6 +67,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   },
   {
     title: "送金",
+    icon: "💸",
     description:
       "日本からNZへの送金や、海外生活中の資金移動サービスを比較できます。",
     href: "/partners/money-transfer",
@@ -79,6 +83,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   },
   {
     title: "電気",
+    icon: "⚡",
     description:
       "フラットや長期滞在で必要になる電気会社を比較できます。",
     href: "/partners/electricity",
@@ -100,6 +105,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   },
   {
     title: "インターネット",
+    icon: "🌐",
     description:
       "フラット生活や長期滞在で使いやすいインターネット回線を比較できます。",
     href: "/partners/internet",
@@ -115,6 +121,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   },
   {
     title: "家具・生活用品",
+    icon: "🛏️",
     description:
       "到着直後に必要な家具・寝具・生活用品の購入先を比較できます。",
     href: "/partners/furniture",
@@ -130,6 +137,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   },
   {
     title: "語学学校",
+    icon: "📚",
     description:
       "英語学習や仕事探し準備に使える語学学校を比較できます。",
     href: "/partners/language-school",
@@ -145,6 +153,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   },
   {
     title: "航空券・移動",
+    icon: "✈️",
     description:
       "日本からNZへの航空券や、NZ国内移動手段を比較できます。",
     href: "/partners/flights-transport",
@@ -207,9 +216,17 @@ export default function PartnersPage() {
             >
               <div className="flex-1 space-y-4">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {category.title}
-                  </h2>
+                  <div className="flex items-center gap-3">
+                    <span
+                      aria-hidden="true"
+                      className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-xl"
+                    >
+                      {category.icon}
+                    </span>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {category.title}
+                    </h2>
+                  </div>
                   <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
                     {category.description}
                   </p>

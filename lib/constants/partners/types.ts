@@ -23,6 +23,9 @@ export type PartnerService = {
   officialUrl: string;
   isAffiliate: boolean;
   affiliateUrl?: string;
+  affiliateStatus?: "official" | "available" | "pending" | "none";
+  affiliateNetwork?: string;
+  affiliateLink?: string;
   lastCheckedAt: string;
   filterTags: string[];
 };

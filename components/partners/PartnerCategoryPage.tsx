@@ -34,7 +34,7 @@ function valueBadgeClass(value: string | boolean | number | null | undefined) {
 }
 
 function getDestinationUrl(service: PartnerService) {
-  return service.affiliateUrl || service.officialUrl;
+  return service.affiliateLink || service.affiliateUrl || service.officialUrl;
 }
 
 export default function PartnerCategoryPage({

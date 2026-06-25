@@ -87,8 +87,9 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
   {
     key: "insurance_compare",
     phase: "渡航前",
-    label: "海外保険を確認する",
-    description: "医療費や事故、盗難に備えて保険の条件を確認します。",
+    label: "海外保険を比較する",
+    description:
+      "ワーホリでは医療費が高額になるケースもあります。渡航前に保険内容を比較しておきましょう。",
     primaryHref: "/partners/insurance",
     primaryLabel: "比較を見る",
     partnerCategory: "insurance",

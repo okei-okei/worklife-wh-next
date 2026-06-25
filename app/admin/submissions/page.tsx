@@ -24,6 +24,7 @@ export default function AdminSubmissionsPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [accessToken, setAccessToken] = useState("");
   const [submissions, setSubmissions] = useState<ListingSubmission[]>([]);
+  const [selectedType, setSelectedType] = useState<"all" | "job" | "property">("all");
   const [isLoading, setIsLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [rejectedReasons, setRejectedReasons] = useState<
@@ -123,6 +124,19 @@ export default function AdminSubmissionsPage() {
     );
   };
 
+  const visibleSubmissions = submissions.filter((submission) =>
+    selectedType === "all" ? true : submission.type === selectedType,
+  );
+  const jobCount = submissions.filter((submission) => submission.type === "job").length;
+  const propertyCount = submissions.filter((submission) => submission.type === "property").length;
+
+  const formatDetail = (value: unknown) => {
+    if (value === true) return "あり";
+    if (value === false) return "なし";
+    if (value === null || value === undefined || value === "") return "-";
+    return String(value);
+  };
+
   if (isCheckingAuth) {
     return (
       <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
@@ -160,9 +174,9 @@ export default function AdminSubmissionsPage() {
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH Admin
             </p>
-            <h1 className="text-4xl font-bold">掲載申請の審査</h1>
+            <h1 className="text-2xl font-bold md:text-4xl">掲載申請の審査</h1>
             <p className="mt-2 text-gray-800">
-              pending の求人・物件掲載申請を承認または却下できます。
+              pending の求人・物件掲載申請を分けて確認し、承認または却下できます。
             </p>
           </div>
 
@@ -185,7 +199,29 @@ export default function AdminSubmissionsPage() {
 
         <section className="rounded-2xl bg-white p-6 shadow">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-2xl font-bold">pending 申請</h2>
+            <div>
+              <h2 className="text-2xl font-bold">pending 申請</h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  ["all", `すべて ${submissions.length}`],
+                  ["job", `求人 ${jobCount}`],
+                  ["property", `物件 ${propertyCount}`],
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setSelectedType(key as "all" | "job" | "property")}
+                    className={`rounded-lg px-4 py-2 text-sm font-bold ${
+                      selectedType === key
+                        ? "bg-blue-600 text-white"
+                        : "border border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <button
               type="button"
               onClick={() => loadSubmissions(accessToken)}
@@ -198,11 +234,11 @@ export default function AdminSubmissionsPage() {
 
           {isLoading ? (
             <p className="text-gray-800">読み込み中...</p>
-          ) : submissions.length === 0 ? (
+          ) : visibleSubmissions.length === 0 ? (
             <p className="text-gray-800">審査待ちの申請はありません。</p>
           ) : (
             <div className="space-y-4">
-              {submissions.map((submission) => (
+              {visibleSubmissions.map((submission) => (
                 <article
                   key={submission.id}
                   className="rounded-xl border border-gray-200 p-5"
@@ -302,6 +338,29 @@ export default function AdminSubmissionsPage() {
                       <summary className="cursor-pointer font-bold text-gray-900">
                         詳細条件を確認
                       </summary>
+                      <dl className="mt-4 grid gap-3 text-sm md:grid-cols-3">
+                        {[
+                          ["地域", [submission.structured_data.region, submission.structured_data.district, submission.structured_data.area].filter(Boolean).join(" / ")],
+                          ["住所", submission.structured_data.address],
+                          ["採用形態", submission.structured_data.employment_type],
+                          ["日本語対応", submission.structured_data.japanese_ok],
+                          ["英語レベル", submission.structured_data.english_level],
+                          ["ビザ条件", submission.structured_data.visa_conditions],
+                          ["時給下限", submission.structured_data.hourly_rate_min],
+                          ["時給上限", submission.structured_data.hourly_rate_max],
+                          ["週勤務時間", submission.structured_data.weekly_hours],
+                          ["週家賃", submission.structured_data.rent_weekly],
+                          ["入居可能日", submission.structured_data.available_from],
+                          ["光熱費込み", submission.structured_data.utilities_included],
+                        ].map(([label, value]) => (
+                          <div key={label as string} className="rounded-lg bg-white p-3">
+                            <dt className="font-bold text-gray-700">{label as string}</dt>
+                            <dd className="mt-1 break-words text-gray-900">
+                              {formatDetail(value)}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
                       <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-xs text-gray-800">
                         {JSON.stringify(submission.structured_data, null, 2)}
                       </pre>

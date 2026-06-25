@@ -23,6 +23,8 @@ type PublicJob = {
   visa_support: boolean | null;
   japanese_ok: boolean | null;
   accommodation_available: boolean | null;
+  english_level?: string | null;
+  visa_conditions?: string | null;
   apply_url: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -86,6 +88,9 @@ export default function JobsPage() {
   const [minHourlyRate, setMinHourlyRate] = useState("");
   const [minWorkHours, setMinWorkHours] = useState("");
   const [employmentType, setEmploymentType] = useState("");
+  const [japaneseSupport, setJapaneseSupport] = useState("");
+  const [englishLevel, setEnglishLevel] = useState("");
+  const [visaCondition, setVisaCondition] = useState("");
   const [accommodationOnly, setAccommodationOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const handledPendingActionRef = useRef(false);
@@ -101,7 +106,7 @@ export default function JobsPage() {
       const extendedResult = await supabase
         .from("public_jobs")
         .select(
-          "id, title, company, city, address, hourly_rate, work_hours, description, visa_support, japanese_ok, accommodation_available, apply_url, latitude, longitude, employment_type, country_code, region, district, suburb, area, hourly_rate_min, hourly_rate_max, weekly_hours, start_date, image_url",
+          "id, title, company, city, address, hourly_rate, work_hours, description, visa_support, japanese_ok, accommodation_available, english_level, visa_conditions, apply_url, latitude, longitude, employment_type, country_code, region, district, suburb, area, hourly_rate_min, hourly_rate_max, weekly_hours, start_date, image_url",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -418,17 +423,42 @@ export default function JobsPage() {
         return false;
       }
 
+      if (japaneseSupport === "yes" && !job.japanese_ok) {
+        return false;
+      }
+
+      if (japaneseSupport === "no" && job.japanese_ok) {
+        return false;
+      }
+
+      if (englishLevel && job.english_level !== englishLevel) {
+        return false;
+      }
+
+      if (visaCondition) {
+        const visaText = [job.visa_conditions, job.visa_support ? "ワーホリビザ可" : ""]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!visaText.includes(visaCondition.toLowerCase())) {
+          return false;
+        }
+      }
+
       return true;
     });
   }, [
     accommodationOnly,
     employmentType,
+    englishLevel,
     filterCoordinates,
     jobs,
+    japaneseSupport,
     locationFilters,
     minHourlyRate,
     minWorkHours,
     searchQuery,
+    visaCondition,
   ]);
 
   const resetFilters = () => {
@@ -438,6 +468,9 @@ export default function JobsPage() {
     setMinHourlyRate("");
     setMinWorkHours("");
     setEmploymentType("");
+    setJapaneseSupport("");
+    setEnglishLevel("");
+    setVisaCondition("");
     setAccommodationOnly(false);
   };
 
@@ -567,7 +600,7 @@ export default function JobsPage() {
             </label>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
               <span className="text-sm font-bold text-gray-900">採用形態</span>
               <select
@@ -582,6 +615,44 @@ export default function JobsPage() {
                 <option value="Seasonal">Seasonal</option>
                 <option value="Fixed-term">Fixed-term</option>
                 <option value="Internship">Internship</option>
+              </select>
+            </label>
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <span className="text-sm font-bold text-gray-900">日本語対応</span>
+              <select
+                value={japaneseSupport}
+                onChange={(event) => setJapaneseSupport(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+              >
+                <option value="">全て</option>
+                <option value="yes">日本語対応あり</option>
+                <option value="no">日本語対応なし</option>
+              </select>
+            </label>
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <span className="text-sm font-bold text-gray-900">英語レベル</span>
+              <select
+                value={englishLevel}
+                onChange={(event) => setEnglishLevel(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+              >
+                <option value="">全て</option>
+                <option value="初級">初級</option>
+                <option value="中級">中級</option>
+                <option value="上級">上級</option>
+              </select>
+            </label>
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <span className="text-sm font-bold text-gray-900">ビザ条件</span>
+              <select
+                value={visaCondition}
+                onChange={(event) => setVisaCondition(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+              >
+                <option value="">全て</option>
+                <option value="ワーホリ">ワーホリビザ可</option>
+                <option value="学生">学生ビザ可</option>
+                <option value="就労">就労可能なビザ</option>
               </select>
             </label>
             <label className="flex min-h-[74px] items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900">
@@ -691,6 +762,16 @@ export default function JobsPage() {
                       日本語OK
                     </span>
                   )}
+                  {job.english_level ? (
+                    <span className="rounded-full bg-cyan-50 px-3 py-1 text-sm font-bold text-cyan-700">
+                      英語{job.english_level}
+                    </span>
+                  ) : null}
+                  {job.visa_conditions ? (
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+                      {job.visa_conditions}
+                    </span>
+                  ) : null}
                   {job.accommodation_available && (
                     <span className="rounded-full bg-purple-50 px-3 py-1 text-sm font-bold text-purple-700">
                       住み込み可能

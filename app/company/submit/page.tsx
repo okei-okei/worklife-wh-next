@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   LegalConsentCheckboxes,
@@ -15,6 +15,39 @@ type CountryCode = "NZ" | "AU" | "CA";
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+const draftStorageKey = "worklife-wh-listing-submission-draft";
+
+type ListingDraft = {
+  type: SubmissionType;
+  countryCode: CountryCode;
+  title: string;
+  companyOrOwner: string;
+  email: string;
+  description: string;
+  url: string;
+  region: string;
+  district: string;
+  area: string;
+  address: string;
+  employmentType: string;
+  hourlyRateMin: string;
+  hourlyRateMax: string;
+  weeklyHours: string;
+  accommodationAvailable: boolean;
+  startDate: string;
+  applicationMethod: string;
+  japaneseOk: boolean;
+  englishLevel: string;
+  visaConditions: string;
+  rentWeekly: string;
+  bedrooms: string;
+  bathrooms: string;
+  parkingSpaces: string;
+  availableFrom: string;
+  petsAllowed: boolean;
+  furnished: boolean;
+  utilitiesIncluded: boolean;
+};
 
 export default function CompanySubmitPage() {
   const [type, setType] = useState<SubmissionType>("job");
@@ -27,6 +60,7 @@ export default function CompanySubmitPage() {
   const [region, setRegion] = useState("");
   const [district, setDistrict] = useState("");
   const [area, setArea] = useState("");
+  const [address, setAddress] = useState("");
   const [employmentType, setEmploymentType] = useState("");
   const [hourlyRateMin, setHourlyRateMin] = useState("");
   const [hourlyRateMax, setHourlyRateMax] = useState("");
@@ -34,6 +68,9 @@ export default function CompanySubmitPage() {
   const [accommodationAvailable, setAccommodationAvailable] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [applicationMethod, setApplicationMethod] = useState("");
+  const [japaneseOk, setJapaneseOk] = useState(false);
+  const [englishLevel, setEnglishLevel] = useState("");
+  const [visaConditions, setVisaConditions] = useState("");
   const [rentWeekly, setRentWeekly] = useState("");
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
@@ -53,6 +90,96 @@ export default function CompanySubmitPage() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const getDraft = (): ListingDraft => ({
+    type,
+    countryCode,
+    title,
+    companyOrOwner,
+    email,
+    description,
+    url,
+    region,
+    district,
+    area,
+    address,
+    employmentType,
+    hourlyRateMin,
+    hourlyRateMax,
+    weeklyHours,
+    accommodationAvailable,
+    startDate,
+    applicationMethod,
+    japaneseOk,
+    englishLevel,
+    visaConditions,
+    rentWeekly,
+    bedrooms,
+    bathrooms,
+    parkingSpaces,
+    availableFrom,
+    petsAllowed,
+    furnished,
+    utilitiesIncluded,
+  });
+
+  const applyDraft = (draft: Partial<ListingDraft>) => {
+    if (draft.type === "job" || draft.type === "property") setType(draft.type);
+    if (draft.countryCode === "NZ" || draft.countryCode === "AU" || draft.countryCode === "CA") setCountryCode(draft.countryCode);
+    setTitle(draft.title || "");
+    setCompanyOrOwner(draft.companyOrOwner || "");
+    setEmail(draft.email || "");
+    setDescription(draft.description || "");
+    setUrl(draft.url || "");
+    setRegion(draft.region || "");
+    setDistrict(draft.district || "");
+    setArea(draft.area || "");
+    setAddress(draft.address || "");
+    setEmploymentType(draft.employmentType || "");
+    setHourlyRateMin(draft.hourlyRateMin || "");
+    setHourlyRateMax(draft.hourlyRateMax || "");
+    setWeeklyHours(draft.weeklyHours || "");
+    setAccommodationAvailable(Boolean(draft.accommodationAvailable));
+    setStartDate(draft.startDate || "");
+    setApplicationMethod(draft.applicationMethod || "");
+    setJapaneseOk(Boolean(draft.japaneseOk));
+    setEnglishLevel(draft.englishLevel || "");
+    setVisaConditions(draft.visaConditions || "");
+    setRentWeekly(draft.rentWeekly || "");
+    setBedrooms(draft.bedrooms || "");
+    setBathrooms(draft.bathrooms || "");
+    setParkingSpaces(draft.parkingSpaces || "");
+    setAvailableFrom(draft.availableFrom || "");
+    setPetsAllowed(Boolean(draft.petsAllowed));
+    setFurnished(Boolean(draft.furnished));
+    setUtilitiesIncluded(Boolean(draft.utilitiesIncluded));
+  };
+
+  useEffect(() => {
+    const savedDraft = window.localStorage.getItem(draftStorageKey);
+    if (!savedDraft) return;
+
+    window.setTimeout(() => {
+      try {
+        applyDraft(JSON.parse(savedDraft) as Partial<ListingDraft>);
+        setMessage("一時保存した入力内容を復元しました。");
+      } catch {
+        window.localStorage.removeItem(draftStorageKey);
+      }
+    }, 0);
+  }, []);
+
+  const saveDraft = () => {
+    window.localStorage.setItem(draftStorageKey, JSON.stringify(getDraft()));
+    setMessage("入力内容をこのブラウザに一時保存しました。");
+    setErrorMessage("");
+  };
+
+  const clearDraft = () => {
+    window.localStorage.removeItem(draftStorageKey);
+    setMessage("一時保存を削除しました。");
+    setErrorMessage("");
+  };
+
   const resetForm = () => {
     setTitle("");
     setCompanyOrOwner("");
@@ -62,6 +189,7 @@ export default function CompanySubmitPage() {
     setRegion("");
     setDistrict("");
     setArea("");
+    setAddress("");
     setEmploymentType("");
     setHourlyRateMin("");
     setHourlyRateMax("");
@@ -69,6 +197,9 @@ export default function CompanySubmitPage() {
     setAccommodationAvailable(false);
     setStartDate("");
     setApplicationMethod("");
+    setJapaneseOk(false);
+    setEnglishLevel("");
+    setVisaConditions("");
     setRentWeekly("");
     setBedrooms("");
     setBathrooms("");
@@ -170,7 +301,15 @@ export default function CompanySubmitPage() {
         district: district || null,
         suburb: area || null,
         area: area || null,
+        address: address || null,
         employment_type: type === "job" ? employmentType || null : null,
+        japanese_ok: type === "job" ? japaneseOk : null,
+        english_level: type === "job" ? englishLevel || null : null,
+        visa_conditions: type === "job" ? visaConditions || null : null,
+        visa_support:
+          type === "job"
+            ? /ワーホリ|working holiday|work visa|就労/i.test(visaConditions)
+            : null,
         hourly_rate_min:
           type === "job" && hourlyRateMin ? Number(hourlyRateMin) : null,
         hourly_rate_max:
@@ -217,6 +356,7 @@ export default function CompanySubmitPage() {
           district: district || null,
           suburb: area || null,
           area: area || null,
+          address: address || null,
           structured_data: structuredData,
           consent_versions: {
             posting_terms:
@@ -241,6 +381,7 @@ export default function CompanySubmitPage() {
       }
 
       setMessage("掲載申請を受け付けました。確認後、承認された内容を公開します。");
+      window.localStorage.removeItem(draftStorageKey);
       resetForm();
     } catch (error) {
       setErrorMessage(
@@ -275,6 +416,30 @@ export default function CompanySubmitPage() {
             TOPへ戻る
           </Link>
         </header>
+
+        <section className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium leading-6 text-blue-900">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <p>
+              入力途中の内容は、このブラウザに一時保存できます。送信前の下書きとして利用してください。
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={saveDraft}
+                className="w-full rounded-lg bg-blue-600 px-4 py-3 text-center font-bold text-white hover:bg-blue-700 sm:w-auto"
+              >
+                入力内容を一時保存
+              </button>
+              <button
+                type="button"
+                onClick={clearDraft}
+                className="w-full rounded-lg border border-blue-200 bg-white px-4 py-3 text-center font-bold text-blue-800 hover:bg-blue-50 sm:w-auto"
+              >
+                一時保存を削除
+              </button>
+            </div>
+          </div>
+        </section>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <section className="rounded-2xl bg-white p-4 shadow md:p-6">
@@ -354,6 +519,22 @@ export default function CompanySubmitPage() {
                   <option value="AU">Australia</option>
                   <option value="CA">Canada</option>
                 </select>
+              </label>
+              <label className="md:col-span-2">
+                <span className="text-sm font-bold">住所</span>
+                <input
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  className={inputClass}
+                  placeholder={
+                    type === "job"
+                      ? "例: Queen Street, Auckland"
+                      : "例: 123 Queen Street, Auckland"
+                  }
+                />
+                <span className="mt-1 block text-xs font-medium text-gray-600">
+                  承認後、座標が登録されている場合はライフプランナーの地図ビューで利用できます。
+                </span>
               </label>
             </div>
 
@@ -469,6 +650,28 @@ export default function CompanySubmitPage() {
                   />
                   住み込み可能
                 </label>
+                <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold">
+                  <input
+                    type="checkbox"
+                    checked={japaneseOk}
+                    onChange={(event) => setJapaneseOk(event.target.checked)}
+                    className="h-5 w-5"
+                  />
+                  日本語対応あり
+                </label>
+                <label>
+                  <span className="text-sm font-bold">必要な英語レベル</span>
+                  <select
+                    value={englishLevel}
+                    onChange={(event) => setEnglishLevel(event.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">未設定</option>
+                    <option value="初級">初級</option>
+                    <option value="中級">中級</option>
+                    <option value="上級">上級</option>
+                  </select>
+                </label>
               </div>
               <label className="mt-4 block">
                 <span className="text-sm font-bold">応募方法</span>
@@ -476,6 +679,15 @@ export default function CompanySubmitPage() {
                   value={applicationMethod}
                   onChange={(event) => setApplicationMethod(event.target.value)}
                   className={inputClass}
+                />
+              </label>
+              <label className="mt-4 block">
+                <span className="text-sm font-bold">ビザ条件</span>
+                <input
+                  value={visaConditions}
+                  onChange={(event) => setVisaConditions(event.target.value)}
+                  className={inputClass}
+                  placeholder="例: ワーホリビザ可、学生ビザ可、就労可能なビザ必須"
                 />
               </label>
             </section>

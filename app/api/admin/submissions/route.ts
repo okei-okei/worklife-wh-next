@@ -116,7 +116,7 @@ async function verifyAdmin(request: NextRequest) {
     return { error: createErrorResponse("Forbidden.", 403) };
   }
 
-  return { error: null, user };
+  return { error: null, user, token };
 }
 
 async function approveSubmission(
@@ -143,6 +143,10 @@ async function approveSubmission(
         area: details.area,
         address: details.address,
         employment_type: details.employment_type,
+        japanese_ok: details.japanese_ok,
+        english_level: details.english_level,
+        visa_conditions: details.visa_conditions,
+        visa_support: details.visa_support,
         hourly_rate: details.hourly_rate_min,
         hourly_rate_min: details.hourly_rate_min,
         hourly_rate_max: details.hourly_rate_max,
@@ -236,6 +240,36 @@ export async function GET(request: NextRequest) {
             .eq("status", "pending")
             .order("created_at", { ascending: false })
         : extendedResult;
+
+    if (
+      result.error &&
+      result.error.message?.toLowerCase().includes("permission denied") &&
+      supabaseUrl &&
+      supabaseAnonKey &&
+      adminCheck.token
+    ) {
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: {
+            Authorization: `Bearer ${adminCheck.token}`,
+          },
+        },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      });
+      const fallback = await userClient
+        .from("listing_submissions")
+        .select(
+          "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, image_urls",
+        )
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+      if (fallback.error) throw fallback.error;
+      return NextResponse.json({ submissions: fallback.data || [] });
+    }
 
     if (result.error) throw result.error;
 

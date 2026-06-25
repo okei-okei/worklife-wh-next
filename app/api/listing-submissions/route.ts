@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type SubmissionType = "job" | "property";
 
@@ -39,27 +40,40 @@ function isMissingColumnError(error: { code?: string; message?: string }) {
   );
 }
 
-function createInsertClient(token: string | null) {
+function createInsertClients(token: string | null) {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Supabase configuration is missing.");
   }
 
+  const clients: Array<{
+    label: string;
+    client: SupabaseClient;
+  }> = [];
+
   if (supabaseServiceRoleKey) {
-    return createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
+    clients.push({
+      label: "service_role",
+      client: createClient(supabaseUrl, supabaseServiceRoleKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      }),
     });
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: token
-      ? {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      : undefined,
-    auth: { persistSession: false, autoRefreshToken: false },
+  clients.push({
+    label: token ? "authenticated_anon" : "anon",
+    client: createClient(supabaseUrl, supabaseAnonKey, {
+      global: token
+        ? {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        : undefined,
+      auth: { persistSession: false, autoRefreshToken: false },
+    }),
   });
+
+  return clients;
 }
 
 async function getUserId(token: string | null) {
@@ -89,7 +103,7 @@ export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get("authorization")?.replace("Bearer ", "") || null;
     const userId = await getUserId(token);
-    const client = createInsertClient(token);
+    const clients = createInsertClients(token);
     const extendedPayload = {
       user_id: userId,
       submitted_by: userId,
@@ -111,33 +125,50 @@ export async function POST(request: NextRequest) {
       consent_versions: body.consent_versions || {},
     };
 
-    const extendedResult = await client
-      .from("listing_submissions")
-      .insert(extendedPayload)
-      .select("id")
-      .single();
+    const minimalPayload = {
+      user_id: userId,
+      type: body.type,
+      title: body.title.trim(),
+      company_or_owner: body.company_or_owner?.trim() || null,
+      email: body.email.trim(),
+      description: body.description?.trim() || null,
+      url: body.url?.trim() || null,
+      status: "pending",
+    };
 
-    const result =
-      extendedResult.error && isMissingColumnError(extendedResult.error)
-        ? await client
-            .from("listing_submissions")
-            .insert({
-              user_id: userId,
-              type: body.type,
-              title: body.title.trim(),
-              company_or_owner: body.company_or_owner?.trim() || null,
-              email: body.email.trim(),
-              description: body.description?.trim() || null,
-              url: body.url?.trim() || null,
-              status: "pending",
-            })
-            .select("id")
-            .single()
-        : extendedResult;
+    const errors: string[] = [];
 
-    if (result.error) throw result.error;
+    for (const { label, client } of clients) {
+      const extendedResult = await client
+        .from("listing_submissions")
+        .insert(extendedPayload);
 
-    return NextResponse.json({ id: result.data.id });
+      if (!extendedResult.error) {
+        return NextResponse.json({ ok: true, mode: `${label}:extended` });
+      }
+
+      errors.push(`${label}: ${extendedResult.error.message}`);
+
+      const shouldTryMinimal =
+        isMissingColumnError(extendedResult.error) ||
+        extendedResult.error.message.toLowerCase().includes("permission denied") ||
+        extendedResult.error.message.toLowerCase().includes("row-level security") ||
+        extendedResult.error.message.toLowerCase().includes("api key");
+
+      if (!shouldTryMinimal) continue;
+
+      const minimalResult = await client
+        .from("listing_submissions")
+        .insert(minimalPayload);
+
+      if (!minimalResult.error) {
+        return NextResponse.json({ ok: true, mode: `${label}:minimal` });
+      }
+
+      errors.push(`${label} minimal: ${minimalResult.error.message}`);
+    }
+
+    throw new Error(errors.join(" / "));
   } catch (error) {
     console.error(error);
     const message = error instanceof Error ? error.message : "掲載申請を送信できませんでした。";

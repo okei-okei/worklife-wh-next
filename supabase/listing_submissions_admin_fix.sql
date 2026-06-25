@@ -35,6 +35,26 @@ grant usage on schema public to anon, authenticated;
 grant select, insert, update on public.listing_submissions to authenticated;
 grant insert on public.listing_submissions to anon;
 
+drop policy if exists "Anyone can submit listing applications" on public.listing_submissions;
+create policy "Anyone can submit listing applications"
+on public.listing_submissions
+for insert
+to anon, authenticated
+with check (
+  status = 'pending'
+  and (
+    user_id is null
+    or auth.uid() = user_id
+  )
+);
+
+drop policy if exists "Users can view own listing submissions" on public.listing_submissions;
+create policy "Users can view own listing submissions"
+on public.listing_submissions
+for select
+to authenticated
+using (auth.uid() = user_id);
+
 drop policy if exists "Admins can review all listing submissions" on public.listing_submissions;
 create policy "Admins can review all listing submissions"
 on public.listing_submissions

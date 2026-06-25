@@ -266,6 +266,25 @@ export default function CompanySubmitPage() {
     return imageUrls;
   };
 
+  const submitMinimalDirectly = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const { error } = await supabase.from("listing_submissions").insert({
+      user_id: user?.id ?? null,
+      type,
+      title: title.trim(),
+      company_or_owner: companyOrOwner.trim() || null,
+      email: email.trim(),
+      description: description.trim() || null,
+      url: url.trim() || null,
+      status: "pending",
+    });
+
+    if (error) throw error;
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage("");
@@ -385,7 +404,17 @@ export default function CompanySubmitPage() {
         const data = (await response.json().catch(() => null)) as
           | { error?: string }
           | null;
-        throw new Error(data?.error || "掲載申請を送信できませんでした。");
+        try {
+          await submitMinimalDirectly();
+        } catch (fallbackError) {
+          const fallbackMessage =
+            fallbackError instanceof Error
+              ? fallbackError.message
+              : "直接送信にも失敗しました。";
+          throw new Error(
+            `${data?.error || "掲載申請を送信できませんでした。"} / fallback: ${fallbackMessage}`,
+          );
+        }
       }
 
       setMessage("掲載申請を受け付けました。確認後、承認された内容を公開します。");

@@ -38,6 +38,14 @@ export async function getAdminContext(request: NextRequest) {
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
   const { data: profile } = await serviceClient
     .from("profiles")
     .select("role")
@@ -49,6 +57,5 @@ export async function getAdminContext(request: NextRequest) {
     return { ok: false as const, status: 403, error: "権限がありません。" };
   }
 
-  return { ok: true as const, user, serviceClient };
+  return { ok: true as const, user, serviceClient, userClient, token };
 }
-

@@ -107,6 +107,7 @@ export default function AdminSubmissionsPage() {
       body: JSON.stringify({
         id: submission.id,
         action,
+        submission,
         rejectedReason: rejectedReasons[submission.id] || "",
       }),
     });

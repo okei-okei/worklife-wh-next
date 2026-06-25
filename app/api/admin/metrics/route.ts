@@ -15,7 +15,13 @@ export async function GET(request: NextRequest) {
   try {
     const users = [];
     for (let page = 1; ; page++) { const { data, error } = await client.auth.admin.listUsers({ page, perPage: 1000 }); if (error) throw error; users.push(...data.users); if (data.users.length < 1000) break; }
-    const rows = async (table: string) => { const result = await client.from(table).select("*"); return (result.error ? [] : result.data || []) as Row[]; };
+    const rows = async (table: string) => {
+      const result = await client.from(table).select("*");
+      if (!result.error) return (result.data || []) as Row[];
+
+      const fallback = await admin.userClient.from(table).select("*");
+      return (fallback.error ? [] : fallback.data || []) as Row[];
+    };
     const [eventsRaw, jobs, properties, savedJobs, savedProperties, checklist, submissions, articles, leads, affiliates, pageViews, reports, contacts, privacy] = await Promise.all([
       rows("admin_metrics_events"), rows("public_jobs"), rows("public_properties"), rows("saved_jobs"), rows("saved_properties"), rows("user_checklist_items"), rows("listing_submissions"), rows("articles"), rows("lead_clicks"), rows("affiliate_clicks"), rows("page_views"), rows("content_reports"), rows("contact_requests"), rows("privacy_requests"),
     ]);

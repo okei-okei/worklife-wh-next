@@ -432,7 +432,12 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = (await request.json().catch(() => null)) as
-    | { id?: string; action?: SubmissionAction; rejectedReason?: string }
+    | {
+        id?: string;
+        action?: SubmissionAction;
+        rejectedReason?: string;
+        submission?: ListingSubmission;
+      }
     | null;
 
   if (!body?.id || !body.action) {
@@ -464,8 +469,14 @@ export async function PATCH(request: NextRequest) {
             .single<ListingSubmission>()
         : extendedResult;
 
-    if (result.error) throw result.error;
-    const data = result.data;
+    if (result.error && !body.submission) throw result.error;
+    const data = (result.error ? body.submission : result.data) as
+      | ListingSubmission
+      | undefined;
+
+    if (!data || data.id !== body.id) {
+      throw result.error || new Error("Submission data could not be resolved.");
+    }
 
     if (data.status !== "pending") {
       return createErrorResponse("Submission is not pending.", 409);

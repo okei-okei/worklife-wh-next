@@ -868,7 +868,7 @@ export default function PropertiesPage() {
             )}
           </section>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {filteredProperties.map((property) => (
               <article
                 id={`property-${property.id}`}
@@ -880,23 +880,27 @@ export default function PropertiesPage() {
                     {property.image_urls.map((imageUrl, index) => (
                       <div
                         key={`${property.id}-${imageUrl}`}
-                        className="relative h-28 w-44 flex-none overflow-hidden rounded-xl bg-gray-100 sm:h-32 sm:w-52 md:h-36 md:w-56"
+                        className={`relative flex-none overflow-hidden rounded-xl bg-white ring-1 ring-gray-200 ${
+                          expandedPropertyIds.includes(property.id)
+                            ? "h-40 w-64 sm:h-44 sm:w-72 md:h-48 md:w-80"
+                            : "h-20 w-32 sm:h-24 sm:w-40 md:h-28 md:w-44"
+                        }`}
                       >
                         {/* Supabase Storage URLs are configured at runtime. */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={imageUrl}
                           alt={`${property.title}の画像${index + 1}`}
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-contain"
                         />
                       </div>
                     ))}
                   </div>
                 ) : null}
-                <div className="flex flex-1 flex-col p-4 md:p-5">
+                <div className="flex flex-1 flex-col p-3 md:p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <h2 className="break-words text-xl font-bold text-gray-900 md:text-2xl">
+                    <h2 className="break-words text-lg font-bold text-gray-900 md:text-xl">
                       {property.title}
                     </h2>
                     <p className="mt-1 font-medium text-gray-800">
@@ -905,12 +909,12 @@ export default function PropertiesPage() {
                     </p>
                   </div>
 
-                  <div className="w-fit rounded-full bg-green-50 px-4 py-2 text-sm font-bold text-green-700">
+                  <div className="w-fit rounded-full bg-green-50 px-3 py-1.5 text-sm font-bold text-green-700">
                     {formatRent(property.rent_weekly)}
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                   <PropertyFact
                     label="ベッド"
                     value={
@@ -948,7 +952,7 @@ export default function PropertiesPage() {
                   />
                 </div>
 
-                <div className="mt-4 grid gap-2 text-sm font-medium text-gray-800">
+                <div className="mt-3 grid gap-1.5 text-sm font-medium text-gray-800">
                   {property.available_from ? (
                     <p>入居可能日: {property.available_from}</p>
                   ) : null}

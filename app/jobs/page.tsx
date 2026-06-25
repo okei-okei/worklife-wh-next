@@ -716,7 +716,7 @@ export default function JobsPage() {
             )}
           </section>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {filteredJobs.map((job) => (
               <article
                 id={`job-${job.id}`}
@@ -729,13 +729,17 @@ export default function JobsPage() {
                   <img
                     src={job.image_url}
                     alt=""
-                    className="h-28 w-full object-cover sm:h-32 md:h-36"
+                    className={`w-full bg-gray-50 object-contain ${
+                      expandedJobIds.includes(job.id)
+                        ? "h-40 sm:h-44 md:h-48"
+                        : "h-20 sm:h-24 md:h-28"
+                    }`}
                   />
                 ) : null}
-                <div className="flex flex-1 flex-col p-4 md:p-5">
+                <div className="flex flex-1 flex-col p-3 md:p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <h2 className="break-words text-xl font-bold text-gray-900 md:text-2xl">
+                    <h2 className="break-words text-lg font-bold text-gray-900 md:text-xl">
                       {job.title}
                     </h2>
                     <p className="mt-1 font-medium text-gray-800">
@@ -746,46 +750,46 @@ export default function JobsPage() {
                     </p>
                   </div>
 
-                  <div className="w-fit rounded-full bg-green-50 px-4 py-2 text-sm font-bold text-green-700">
+                  <div className="w-fit rounded-full bg-green-50 px-3 py-1.5 text-sm font-bold text-green-700">
                     {job.hourly_rate_max
                       ? `$${job.hourly_rate_min ?? job.hourly_rate ?? 0} - $${job.hourly_rate_max}/時`
                       : formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate)}
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   {job.visa_support && (
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
                       ワーホリ歓迎
                     </span>
                   )}
                   {job.japanese_ok && (
-                    <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-bold text-amber-700">
+                    <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
                       日本語OK
                     </span>
                   )}
                   {job.english_level ? (
-                    <span className="rounded-full bg-cyan-50 px-3 py-1 text-sm font-bold text-cyan-700">
+                    <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-700">
                       英語{job.english_level}
                     </span>
                   ) : null}
                   {job.visa_conditions ? (
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
                       {job.visa_conditions}
                     </span>
                   ) : null}
                   {job.accommodation_available && (
-                    <span className="rounded-full bg-purple-50 px-3 py-1 text-sm font-bold text-purple-700">
+                    <span className="rounded-full bg-purple-50 px-2.5 py-1 text-xs font-bold text-purple-700">
                       住み込み可能
                     </span>
                   )}
                   {(job.weekly_hours ?? job.work_hours) != null && (
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700">
                       週{job.weekly_hours ?? job.work_hours}時間
                     </span>
                   )}
                   {job.employment_type ? (
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700">
                       {job.employment_type}
                     </span>
                   ) : null}

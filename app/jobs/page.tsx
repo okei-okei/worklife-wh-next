@@ -650,9 +650,9 @@ export default function JobsPage() {
                 className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
               >
                 <option value="">全て</option>
-                <option value="ワーホリ">ワーホリビザ可</option>
-                <option value="学生">学生ビザ可</option>
-                <option value="就労">就労可能なビザ</option>
+                <option value="ワーホリビザ可">ワーホリビザ可</option>
+                <option value="学生ビザ可">学生ビザ可</option>
+                <option value="就労可能なビザ必須">就労可能なビザ必須</option>
               </select>
             </label>
             <label className="flex min-h-[74px] items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900">

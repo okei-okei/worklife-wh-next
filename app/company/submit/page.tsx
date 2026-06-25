@@ -292,8 +292,8 @@ export default function CompanySubmitPage() {
 
     try {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
 
       const structuredData = {
         country_code: countryCode,
@@ -339,18 +339,31 @@ export default function CompanySubmitPage() {
           type === "property" ? utilitiesIncluded : null,
       };
 
-      const { data: submission, error } = await supabase
-        .from("listing_submissions")
-        .insert({
-          user_id: user?.id ?? null,
-          submitted_by: user?.id ?? null,
+      let imageUrls: string[] = [];
+      if (files.length) {
+        try {
+          imageUrls = await uploadImages(`submission-${Date.now()}`);
+        } catch (uploadError) {
+          console.error(uploadError);
+          imageUrls = [];
+        }
+      }
+
+      const response = await fetch("/api/listing-submissions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {}),
+        },
+        body: JSON.stringify({
           type,
           title: title.trim(),
           company_or_owner: companyOrOwner.trim() || null,
           email: email.trim(),
           description: description.trim() || null,
           url: url.trim() || null,
-          status: "pending",
           country_code: countryCode,
           region: region || null,
           district: district || null,
@@ -358,26 +371,21 @@ export default function CompanySubmitPage() {
           area: area || null,
           address: address || null,
           structured_data: structuredData,
+          image_urls: imageUrls,
           consent_versions: {
             posting_terms:
               type === "job" ? "job_posting" : "property_posting",
             business_terms: "business_terms",
             version: LEGAL_VERSION,
           },
-        })
-        .select("id")
-        .single();
+        }),
+      });
 
-      if (error) throw error;
-
-      if (files.length) {
-        const imageUrls = await uploadImages(submission.id);
-        const { error: imageUpdateError } = await supabase
-          .from("listing_submissions")
-          .update({ image_urls: imageUrls })
-          .eq("id", submission.id);
-
-        if (imageUpdateError) throw imageUpdateError;
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(data?.error || "掲載申請を送信できませんでした。");
       }
 
       setMessage("掲載申請を受け付けました。確認後、承認された内容を公開します。");
@@ -683,12 +691,16 @@ export default function CompanySubmitPage() {
               </label>
               <label className="mt-4 block">
                 <span className="text-sm font-bold">ビザ条件</span>
-                <input
+                <select
                   value={visaConditions}
                   onChange={(event) => setVisaConditions(event.target.value)}
                   className={inputClass}
-                  placeholder="例: ワーホリビザ可、学生ビザ可、就労可能なビザ必須"
-                />
+                >
+                  <option value="">未設定</option>
+                  <option value="ワーホリビザ可">ワーホリビザ可</option>
+                  <option value="学生ビザ可">学生ビザ可</option>
+                  <option value="就労可能なビザ必須">就労可能なビザ必須</option>
+                </select>
               </label>
             </section>
           ) : (

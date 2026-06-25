@@ -127,42 +127,74 @@ async function approveSubmission(
   const details = submission.structured_data || {};
 
   if (submission.type === "job") {
-    const { error } = await serviceClient.from("public_jobs").upsert(
-      {
-        source_submission_id: submission.id,
-        title: submission.title,
-        company: submission.company_or_owner,
-        contact_email: submission.email,
-        description: submission.description,
-        apply_url: submission.url,
-        country_code: details.country_code,
-        region: details.region,
-        city: details.district,
-        district: details.district,
-        suburb: details.suburb,
-        area: details.area,
-        address: details.address,
-        employment_type: details.employment_type,
-        japanese_ok: details.japanese_ok,
-        english_level: details.english_level,
-        visa_conditions: details.visa_conditions,
-        visa_support: details.visa_support,
-        hourly_rate: details.hourly_rate_min,
-        hourly_rate_min: details.hourly_rate_min,
-        hourly_rate_max: details.hourly_rate_max,
-        work_hours: details.weekly_hours,
-        weekly_hours: details.weekly_hours,
-        accommodation_available: details.accommodation_available,
-        start_date: details.start_date,
-        image_url: submission.image_urls?.[0] || null,
-        is_active: true,
-      },
-      {
-        onConflict: "source_submission_id",
-      },
-    );
+    const extendedPayload = {
+      source_submission_id: submission.id,
+      title: submission.title,
+      company: submission.company_or_owner,
+      contact_email: submission.email,
+      description: submission.description,
+      apply_url: submission.url,
+      country_code: details.country_code,
+      region: details.region,
+      city: details.district,
+      district: details.district,
+      suburb: details.suburb,
+      area: details.area,
+      address: details.address,
+      employment_type: details.employment_type,
+      japanese_ok: details.japanese_ok,
+      english_level: details.english_level,
+      visa_conditions: details.visa_conditions,
+      visa_support: details.visa_support,
+      hourly_rate: details.hourly_rate_min,
+      hourly_rate_min: details.hourly_rate_min,
+      hourly_rate_max: details.hourly_rate_max,
+      work_hours: details.weekly_hours,
+      weekly_hours: details.weekly_hours,
+      accommodation_available: details.accommodation_available,
+      start_date: details.start_date,
+      image_url: submission.image_urls?.[0] || null,
+      is_active: true,
+    };
+    const extended = await serviceClient
+      .from("public_jobs")
+      .upsert(extendedPayload, { onConflict: "source_submission_id" });
 
-    if (error) throw error;
+    const result =
+      extended.error && isMissingColumnError(extended.error)
+        ? await serviceClient.from("public_jobs").upsert(
+            {
+              source_submission_id: submission.id,
+              title: submission.title,
+              company: submission.company_or_owner,
+              contact_email: submission.email,
+              description: submission.description,
+              apply_url: submission.url,
+              country_code: details.country_code,
+              region: details.region,
+              city: details.district,
+              district: details.district,
+              suburb: details.suburb,
+              area: details.area,
+              address: details.address,
+              employment_type: details.employment_type,
+              japanese_ok: details.japanese_ok,
+              visa_support: details.visa_support,
+              hourly_rate: details.hourly_rate_min,
+              hourly_rate_min: details.hourly_rate_min,
+              hourly_rate_max: details.hourly_rate_max,
+              work_hours: details.weekly_hours,
+              weekly_hours: details.weekly_hours,
+              accommodation_available: details.accommodation_available,
+              start_date: details.start_date,
+              image_url: submission.image_urls?.[0] || null,
+              is_active: true,
+            },
+            { onConflict: "source_submission_id" },
+          )
+        : extended;
+
+    if (result.error) throw result.error;
   }
 
   if (submission.type === "property") {

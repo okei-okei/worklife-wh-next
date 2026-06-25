@@ -8,6 +8,7 @@ export const ARTICLE_CATEGORIES = [
   "海外保険",
   "保険",
   "送金",
+  "海外送金",
   "仕事探し",
   "家探し",
   "物件探し",

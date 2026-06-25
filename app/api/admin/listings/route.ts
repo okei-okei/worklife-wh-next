@@ -99,10 +99,7 @@ async function updateListing(
     if (!result.error) return;
     errors.push(`${label}: ${result.error.message}`);
 
-    if (
-      isMissingColumnError(result.error) ||
-      result.error.message.toLowerCase().includes("permission denied")
-    ) {
+    if (isMissingColumnError(result.error)) {
       const fallback = await client
         .from(table)
         .update(fallbackPayload)

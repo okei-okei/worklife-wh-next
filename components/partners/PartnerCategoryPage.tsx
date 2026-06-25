@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { trackMetric } from "@/lib/analytics";
 import type {
@@ -18,6 +19,7 @@ type Props = {
   filters: PartnerFilter[];
   comparisonFields: PartnerComparisonField[];
   recommendations: PartnerRecommendation[];
+  children?: ReactNode;
 };
 
 function formatValue(value: string | boolean | number | null | undefined) {
@@ -45,6 +47,7 @@ export default function PartnerCategoryPage({
   filters,
   comparisonFields,
   recommendations,
+  children,
 }: Props) {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
@@ -418,6 +421,8 @@ export default function PartnerCategoryPage({
             </table>
           </div>
         </section> : null}
+
+        {children}
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-700 md:p-5">
           WorkLife WHでは、契約前に条件を比較・確認しやすい形で情報を整理しています。掲載サービスには広告・紹介リンクが含まれる場合があります。掲載内容は料金、利用条件、対応エリア、ワーホリ・海外生活との相性などをもとに整理しています。実際に契約・申込みを行う前には、必ず各サービスの公式サイトで最新情報をご確認ください。

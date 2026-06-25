@@ -66,19 +66,18 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
     ],
   },
   {
-    title: "送金",
+    title: "海外送金",
     icon: "💸",
-    description:
-      "日本からNZへの送金や、海外生活中の資金移動サービスを比較できます。",
+    description: "海外送金サービスを比較",
     href: "/partners/money-transfer",
-    buttonLabel: "送金サービスを比較する",
-    services: ["Wise", "Remitly", "OFX", "Western Union", "Xe"],
+    buttonLabel: "海外送金を比較する",
+    services: ["Wise", "OFX", "Remitly", "Western Union", "XE"],
     comparisonItems: [
       "手数料",
       "為替レート",
       "着金速度",
-      "少額送金",
-      "高額送金",
+      "日本語対応",
+      "アプリ対応",
     ],
   },
   {

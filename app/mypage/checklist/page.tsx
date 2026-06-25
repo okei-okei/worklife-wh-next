@@ -108,8 +108,8 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
   {
     key: "money_transfer_compare",
     phase: "渡航前",
-    label: "海外送金手段を確認する",
-    description: "日本からNZへの送金や、生活資金の移動方法を確認します。",
+    label: "海外送金方法を比較する",
+    description: "生活費や初期費用の送金方法を事前に比較しておきましょう。",
     primaryHref: "/partners/money-transfer",
     primaryLabel: "比較を見る",
     partnerCategory: "money-transfer",

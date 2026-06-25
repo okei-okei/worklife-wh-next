@@ -14,6 +14,16 @@ function formatDate(value: string | null | undefined) {
   return new Date(value).toLocaleDateString("ja-JP");
 }
 
+function getPartnerLinkLabel(article: Article, partnerUrl: string) {
+  if (partnerUrl.includes("/partners/insurance") || article.category === "海外保険") {
+    return "海外保険比較を見る";
+  }
+  if (partnerUrl.includes("/partners/sim-esim") || article.category === "SIM/eSIM") {
+    return "SIM/eSIM比較を見る";
+  }
+  return "比較ページを見る";
+}
+
 async function getArticle(slug: string) {
   const staticArticle = getStaticArticleBySlug(slug);
   if (staticArticle) return staticArticle;
@@ -85,6 +95,7 @@ export default async function ArticlePage({ params }: Props) {
   const blocks = article.content.split(/\n{2,}/).filter(Boolean);
   const relatedPartnerUrl = article.related_partner_url || "/partners";
   const relatedChecklistUrl = article.related_checklist_url || "/mypage/checklist";
+  const partnerLinkLabel = getPartnerLinkLabel(article, relatedPartnerUrl);
 
   return (
     <main className="min-h-screen bg-gray-100 px-4 py-8 text-gray-900 md:px-6 md:py-10">
@@ -131,7 +142,7 @@ export default async function ArticlePage({ params }: Props) {
                 href={relatedPartnerUrl}
                 className="rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800"
               >
-                SIM/eSIM比較を見る
+                {partnerLinkLabel}
               </Link>
               <Link
                 href={relatedChecklistUrl}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/server/adminAuth";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type ListingType = "job" | "property";
 
@@ -41,58 +42,130 @@ function isMissingColumnError(error: { code?: string; message?: string }) {
   );
 }
 
+function adminDbClients(admin: Extract<Awaited<ReturnType<typeof getAdminContext>>, { ok: true }>) {
+  return [
+    { label: "service_role", client: admin.serviceClient },
+    { label: "admin_jwt", client: admin.userClient },
+  ];
+}
+
+async function selectListings(
+  clients: Array<{ label: string; client: SupabaseClient }>,
+  table: "public_jobs" | "public_properties",
+  primaryColumns: string,
+  fallbackColumns: string,
+) {
+  const errors: string[] = [];
+
+  for (const { label, client } of clients) {
+    const primary = await client
+      .from(table)
+      .select(primaryColumns)
+      .order("created_at", { ascending: false });
+
+    if (!primary.error) return primary.data || [];
+    errors.push(`${label}: ${primary.error.message}`);
+
+    if (
+      isMissingColumnError(primary.error) ||
+      primary.error.message.toLowerCase().includes("permission denied")
+    ) {
+      const fallback = await client
+        .from(table)
+        .select(fallbackColumns)
+        .order("created_at", { ascending: false });
+
+      if (!fallback.error) return fallback.data || [];
+      errors.push(`${label} fallback: ${fallback.error.message}`);
+    }
+  }
+
+  throw new Error(errors.join(" / "));
+}
+
+async function updateListing(
+  clients: Array<{ label: string; client: SupabaseClient }>,
+  table: "public_jobs" | "public_properties",
+  id: string,
+  payload: Record<string, unknown>,
+  fallbackPayload: Record<string, unknown>,
+) {
+  const errors: string[] = [];
+
+  for (const { label, client } of clients) {
+    const result = await client.from(table).update(payload).eq("id", id);
+    if (!result.error) return;
+    errors.push(`${label}: ${result.error.message}`);
+
+    if (
+      isMissingColumnError(result.error) ||
+      result.error.message.toLowerCase().includes("permission denied")
+    ) {
+      const fallback = await client
+        .from(table)
+        .update(fallbackPayload)
+        .eq("id", id);
+      if (!fallback.error) return;
+      errors.push(`${label} fallback: ${fallback.error.message}`);
+    }
+  }
+
+  throw new Error(errors.join(" / "));
+}
+
+async function deleteListing(
+  clients: Array<{ label: string; client: SupabaseClient }>,
+  table: "public_jobs" | "public_properties",
+  id: string,
+) {
+  const errors: string[] = [];
+
+  for (const { label, client } of clients) {
+    const result = await client.from(table).delete().eq("id", id);
+    if (!result.error) return;
+    errors.push(`${label}: ${result.error.message}`);
+
+    const softDelete = await client
+      .from(table)
+      .update({ is_active: false })
+      .eq("id", id);
+    if (!softDelete.error) return;
+    errors.push(`${label} soft delete: ${softDelete.error.message}`);
+  }
+
+  throw new Error(errors.join(" / "));
+}
+
 export async function GET(request: NextRequest) {
   const admin = await getAdminContext(request);
   if (!admin.ok) {
     return NextResponse.json({ error: admin.error }, { status: admin.status });
   }
 
-  const jobQuery = admin.serviceClient
-    .from("public_jobs")
-    .select(
+  try {
+    const clients = adminDbClients(admin);
+    const [jobs, properties] = await Promise.all([
+      selectListings(
+        clients,
+        "public_jobs",
       "id, title, company, city, area, address, hourly_rate, hourly_rate_min, hourly_rate_max, work_hours, weekly_hours, description, application_method, apply_url, is_active, created_at",
-    )
-    .order("created_at", { ascending: false });
-
-  const propertyQuery = admin.serviceClient
-    .from("public_properties")
-    .select(
+        "id, title, company, city, address, hourly_rate, work_hours, description, apply_url, is_active, created_at",
+      ),
+      selectListings(
+        clients,
+        "public_properties",
       "id, title, owner_name, city, area, address, rent_weekly, description, inquiry_method, url, is_active, created_at",
-    )
-    .order("created_at", { ascending: false });
+        "id, title, owner_name, city, area, address, rent_weekly, description, url, is_active, created_at",
+      ),
+    ]);
 
-  const [jobsResult, propertiesResult] = await Promise.all([
-    jobQuery,
-    propertyQuery,
-  ]);
-
-  const jobs =
-    jobsResult.error && isMissingColumnError(jobsResult.error)
-      ? await admin.serviceClient
-          .from("public_jobs")
-          .select(
-            "id, title, company, city, address, hourly_rate, work_hours, description, apply_url, is_active, created_at",
-          )
-          .order("created_at", { ascending: false })
-      : jobsResult;
-
-  const properties =
-    propertiesResult.error && isMissingColumnError(propertiesResult.error)
-      ? await admin.serviceClient
-          .from("public_properties")
-          .select(
-            "id, title, owner_name, city, area, address, rent_weekly, description, url, is_active, created_at",
-          )
-          .order("created_at", { ascending: false })
-      : propertiesResult;
-
-  if (jobs.error) return jsonError(jobs.error.message, 500);
-  if (properties.error) return jsonError(properties.error.message, 500);
-
-  return NextResponse.json({
-    jobs: jobs.data || [],
-    properties: properties.data || [],
-  });
+    return NextResponse.json({ jobs, properties });
+  } catch (error) {
+    return jsonError(
+      error instanceof Error ? error.message : "公開掲載を取得できませんでした。",
+      500,
+    );
+  }
 }
 
 export async function PATCH(request: NextRequest) {
@@ -142,49 +215,46 @@ export async function PATCH(request: NextRequest) {
           is_active: body.is_active !== false,
         };
 
-  const result = await admin.serviceClient
-    .from(table)
-    .update(payload)
-    .eq("id", body.id);
+  const fallbackPayload =
+    body.type === "job"
+      ? {
+          title: body.title.trim(),
+          company: body.company?.trim() || null,
+          city: body.city?.trim() || null,
+          address: body.address?.trim() || null,
+          hourly_rate: body.hourly_rate ?? body.hourly_rate_min ?? null,
+          work_hours: body.work_hours ?? body.weekly_hours ?? null,
+          description: body.description?.trim() || null,
+          apply_url: body.apply_url?.trim() || null,
+          is_active: body.is_active !== false,
+        }
+      : {
+          title: body.title.trim(),
+          owner_name: body.owner_name?.trim() || null,
+          city: body.city?.trim() || null,
+          area: body.area?.trim() || null,
+          address: body.address?.trim() || null,
+          rent_weekly: body.rent_weekly ?? null,
+          description: body.description?.trim() || null,
+          url: body.url?.trim() || null,
+          is_active: body.is_active !== false,
+        };
 
-  if (!result.error) return NextResponse.json({ ok: true });
-
-  if (isMissingColumnError(result.error)) {
-    const fallbackPayload =
-      body.type === "job"
-        ? {
-            title: body.title.trim(),
-            company: body.company?.trim() || null,
-            city: body.city?.trim() || null,
-            address: body.address?.trim() || null,
-            hourly_rate: body.hourly_rate ?? body.hourly_rate_min ?? null,
-            work_hours: body.work_hours ?? body.weekly_hours ?? null,
-            description: body.description?.trim() || null,
-            apply_url: body.apply_url?.trim() || null,
-            is_active: body.is_active !== false,
-          }
-        : {
-            title: body.title.trim(),
-            owner_name: body.owner_name?.trim() || null,
-            city: body.city?.trim() || null,
-            area: body.area?.trim() || null,
-            address: body.address?.trim() || null,
-            rent_weekly: body.rent_weekly ?? null,
-            description: body.description?.trim() || null,
-            url: body.url?.trim() || null,
-            is_active: body.is_active !== false,
-          };
-
-    const fallback = await admin.serviceClient
-      .from(table)
-      .update(fallbackPayload)
-      .eq("id", body.id);
-
-    if (!fallback.error) return NextResponse.json({ ok: true });
-    return jsonError(fallback.error.message, 500);
+  try {
+    await updateListing(
+      adminDbClients(admin),
+      table,
+      body.id,
+      payload,
+      fallbackPayload,
+    );
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return jsonError(
+      error instanceof Error ? error.message : "掲載内容を更新できませんでした。",
+      500,
+    );
   }
-
-  return jsonError(result.error.message, 500);
 }
 
 export async function DELETE(request: NextRequest) {
@@ -202,8 +272,14 @@ export async function DELETE(request: NextRequest) {
   }
 
   const table = type === "job" ? "public_jobs" : "public_properties";
-  const result = await admin.serviceClient.from(table).delete().eq("id", id);
 
-  if (result.error) return jsonError(result.error.message, 500);
-  return NextResponse.json({ ok: true });
+  try {
+    await deleteListing(adminDbClients(admin), table, id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return jsonError(
+      error instanceof Error ? error.message : "掲載を削除できませんでした。",
+      500,
+    );
+  }
 }

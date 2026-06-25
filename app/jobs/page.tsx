@@ -20,6 +20,7 @@ type PublicJob = {
   hourly_rate: number | null;
   work_hours: number | null;
   description: string | null;
+  application_method?: string | null;
   visa_support: boolean | null;
   japanese_ok: boolean | null;
   accommodation_available: boolean | null;
@@ -93,6 +94,7 @@ export default function JobsPage() {
   const [visaCondition, setVisaCondition] = useState("");
   const [accommodationOnly, setAccommodationOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [expandedJobIds, setExpandedJobIds] = useState<string[]>([]);
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     apply?: (job: PublicJob) => void;
@@ -106,7 +108,7 @@ export default function JobsPage() {
       const extendedResult = await supabase
         .from("public_jobs")
         .select(
-          "id, title, company, city, address, hourly_rate, work_hours, description, visa_support, japanese_ok, accommodation_available, english_level, visa_conditions, apply_url, latitude, longitude, employment_type, country_code, region, district, suburb, area, hourly_rate_min, hourly_rate_max, weekly_hours, start_date, image_url",
+          "id, title, company, city, address, hourly_rate, work_hours, description, application_method, visa_support, japanese_ok, accommodation_available, english_level, visa_conditions, apply_url, latitude, longitude, employment_type, country_code, region, district, suburb, area, hourly_rate_min, hourly_rate_max, weekly_hours, start_date, image_url",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -789,13 +791,42 @@ export default function JobsPage() {
                   ) : null}
                 </div>
 
-                {job.description && (
-                  <p className="mt-4 line-clamp-4 text-sm font-medium leading-7 text-gray-800">
-                    {job.description}
-                  </p>
-                )}
+                {expandedJobIds.includes(job.id) ? (
+                  <div className="mt-4 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-800">
+                    <div>
+                      <p className="font-bold text-gray-900">職務内容</p>
+                      <p className="mt-1 whitespace-pre-wrap">
+                        {job.description || "職務内容は未設定です。"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">応募方法</p>
+                      <p className="mt-1 whitespace-pre-wrap">
+                        {job.application_method ||
+                          (job.apply_url
+                            ? "外部ページから応募内容を確認してください。"
+                            : "応募方法は未設定です。")}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="mt-auto flex flex-col gap-2 pt-5 sm:flex-row sm:flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedJobIds((current) =>
+                        current.includes(job.id)
+                          ? current.filter((id) => id !== job.id)
+                          : [...current, job.id],
+                      )
+                    }
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                  >
+                    {expandedJobIds.includes(job.id)
+                      ? "詳細を閉じる"
+                      : "詳細を見る"}
+                  </button>
                   <button
                     onClick={() => handleSaveJob(job)}
                     disabled={savingJobId === job.id}
@@ -819,7 +850,7 @@ export default function JobsPage() {
                       rel="noreferrer"
                       className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
                     >
-                      詳細を見る
+                      外部ページを見る
                     </a>
                   )}
                 </div>

@@ -21,6 +21,7 @@ alter table public.public_jobs
 add column if not exists japanese_ok boolean not null default false,
 add column if not exists english_level text null,
 add column if not exists visa_conditions text null,
+add column if not exists application_method text null,
 add column if not exists visa_support boolean not null default false,
 add column if not exists address text null,
 add column if not exists latitude double precision null,
@@ -28,6 +29,7 @@ add column if not exists longitude double precision null;
 
 alter table public.public_properties
 add column if not exists address text null,
+add column if not exists inquiry_method text null,
 add column if not exists latitude double precision null,
 add column if not exists longitude double precision null;
 

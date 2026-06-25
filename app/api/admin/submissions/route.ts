@@ -166,6 +166,7 @@ async function approveSubmission(
       contact_email: submission.email,
       description: submission.description,
       apply_url: submission.url,
+      application_method: details.application_method,
       country_code: details.country_code,
       region: details.region,
       city: details.district,
@@ -252,6 +253,33 @@ async function approveSubmission(
       contact_email: submission.email,
       description: submission.description,
       url: submission.url,
+      inquiry_method: details.inquiry_method,
+      country_code: details.country_code,
+      region: details.region,
+      city: details.district,
+      district: details.district,
+      suburb: details.suburb,
+      area: details.area,
+      address: details.address,
+      rent_weekly: details.rent_weekly,
+      bedrooms: details.bedrooms,
+      bathrooms: details.bathrooms,
+      parking_spaces: details.parking_spaces,
+      available_from: details.available_from,
+      pets_allowed: details.pets_allowed,
+      furnished: details.furnished,
+      bills_included: details.utilities_included,
+      utilities_included: details.utilities_included,
+      image_urls: submission.image_urls || [],
+      is_active: true,
+    };
+    const fallbackPropertyPayload = {
+      source_submission_id: submission.id,
+      title: submission.title,
+      owner_name: submission.company_or_owner,
+      contact_email: submission.email,
+      description: submission.description,
+      url: submission.url,
       country_code: details.country_code,
       region: details.region,
       city: details.district,
@@ -284,6 +312,19 @@ async function approveSubmission(
       }
 
       errors.push(`${label}: ${result.error.message}`);
+
+      if (isMissingColumnError(result.error)) {
+        const fallback = await client
+          .from("public_properties")
+          .upsert(fallbackPropertyPayload, {
+            onConflict: "source_submission_id",
+          });
+        if (!fallback.error) {
+          errors.length = 0;
+          break;
+        }
+        errors.push(`${label} fallback: ${fallback.error.message}`);
+      }
     }
 
     if (errors.length) throw new Error(errors.join(" / "));

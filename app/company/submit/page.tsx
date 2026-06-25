@@ -36,6 +36,7 @@ type ListingDraft = {
   accommodationAvailable: boolean;
   startDate: string;
   applicationMethod: string;
+  inquiryMethod: string;
   japaneseOk: boolean;
   englishLevel: string;
   visaConditions: string;
@@ -68,6 +69,7 @@ export default function CompanySubmitPage() {
   const [accommodationAvailable, setAccommodationAvailable] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [applicationMethod, setApplicationMethod] = useState("");
+  const [inquiryMethod, setInquiryMethod] = useState("");
   const [japaneseOk, setJapaneseOk] = useState(false);
   const [englishLevel, setEnglishLevel] = useState("");
   const [visaConditions, setVisaConditions] = useState("");
@@ -109,6 +111,7 @@ export default function CompanySubmitPage() {
     accommodationAvailable,
     startDate,
     applicationMethod,
+    inquiryMethod,
     japaneseOk,
     englishLevel,
     visaConditions,
@@ -141,6 +144,7 @@ export default function CompanySubmitPage() {
     setAccommodationAvailable(Boolean(draft.accommodationAvailable));
     setStartDate(draft.startDate || "");
     setApplicationMethod(draft.applicationMethod || "");
+    setInquiryMethod(draft.inquiryMethod || "");
     setJapaneseOk(Boolean(draft.japaneseOk));
     setEnglishLevel(draft.englishLevel || "");
     setVisaConditions(draft.visaConditions || "");
@@ -197,6 +201,7 @@ export default function CompanySubmitPage() {
     setAccommodationAvailable(false);
     setStartDate("");
     setApplicationMethod("");
+    setInquiryMethod("");
     setJapaneseOk(false);
     setEnglishLevel("");
     setVisaConditions("");
@@ -352,6 +357,7 @@ export default function CompanySubmitPage() {
               pets_allowed: petsAllowed,
               furnished,
               utilities_included: utilitiesIncluded,
+              inquiry_method: inquiryMethod || null,
             };
 
       let imageUrls: string[] = [];
@@ -783,6 +789,15 @@ export default function CompanySubmitPage() {
                   </label>
                 ))}
               </div>
+              <label className="mt-4 block">
+                <span className="text-sm font-bold">問い合わせ方法</span>
+                <input
+                  value={inquiryMethod}
+                  onChange={(event) => setInquiryMethod(event.target.value)}
+                  className={inputClass}
+                  placeholder="例: メールで問い合わせ / フォームから連絡"
+                />
+              </label>
             </section>
           )}
 

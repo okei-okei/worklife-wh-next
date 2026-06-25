@@ -19,6 +19,7 @@ type PublicProperty = {
   address: string | null;
   rent_weekly: number | null;
   description: string | null;
+  inquiry_method?: string | null;
   url: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -184,6 +185,7 @@ export default function PropertiesPage() {
     "all" | "included" | "excluded"
   >("all");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [expandedPropertyIds, setExpandedPropertyIds] = useState<string[]>([]);
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     inquiry?: (property: PublicProperty) => void;
@@ -197,7 +199,7 @@ export default function PropertiesPage() {
       const extendedResult = await supabase
         .from("public_properties")
         .select(
-          "id, title, city, area, address, rent_weekly, description, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, image_urls",
+          "id, title, city, area, address, rent_weekly, description, inquiry_method, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, image_urls",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -899,12 +901,6 @@ export default function PropertiesPage() {
                   </div>
                 </div>
 
-                {property.description && (
-                  <p className="mt-4 line-clamp-4 text-sm font-medium leading-7 text-gray-800">
-                    {property.description}
-                  </p>
-                )}
-
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <PropertyFact
                     label="ベッド"
@@ -952,7 +948,42 @@ export default function PropertiesPage() {
                   ) : null}
                 </div>
 
+                {expandedPropertyIds.includes(property.id) ? (
+                  <div className="mt-4 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-800">
+                    <div>
+                      <p className="font-bold text-gray-900">物件説明</p>
+                      <p className="mt-1 whitespace-pre-wrap">
+                        {property.description || "物件説明は未設定です。"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">問い合わせ方法</p>
+                      <p className="mt-1 whitespace-pre-wrap">
+                        {property.inquiry_method ||
+                          (property.url
+                            ? "外部ページから問い合わせ方法を確認してください。"
+                            : "問い合わせ方法は未設定です。")}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="mt-auto flex flex-col gap-2 pt-5 sm:flex-row sm:flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedPropertyIds((current) =>
+                        current.includes(property.id)
+                          ? current.filter((id) => id !== property.id)
+                          : [...current, property.id],
+                      )
+                    }
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                  >
+                    {expandedPropertyIds.includes(property.id)
+                      ? "詳細を閉じる"
+                      : "詳細を見る"}
+                  </button>
                   <button
                     onClick={() => handleSaveProperty(property)}
                     disabled={savingPropertyId === property.id}

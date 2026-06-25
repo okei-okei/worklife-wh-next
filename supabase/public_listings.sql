@@ -53,6 +53,7 @@ alter table public_jobs add column if not exists japanese_ok boolean not null de
 alter table public_jobs add column if not exists accommodation_available boolean not null default false;
 alter table public_jobs add column if not exists apply_url text null;
 alter table public_jobs add column if not exists contact_email text null;
+alter table public_jobs add column if not exists application_method text null;
 alter table public_jobs add column if not exists country text not null default 'NZ';
 alter table public_jobs add column if not exists latitude double precision null;
 alter table public_jobs add column if not exists longitude double precision null;
@@ -68,6 +69,7 @@ alter table public_properties add column if not exists address text null;
 alter table public_properties add column if not exists rent_weekly numeric null;
 alter table public_properties add column if not exists description text null;
 alter table public_properties add column if not exists url text null;
+alter table public_properties add column if not exists inquiry_method text null;
 alter table public_properties add column if not exists utilities_included boolean null;
 alter table public_properties add column if not exists country text not null default 'NZ';
 alter table public_properties add column if not exists latitude double precision null;
@@ -95,6 +97,8 @@ alter table public_properties enable row level security;
 grant usage on schema public to anon, authenticated;
 grant select on public_jobs to anon, authenticated;
 grant select on public_properties to anon, authenticated;
+grant insert, update, delete on public_jobs to authenticated;
+grant insert, update, delete on public_properties to authenticated;
 
 drop policy if exists "Anyone can view active public jobs" on public_jobs;
 create policy "Anyone can view active public jobs"
@@ -109,3 +113,51 @@ on public_properties
 for select
 to anon, authenticated
 using (is_active = true);
+
+drop policy if exists "Admins can manage public jobs" on public_jobs;
+create policy "Admins can manage public jobs"
+on public_jobs
+for all
+to authenticated
+using (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+)
+with check (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+);
+
+drop policy if exists "Admins can manage public properties" on public_properties;
+create policy "Admins can manage public properties"
+on public_properties
+for all
+to authenticated
+using (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+)
+with check (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+);

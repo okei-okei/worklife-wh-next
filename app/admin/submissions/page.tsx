@@ -174,6 +174,7 @@ export default function AdminSubmissionsPage() {
       ["駐車場数", data.parking_spaces],
       ["入居可能日", data.available_from],
       ["ペット可", data.pets_allowed],
+      ["喫煙可", data.smoking_allowed],
       ["家具付き", data.furnished],
       ["光熱費込み", data.utilities_included],
     ];

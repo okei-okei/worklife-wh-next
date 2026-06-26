@@ -45,7 +45,8 @@ type ListingDraft = {
   bathrooms: string;
   parkingSpaces: string;
   availableFrom: string;
-  petsAllowed: boolean;
+  petsAllowed: string;
+  smokingAllowed: string;
   furnished: boolean;
   utilitiesIncluded: boolean;
 };
@@ -78,7 +79,8 @@ export default function CompanySubmitPage() {
   const [bathrooms, setBathrooms] = useState("");
   const [parkingSpaces, setParkingSpaces] = useState("");
   const [availableFrom, setAvailableFrom] = useState("");
-  const [petsAllowed, setPetsAllowed] = useState(false);
+  const [petsAllowed, setPetsAllowed] = useState("");
+  const [smokingAllowed, setSmokingAllowed] = useState("");
   const [furnished, setFurnished] = useState(false);
   const [utilitiesIncluded, setUtilitiesIncluded] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -121,6 +123,7 @@ export default function CompanySubmitPage() {
     parkingSpaces,
     availableFrom,
     petsAllowed,
+    smokingAllowed,
     furnished,
     utilitiesIncluded,
   });
@@ -153,7 +156,20 @@ export default function CompanySubmitPage() {
     setBathrooms(draft.bathrooms || "");
     setParkingSpaces(draft.parkingSpaces || "");
     setAvailableFrom(draft.availableFrom || "");
-    setPetsAllowed(Boolean(draft.petsAllowed));
+    setPetsAllowed(
+      typeof draft.petsAllowed === "string"
+        ? draft.petsAllowed
+        : draft.petsAllowed
+          ? "true"
+          : "",
+    );
+    setSmokingAllowed(
+      typeof draft.smokingAllowed === "string"
+        ? draft.smokingAllowed
+        : draft.smokingAllowed
+          ? "true"
+          : "",
+    );
     setFurnished(Boolean(draft.furnished));
     setUtilitiesIncluded(Boolean(draft.utilitiesIncluded));
   };
@@ -210,7 +226,8 @@ export default function CompanySubmitPage() {
     setBathrooms("");
     setParkingSpaces("");
     setAvailableFrom("");
-    setPetsAllowed(false);
+    setPetsAllowed("");
+    setSmokingAllowed("");
     setFurnished(false);
     setUtilitiesIncluded(false);
     setFiles([]);
@@ -355,7 +372,9 @@ export default function CompanySubmitPage() {
               bathrooms: bathrooms ? Number(bathrooms) : null,
               parking_spaces: parkingSpaces ? Number(parkingSpaces) : null,
               available_from: availableFrom || null,
-              pets_allowed: petsAllowed,
+              pets_allowed: petsAllowed === "" ? null : petsAllowed === "true",
+              smoking_allowed:
+                smokingAllowed === "" ? null : smokingAllowed === "true",
               furnished,
               utilities_included: utilitiesIncluded,
               inquiry_method: inquiryMethod || null,
@@ -773,8 +792,31 @@ export default function CompanySubmitPage() {
                     className={inputClass}
                   />
                 </label>
+                <label>
+                  <span className="text-sm font-bold">ペット</span>
+                  <select
+                    value={petsAllowed}
+                    onChange={(event) => setPetsAllowed(event.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">要確認</option>
+                    <option value="true">ペット可</option>
+                    <option value="false">ペット不可</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="text-sm font-bold">喫煙</span>
+                  <select
+                    value={smokingAllowed}
+                    onChange={(event) => setSmokingAllowed(event.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">要確認</option>
+                    <option value="true">喫煙可</option>
+                    <option value="false">喫煙不可</option>
+                  </select>
+                </label>
                 {[
-                  ["ペット可", petsAllowed, setPetsAllowed],
                   ["家具付き", furnished, setFurnished],
                   ["光熱費込み", utilitiesIncluded, setUtilitiesIncluded],
                 ].map(([label, checked, setter]) => (

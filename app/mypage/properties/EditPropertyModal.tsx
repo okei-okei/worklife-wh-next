@@ -30,6 +30,7 @@ export default function EditPropertyModal({
   const [availableFrom, setAvailableFrom] = useState("");
   const [utilitiesIncluded, setUtilitiesIncluded] = useState("");
   const [petsAllowed, setPetsAllowed] = useState("");
+  const [smokingAllowed, setSmokingAllowed] = useState("");
 
   useEffect(() => {
     if (!property) return;
@@ -51,6 +52,11 @@ export default function EditPropertyModal({
       );
       setPetsAllowed(
         property.pets_allowed == null ? "" : String(property.pets_allowed),
+      );
+      setSmokingAllowed(
+        property.smoking_allowed == null
+          ? ""
+          : String(property.smoking_allowed),
       );
     }, 0);
 
@@ -95,6 +101,8 @@ export default function EditPropertyModal({
         bills_included:
           utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
         pets_allowed: petsAllowed === "" ? null : petsAllowed === "true",
+        smoking_allowed:
+          smokingAllowed === "" ? null : smokingAllowed === "true",
         latitude,
         longitude,
       })
@@ -225,7 +233,7 @@ export default function EditPropertyModal({
           </label>
         </div>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
           <label className="block">
             <span className="text-sm font-bold text-gray-900">光熱費込み</span>
             <select
@@ -245,6 +253,19 @@ export default function EditPropertyModal({
               className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 font-medium text-gray-900"
               value={petsAllowed}
               onChange={(e) => setPetsAllowed(e.target.value)}
+            >
+              <option value="">要確認</option>
+              <option value="true">可</option>
+              <option value="false">不可</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-bold text-gray-900">喫煙</span>
+            <select
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 font-medium text-gray-900"
+              value={smokingAllowed}
+              onChange={(e) => setSmokingAllowed(e.target.value)}
             >
               <option value="">要確認</option>
               <option value="true">可</option>

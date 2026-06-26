@@ -17,6 +17,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
   const [availableFrom, setAvailableFrom] = useState("");
   const [utilitiesIncluded, setUtilitiesIncluded] = useState("");
   const [petsAllowed, setPetsAllowed] = useState("");
+  const [smokingAllowed, setSmokingAllowed] = useState("");
   const [isFetchingLink, setIsFetchingLink] = useState(false);
 
   const handleFetchFromUrl = async () => {
@@ -86,6 +87,8 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
       bills_included:
         utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
       pets_allowed: petsAllowed === "" ? null : petsAllowed === "true",
+      smoking_allowed:
+        smokingAllowed === "" ? null : smokingAllowed === "true",
       status: "気になる",
       latitude: geo.latitude,
       longitude: geo.longitude,
@@ -104,6 +107,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
     setAvailableFrom("");
     setUtilitiesIncluded("");
     setPetsAllowed("");
+    setSmokingAllowed("");
 
     onSaved();
   };
@@ -234,7 +238,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         </label>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <label className="block">
           <span className="text-sm font-bold text-gray-900">光熱費込み</span>
           <select
@@ -254,6 +258,19 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
             className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
             value={petsAllowed}
             onChange={(e) => setPetsAllowed(e.target.value)}
+          >
+            <option value="">要確認</option>
+            <option value="true">可</option>
+            <option value="false">不可</option>
+          </select>
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-gray-900">喫煙</span>
+          <select
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
+            value={smokingAllowed}
+            onChange={(e) => setSmokingAllowed(e.target.value)}
           >
             <option value="">要確認</option>
             <option value="true">可</option>

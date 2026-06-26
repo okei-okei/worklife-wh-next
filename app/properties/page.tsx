@@ -32,6 +32,7 @@ type PublicProperty = {
   bathrooms?: number | null;
   parking_spaces?: number | null;
   pets_allowed?: boolean | null;
+  smoking_allowed?: boolean | null;
   country_code?: string | null;
   region?: string | null;
   district?: string | null;
@@ -158,6 +159,12 @@ function formatUtilitiesIncluded(property: PublicProperty) {
   return "要確認";
 }
 
+function formatNullableBoolean(value: boolean | null | undefined) {
+  if (value === true) return "可";
+  if (value === false) return "不可";
+  return "要確認";
+}
+
 export default function PropertiesPage() {
   const router = useRouter();
   useEffect(() => { trackMetric("public_property_view", { eventType: "page_view", pagePath: "/properties" }); }, []);
@@ -180,7 +187,12 @@ export default function PropertiesPage() {
   const [minParkingSpaces, setMinParkingSpaces] = useState("");
   const [maxParkingSpaces, setMaxParkingSpaces] = useState("");
   const [availableFrom, setAvailableFrom] = useState("");
-  const [petsAllowedOnly, setPetsAllowedOnly] = useState(false);
+  const [petsFilter, setPetsFilter] = useState<
+    "all" | "allowed" | "not_allowed" | "unknown"
+  >("all");
+  const [smokingFilter, setSmokingFilter] = useState<
+    "all" | "allowed" | "not_allowed" | "unknown"
+  >("all");
   const [utilitiesFilter, setUtilitiesFilter] = useState<
     "all" | "included" | "excluded"
   >("all");
@@ -199,7 +211,7 @@ export default function PropertiesPage() {
       const extendedResult = await supabase
         .from("public_properties")
         .select(
-          "id, title, city, area, address, rent_weekly, description, inquiry_method, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, image_urls",
+          "id, title, city, area, address, rent_weekly, description, inquiry_method, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, smoking_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, image_urls",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -282,6 +294,7 @@ export default function PropertiesPage() {
       parking_spaces: property.parking_spaces,
       available_from: property.available_from,
       pets_allowed: property.pets_allowed,
+      smoking_allowed: property.smoking_allowed,
       source_type: "public",
       public_property_id: property.id,
       utilities_included:
@@ -585,7 +598,27 @@ export default function PropertiesPage() {
         if (availableDate > desiredDate) return false;
       }
 
-      if (petsAllowedOnly && !property.pets_allowed) {
+      if (petsFilter === "allowed" && property.pets_allowed !== true) {
+        return false;
+      }
+
+      if (petsFilter === "not_allowed" && property.pets_allowed !== false) {
+        return false;
+      }
+
+      if (petsFilter === "unknown" && property.pets_allowed != null) {
+        return false;
+      }
+
+      if (smokingFilter === "allowed" && property.smoking_allowed !== true) {
+        return false;
+      }
+
+      if (smokingFilter === "not_allowed" && property.smoking_allowed !== false) {
+        return false;
+      }
+
+      if (smokingFilter === "unknown" && property.smoking_allowed != null) {
         return false;
       }
 
@@ -614,9 +647,10 @@ export default function PropertiesPage() {
     minBathrooms,
     minBedrooms,
     minParkingSpaces,
-    petsAllowedOnly,
+    petsFilter,
     properties,
     searchQuery,
+    smokingFilter,
     utilitiesFilter,
   ]);
 
@@ -633,7 +667,8 @@ export default function PropertiesPage() {
     setMinParkingSpaces("");
     setMaxParkingSpaces("");
     setAvailableFrom("");
-    setPetsAllowedOnly(false);
+    setPetsFilter("all");
+    setSmokingFilter("all");
     setUtilitiesFilter("all");
   };
 
@@ -790,6 +825,52 @@ export default function PropertiesPage() {
             </label>
             <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
               <span className="text-sm font-bold text-gray-900">
+                ペット
+              </span>
+              <select
+                value={petsFilter}
+                onChange={(event) =>
+                  setPetsFilter(
+                    event.target.value as
+                      | "all"
+                      | "allowed"
+                      | "not_allowed"
+                      | "unknown",
+                  )
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+              >
+                <option value="all">全て</option>
+                <option value="allowed">ペット可</option>
+                <option value="not_allowed">ペット不可</option>
+                <option value="unknown">要確認</option>
+              </select>
+            </label>
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <span className="text-sm font-bold text-gray-900">
+                喫煙
+              </span>
+              <select
+                value={smokingFilter}
+                onChange={(event) =>
+                  setSmokingFilter(
+                    event.target.value as
+                      | "all"
+                      | "allowed"
+                      | "not_allowed"
+                      | "unknown",
+                  )
+                }
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+              >
+                <option value="all">全て</option>
+                <option value="allowed">喫煙可</option>
+                <option value="not_allowed">喫煙不可</option>
+                <option value="unknown">要確認</option>
+              </select>
+            </label>
+            <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <span className="text-sm font-bold text-gray-900">
                 光熱費込み
               </span>
               <select
@@ -805,15 +886,6 @@ export default function PropertiesPage() {
                 <option value="included">光熱費込み</option>
                 <option value="excluded">光熱費別</option>
               </select>
-            </label>
-            <label className="flex min-h-[74px] items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900">
-              <input
-                type="checkbox"
-                checked={petsAllowedOnly}
-                onChange={(event) => setPetsAllowedOnly(event.target.checked)}
-                className="h-5 w-5"
-              />
-              ペット可
             </label>
           </div>
 
@@ -948,7 +1020,11 @@ export default function PropertiesPage() {
                   />
                   <PropertyFact
                     label="ペット"
-                    value={property.pets_allowed ? "可" : "要確認"}
+                    value={formatNullableBoolean(property.pets_allowed)}
+                  />
+                  <PropertyFact
+                    label="喫煙"
+                    value={formatNullableBoolean(property.smoking_allowed)}
                   />
                 </div>
 

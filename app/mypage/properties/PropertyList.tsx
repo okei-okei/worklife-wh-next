@@ -42,6 +42,12 @@ function formatUtilitiesIncluded(property: Property) {
   return "要確認";
 }
 
+function formatNullableBoolean(value: boolean | null | undefined) {
+  if (value === true) return "可";
+  if (value === false) return "不可";
+  return "要確認";
+}
+
 export default function PropertyList({
   properties,
   userId,
@@ -165,13 +171,11 @@ export default function PropertyList({
               />
               <PropertyFact
                 label="ペット"
-                value={
-                  p.pets_allowed === true
-                    ? "可"
-                    : p.pets_allowed === false
-                      ? "不可"
-                      : "要確認"
-                }
+                value={formatNullableBoolean(p.pets_allowed)}
+              />
+              <PropertyFact
+                label="喫煙"
+                value={formatNullableBoolean(p.smoking_allowed)}
               />
             </div>
 

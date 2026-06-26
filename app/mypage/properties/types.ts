@@ -11,6 +11,7 @@ export type Property = {
   parking_spaces?: number | null;
   available_from?: string | null;
   pets_allowed?: boolean | null;
+  smoking_allowed?: boolean | null;
   utilities_included?: boolean | null;
   bills_included?: boolean | null;
   image_urls?: string[] | null;

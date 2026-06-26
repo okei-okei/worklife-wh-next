@@ -10,6 +10,10 @@ type UpdateBody = {
   title?: string;
   company?: string | null;
   owner_name?: string | null;
+  country_code?: string | null;
+  region?: string | null;
+  district?: string | null;
+  suburb?: string | null;
   city?: string | null;
   area?: string | null;
   address?: string | null;
@@ -25,7 +29,23 @@ type UpdateBody = {
   hourly_rate?: number | null;
   weekly_hours?: number | null;
   work_hours?: number | null;
+  employment_type?: string | null;
+  start_date?: string | null;
+  accommodation_available?: boolean | null;
+  japanese_ok?: boolean | null;
+  english_level?: string | null;
+  visa_conditions?: string | null;
+  visa_support?: boolean | null;
   rent_weekly?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  parking_spaces?: number | null;
+  available_from?: string | null;
+  pets_allowed?: boolean | null;
+  smoking_allowed?: boolean | null;
+  furnished?: boolean | null;
+  utilities_included?: boolean | null;
+  bills_included?: boolean | null;
   is_active?: boolean;
 };
 
@@ -147,14 +167,14 @@ export async function GET(request: NextRequest) {
       selectListings(
         clients,
         "public_jobs",
-        "id, title, company, city, area, address, hourly_rate, hourly_rate_min, hourly_rate_max, work_hours, weekly_hours, description, application_method, apply_url, image_url, is_active, created_at",
+        "id, title, company, country_code, region, district, suburb, city, area, address, hourly_rate, hourly_rate_min, hourly_rate_max, work_hours, weekly_hours, employment_type, start_date, accommodation_available, japanese_ok, english_level, visa_conditions, visa_support, description, application_method, apply_url, image_url, is_active, created_at",
         "id, title, company, city, address, hourly_rate, work_hours, description, apply_url, is_active, created_at",
       ),
       selectListings(
         clients,
         "public_properties",
-        "id, title, owner_name, city, area, address, rent_weekly, description, inquiry_method, url, image_urls, is_active, created_at",
-        "id, title, owner_name, city, area, address, rent_weekly, description, url, is_active, created_at",
+        "id, title, owner_name, country_code, region, district, suburb, city, area, address, rent_weekly, bedrooms, bathrooms, parking_spaces, available_from, pets_allowed, smoking_allowed, furnished, utilities_included, bills_included, description, inquiry_method, url, image_urls, is_active, created_at",
+        "id, title, owner_name, city, area, address, rent_weekly, description, url, image_urls, is_active, created_at",
       ),
     ]);
 
@@ -188,6 +208,10 @@ export async function PATCH(request: NextRequest) {
       ? {
           title: body.title.trim(),
           company: body.company?.trim() || null,
+          country_code: body.country_code?.trim() || "NZ",
+          region: body.region?.trim() || null,
+          district: body.district?.trim() || null,
+          suburb: body.suburb?.trim() || null,
           city: body.city?.trim() || null,
           area: body.area?.trim() || null,
           address: body.address?.trim() || null,
@@ -196,6 +220,17 @@ export async function PATCH(request: NextRequest) {
           hourly_rate_max: body.hourly_rate_max ?? null,
           work_hours: body.work_hours ?? body.weekly_hours ?? null,
           weekly_hours: body.weekly_hours ?? null,
+          employment_type: body.employment_type?.trim() || null,
+          start_date: body.start_date || null,
+          accommodation_available: Boolean(body.accommodation_available),
+          japanese_ok: Boolean(body.japanese_ok),
+          english_level: body.english_level?.trim() || null,
+          visa_conditions: body.visa_conditions?.trim() || null,
+          visa_support:
+            body.visa_support ??
+            /ワーホリ|working holiday|work visa|就労/i.test(
+              body.visa_conditions || "",
+            ),
           description: body.description?.trim() || null,
           application_method: body.application_method?.trim() || null,
           apply_url: body.apply_url?.trim() || null,
@@ -205,10 +240,23 @@ export async function PATCH(request: NextRequest) {
       : {
           title: body.title.trim(),
           owner_name: body.owner_name?.trim() || null,
+          country_code: body.country_code?.trim() || "NZ",
+          region: body.region?.trim() || null,
+          district: body.district?.trim() || null,
+          suburb: body.suburb?.trim() || null,
           city: body.city?.trim() || null,
           area: body.area?.trim() || null,
           address: body.address?.trim() || null,
           rent_weekly: body.rent_weekly ?? null,
+          bedrooms: body.bedrooms ?? null,
+          bathrooms: body.bathrooms ?? null,
+          parking_spaces: body.parking_spaces ?? null,
+          available_from: body.available_from || null,
+          pets_allowed: body.pets_allowed ?? null,
+          smoking_allowed: body.smoking_allowed ?? null,
+          furnished: Boolean(body.furnished),
+          utilities_included: body.utilities_included ?? null,
+          bills_included: body.bills_included ?? body.utilities_included ?? null,
           description: body.description?.trim() || null,
           inquiry_method: body.inquiry_method?.trim() || null,
           url: body.url?.trim() || null,

@@ -10,6 +10,10 @@ type AdminJob = {
   id: string;
   title: string;
   company: string | null;
+  country_code?: string | null;
+  region?: string | null;
+  district?: string | null;
+  suburb?: string | null;
   city: string | null;
   area?: string | null;
   address: string | null;
@@ -18,6 +22,13 @@ type AdminJob = {
   hourly_rate_max?: number | null;
   work_hours: number | null;
   weekly_hours?: number | null;
+  employment_type?: string | null;
+  start_date?: string | null;
+  accommodation_available?: boolean | null;
+  japanese_ok?: boolean | null;
+  english_level?: string | null;
+  visa_conditions?: string | null;
+  visa_support?: boolean | null;
   description: string | null;
   application_method?: string | null;
   apply_url: string | null;
@@ -29,10 +40,23 @@ type AdminProperty = {
   id: string;
   title: string;
   owner_name: string | null;
+  country_code?: string | null;
+  region?: string | null;
+  district?: string | null;
+  suburb?: string | null;
   city: string | null;
   area: string | null;
   address: string | null;
   rent_weekly: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  parking_spaces?: number | null;
+  available_from?: string | null;
+  pets_allowed?: boolean | null;
+  smoking_allowed?: boolean | null;
+  furnished?: boolean | null;
+  utilities_included?: boolean | null;
+  bills_included?: boolean | null;
   description: string | null;
   inquiry_method?: string | null;
   url: string | null;
@@ -43,12 +67,30 @@ type AdminProperty = {
 type EditForm = {
   title: string;
   name: string;
+  countryCode: string;
+  region: string;
+  district: string;
+  suburb: string;
   city: string;
   area: string;
   address: string;
   priceMin: string;
   priceMax: string;
   hours: string;
+  employmentType: string;
+  startDate: string;
+  accommodationAvailable: boolean;
+  japaneseOk: boolean;
+  englishLevel: string;
+  visaConditions: string;
+  bedrooms: string;
+  bathrooms: string;
+  parkingSpaces: string;
+  availableFrom: string;
+  petsAllowed: string;
+  smokingAllowed: string;
+  furnished: boolean;
+  utilitiesIncluded: boolean;
   description: string;
   method: string;
   url: string;
@@ -64,12 +106,30 @@ function jobToForm(job: AdminJob): EditForm {
   return {
     title: job.title || "",
     name: job.company || "",
-    city: job.city || "",
-    area: job.area || "",
+    countryCode: job.country_code || "NZ",
+    region: job.region || "",
+    district: job.district || job.city || "",
+    suburb: job.suburb || job.area || "",
+    city: job.city || job.district || "",
+    area: job.area || job.suburb || "",
     address: job.address || "",
     priceMin: String(job.hourly_rate_min ?? job.hourly_rate ?? ""),
     priceMax: String(job.hourly_rate_max ?? ""),
     hours: String(job.weekly_hours ?? job.work_hours ?? ""),
+    employmentType: job.employment_type || "",
+    startDate: job.start_date || "",
+    accommodationAvailable: Boolean(job.accommodation_available),
+    japaneseOk: Boolean(job.japanese_ok),
+    englishLevel: job.english_level || "",
+    visaConditions: job.visa_conditions || "",
+    bedrooms: "",
+    bathrooms: "",
+    parkingSpaces: "",
+    availableFrom: "",
+    petsAllowed: "",
+    smokingAllowed: "",
+    furnished: false,
+    utilitiesIncluded: false,
     description: job.description || "",
     method: job.application_method || "",
     url: job.apply_url || "",
@@ -83,12 +143,39 @@ function propertyToForm(property: AdminProperty): EditForm {
   return {
     title: property.title || "",
     name: property.owner_name || "",
-    city: property.city || "",
-    area: property.area || "",
+    countryCode: property.country_code || "NZ",
+    region: property.region || "",
+    district: property.district || property.city || "",
+    suburb: property.suburb || property.area || "",
+    city: property.city || property.district || "",
+    area: property.area || property.suburb || "",
     address: property.address || "",
     priceMin: String(property.rent_weekly ?? ""),
     priceMax: "",
     hours: "",
+    employmentType: "",
+    startDate: "",
+    accommodationAvailable: false,
+    japaneseOk: false,
+    englishLevel: "",
+    visaConditions: "",
+    bedrooms: String(property.bedrooms ?? ""),
+    bathrooms: String(property.bathrooms ?? ""),
+    parkingSpaces: String(property.parking_spaces ?? ""),
+    availableFrom: property.available_from || "",
+    petsAllowed:
+      property.pets_allowed === null || property.pets_allowed === undefined
+        ? ""
+        : String(property.pets_allowed),
+    smokingAllowed:
+      property.smoking_allowed === null ||
+      property.smoking_allowed === undefined
+        ? ""
+        : String(property.smoking_allowed),
+    furnished: Boolean(property.furnished),
+    utilitiesIncluded: Boolean(
+      property.utilities_included ?? property.bills_included,
+    ),
     description: property.description || "",
     method: property.inquiry_method || "",
     url: property.url || "",
@@ -233,14 +320,28 @@ export default function AdminListingsPage() {
             id: editing.id,
             title: form.title,
             company: form.name,
-            city: form.city,
-            area: form.area,
+            country_code: form.countryCode,
+            region: form.region,
+            district: form.district,
+            suburb: form.suburb,
+            city: form.city || form.district,
+            area: form.area || form.suburb,
             address: form.address,
             hourly_rate: form.priceMin ? Number(form.priceMin) : null,
             hourly_rate_min: form.priceMin ? Number(form.priceMin) : null,
             hourly_rate_max: form.priceMax ? Number(form.priceMax) : null,
             work_hours: form.hours ? Number(form.hours) : null,
             weekly_hours: form.hours ? Number(form.hours) : null,
+            employment_type: form.employmentType,
+            start_date: form.startDate || null,
+            accommodation_available: form.accommodationAvailable,
+            japanese_ok: form.japaneseOk,
+            english_level: form.englishLevel,
+            visa_conditions: form.visaConditions,
+            visa_support:
+              /ワーホリ|working holiday|work visa|就労/i.test(
+                form.visaConditions,
+              ),
             description: form.description,
             application_method: form.method,
             apply_url: form.url,
@@ -252,10 +353,29 @@ export default function AdminListingsPage() {
             id: editing.id,
             title: form.title,
             owner_name: form.name,
-            city: form.city,
-            area: form.area,
+            country_code: form.countryCode,
+            region: form.region,
+            district: form.district,
+            suburb: form.suburb,
+            city: form.city || form.district,
+            area: form.area || form.suburb,
             address: form.address,
             rent_weekly: form.priceMin ? Number(form.priceMin) : null,
+            bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
+            bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
+            parking_spaces: form.parkingSpaces
+              ? Number(form.parkingSpaces)
+              : null,
+            available_from: form.availableFrom || null,
+            pets_allowed:
+              form.petsAllowed === "" ? null : form.petsAllowed === "true",
+            smoking_allowed:
+              form.smokingAllowed === ""
+                ? null
+                : form.smokingAllowed === "true",
+            furnished: form.furnished,
+            utilities_included: form.utilitiesIncluded,
+            bills_included: form.utilitiesIncluded,
             description: form.description,
             inquiry_method: form.method,
             url: form.url,
@@ -512,7 +632,62 @@ export default function AdminListingsPage() {
                 />
               </label>
               <label>
-                <span className="text-sm font-bold">都市</span>
+                <span className="text-sm font-bold">国</span>
+                <select
+                  value={form.countryCode}
+                  onChange={(event) =>
+                    setForm({ ...form, countryCode: event.target.value })
+                  }
+                  className={inputClass}
+                >
+                  <option value="NZ">New Zealand</option>
+                  <option value="AU">Australia</option>
+                  <option value="CA">Canada</option>
+                </select>
+              </label>
+              <label>
+                <span className="text-sm font-bold">Region</span>
+                <input
+                  value={form.region}
+                  onChange={(event) =>
+                    setForm({ ...form, region: event.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="例: Auckland"
+                />
+              </label>
+              <label>
+                <span className="text-sm font-bold">City / District</span>
+                <input
+                  value={form.district}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      district: event.target.value,
+                      city: event.target.value,
+                    })
+                  }
+                  className={inputClass}
+                  placeholder="例: Auckland"
+                />
+              </label>
+              <label>
+                <span className="text-sm font-bold">Area / Suburb</span>
+                <input
+                  value={form.suburb}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      suburb: event.target.value,
+                      area: event.target.value,
+                    })
+                  }
+                  className={inputClass}
+                  placeholder="例: Auckland CBD"
+                />
+              </label>
+              <label>
+                <span className="text-sm font-bold">都市（表示用）</span>
                 <input
                   value={form.city}
                   onChange={(event) =>
@@ -522,7 +697,7 @@ export default function AdminListingsPage() {
                 />
               </label>
               <label>
-                <span className="text-sm font-bold">エリア</span>
+                <span className="text-sm font-bold">エリア（表示用）</span>
                 <input
                   value={form.area}
                   onChange={(event) =>
@@ -585,6 +760,205 @@ export default function AdminListingsPage() {
                   </label>
                 </>
               ) : null}
+              {editing.type === "job" ? (
+                <>
+                  <label>
+                    <span className="text-sm font-bold">採用形態</span>
+                    <select
+                      value={form.employmentType}
+                      onChange={(event) =>
+                        setForm({ ...form, employmentType: event.target.value })
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">未設定</option>
+                      {[
+                        "Full-time",
+                        "Part-time",
+                        "Casual",
+                        "Seasonal",
+                        "Fixed-term",
+                        "Internship",
+                      ].map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="text-sm font-bold">勤務開始可能日</span>
+                    <input
+                      type="date"
+                      value={form.startDate}
+                      onChange={(event) =>
+                        setForm({ ...form, startDate: event.target.value })
+                      }
+                      className={inputClass}
+                    />
+                  </label>
+                  <label>
+                    <span className="text-sm font-bold">必要な英語レベル</span>
+                    <select
+                      value={form.englishLevel}
+                      onChange={(event) =>
+                        setForm({ ...form, englishLevel: event.target.value })
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">未設定</option>
+                      <option value="初級">初級</option>
+                      <option value="中級">中級</option>
+                      <option value="上級">上級</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span className="text-sm font-bold">ビザ条件</span>
+                    <select
+                      value={form.visaConditions}
+                      onChange={(event) =>
+                        setForm({ ...form, visaConditions: event.target.value })
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">未設定</option>
+                      <option value="ワーホリビザ可">ワーホリビザ可</option>
+                      <option value="学生ビザ可">学生ビザ可</option>
+                      <option value="就労可能なビザ必須">
+                        就労可能なビザ必須
+                      </option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 font-bold">
+                    <input
+                      type="checkbox"
+                      checked={form.accommodationAvailable}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          accommodationAvailable: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5"
+                    />
+                    住み込み可能
+                  </label>
+                  <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 font-bold">
+                    <input
+                      type="checkbox"
+                      checked={form.japaneseOk}
+                      onChange={(event) =>
+                        setForm({ ...form, japaneseOk: event.target.checked })
+                      }
+                      className="h-5 w-5"
+                    />
+                    日本語対応あり
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label>
+                    <span className="text-sm font-bold">ベッドルーム数</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.bedrooms}
+                      onChange={(event) =>
+                        setForm({ ...form, bedrooms: event.target.value })
+                      }
+                      className={inputClass}
+                    />
+                  </label>
+                  <label>
+                    <span className="text-sm font-bold">バスルーム数</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.bathrooms}
+                      onChange={(event) =>
+                        setForm({ ...form, bathrooms: event.target.value })
+                      }
+                      className={inputClass}
+                    />
+                  </label>
+                  <label>
+                    <span className="text-sm font-bold">駐車場数</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.parkingSpaces}
+                      onChange={(event) =>
+                        setForm({ ...form, parkingSpaces: event.target.value })
+                      }
+                      className={inputClass}
+                    />
+                  </label>
+                  <label>
+                    <span className="text-sm font-bold">入居可能日</span>
+                    <input
+                      type="date"
+                      value={form.availableFrom}
+                      onChange={(event) =>
+                        setForm({ ...form, availableFrom: event.target.value })
+                      }
+                      className={inputClass}
+                    />
+                  </label>
+                  <label>
+                    <span className="text-sm font-bold">ペット</span>
+                    <select
+                      value={form.petsAllowed}
+                      onChange={(event) =>
+                        setForm({ ...form, petsAllowed: event.target.value })
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">要確認</option>
+                      <option value="true">ペット可</option>
+                      <option value="false">ペット不可</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span className="text-sm font-bold">喫煙</span>
+                    <select
+                      value={form.smokingAllowed}
+                      onChange={(event) =>
+                        setForm({ ...form, smokingAllowed: event.target.value })
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">要確認</option>
+                      <option value="true">喫煙可</option>
+                      <option value="false">喫煙不可</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 font-bold">
+                    <input
+                      type="checkbox"
+                      checked={form.furnished}
+                      onChange={(event) =>
+                        setForm({ ...form, furnished: event.target.checked })
+                      }
+                      className="h-5 w-5"
+                    />
+                    家具付き
+                  </label>
+                  <label className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 font-bold">
+                    <input
+                      type="checkbox"
+                      checked={form.utilitiesIncluded}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          utilitiesIncluded: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5"
+                    />
+                    光熱費込み
+                  </label>
+                </>
+              )}
               <label className="md:col-span-2">
                 <span className="text-sm font-bold">
                   {editing.type === "job" ? "職務内容" : "物件説明"}

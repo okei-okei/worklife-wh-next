@@ -62,6 +62,8 @@ type Props = {
   highlightedJobId?: string;
   highlightedPropertyId?: string;
   highlightedLine?: Line | null;
+  onJobSelect?: (id: string) => void;
+  onPropertySelect?: (id: string) => void;
 };
 
 export default function MapView({
@@ -71,6 +73,8 @@ export default function MapView({
   highlightedJobId,
   highlightedPropertyId,
   highlightedLine,
+  onJobSelect,
+  onPropertySelect,
 }: Props) {
   const center = jobs[0]
     ? [jobs[0].lat, jobs[0].lng]
@@ -99,6 +103,9 @@ export default function MapView({
             key={`${job.id}-${job.lat}-${job.lng}`}
             position={[job.lat, job.lng]}
             icon={job.id === highlightedJobId ? highlightedJobIcon : jobIcon}
+            eventHandlers={{
+              click: () => onJobSelect?.(job.id),
+            }}
           >
             <Popup>
               <div className="min-w-44 space-y-2 text-gray-900">
@@ -131,6 +138,9 @@ export default function MapView({
                 ? highlightedPropertyIcon
                 : propertyIcon
             }
+            eventHandlers={{
+              click: () => onPropertySelect?.(property.id),
+            }}
           >
             <Popup>
               <div className="min-w-44 space-y-2 text-gray-900">

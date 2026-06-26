@@ -95,6 +95,7 @@ export default function JobsPage() {
   const [accommodationOnly, setAccommodationOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [expandedJobIds, setExpandedJobIds] = useState<string[]>([]);
+  const [selectedMapJobId, setSelectedMapJobId] = useState<string | null>(null);
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     apply?: (job: PublicJob) => void;
@@ -501,6 +502,11 @@ export default function JobsPage() {
     [filteredJobs],
   );
 
+  const selectedMapJob = useMemo(
+    () => filteredJobs.find((job) => job.id === selectedMapJobId) || null,
+    [filteredJobs, selectedMapJobId],
+  );
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -706,15 +712,146 @@ export default function JobsPage() {
             </p>
           </div>
         ) : viewMode === "map" ? (
-          <section className="rounded-2xl bg-white p-3 shadow md:p-4">
-            {mapJobs.length ? (
-              <MapView jobs={mapJobs} properties={[]} />
-            ) : (
-              <p className="p-4 font-medium text-gray-700">
-                地図に表示できる座標付き求人がありません。リスト表示ではすべての求人を確認できます。
-              </p>
-            )}
-          </section>
+          <div className="space-y-4">
+            <section className="rounded-2xl bg-white p-3 shadow md:p-4">
+              {mapJobs.length ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-bold text-gray-700">
+                    地図上のピンを選択すると、下に選択中の求人を1件だけ表示します。
+                  </p>
+                  <MapView
+                    jobs={mapJobs}
+                    properties={[]}
+                    highlightedJobId={selectedMapJob?.id}
+                    onJobSelect={setSelectedMapJobId}
+                  />
+                </div>
+              ) : (
+                <p className="p-4 font-medium text-gray-700">
+                  地図に表示できる座標付き求人がありません。リスト表示ではすべての求人を確認できます。
+                </p>
+              )}
+            </section>
+
+            {selectedMapJob ? (
+              <article
+                id={`job-${selectedMapJob.id}`}
+                className="overflow-hidden rounded-2xl bg-white shadow"
+              >
+                <div className="grid gap-0 md:grid-cols-[180px_1fr]">
+                  {selectedMapJob.image_url ? (
+                    // Supabase Storage URLs are configured at runtime.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={selectedMapJob.image_url}
+                      alt=""
+                      className="h-28 w-full bg-gray-50 object-contain md:h-full"
+                    />
+                  ) : null}
+                  <div className="p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-blue-700">
+                          選択中の求人
+                        </p>
+                        <h2 className="mt-1 break-words text-lg font-bold text-gray-900 md:text-xl">
+                          {selectedMapJob.title}
+                        </h2>
+                        <p className="mt-1 font-medium text-gray-800">
+                          {selectedMapJob.company || "掲載企業未設定"}
+                          {selectedMapJob.area ||
+                          selectedMapJob.suburb ||
+                          selectedMapJob.district ||
+                          selectedMapJob.city
+                            ? ` / ${
+                                selectedMapJob.area ||
+                                selectedMapJob.suburb ||
+                                selectedMapJob.district ||
+                                selectedMapJob.city
+                              }`
+                            : ""}
+                        </p>
+                      </div>
+                      <div className="w-fit rounded-full bg-green-50 px-3 py-1.5 text-sm font-bold text-green-700">
+                        {selectedMapJob.hourly_rate_max
+                          ? `$${selectedMapJob.hourly_rate_min ?? selectedMapJob.hourly_rate ?? 0} - $${selectedMapJob.hourly_rate_max}/時`
+                          : formatHourlyRate(
+                              selectedMapJob.hourly_rate_min ??
+                                selectedMapJob.hourly_rate,
+                            )}
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {selectedMapJob.employment_type ? (
+                        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700">
+                          {selectedMapJob.employment_type}
+                        </span>
+                      ) : null}
+                      {selectedMapJob.japanese_ok ? (
+                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
+                          日本語OK
+                        </span>
+                      ) : null}
+                      {selectedMapJob.visa_conditions ? (
+                        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                          {selectedMapJob.visa_conditions}
+                        </span>
+                      ) : null}
+                      {(selectedMapJob.weekly_hours ??
+                        selectedMapJob.work_hours) != null ? (
+                        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700">
+                          週
+                          {selectedMapJob.weekly_hours ??
+                            selectedMapJob.work_hours}
+                          時間
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <p className="mt-3 line-clamp-2 text-sm font-medium leading-6 text-gray-700">
+                      {selectedMapJob.description || "職務内容は未設定です。"}
+                    </p>
+
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                      <button
+                        onClick={() => handleSaveJob(selectedMapJob)}
+                        disabled={savingJobId === selectedMapJob.id}
+                        className="w-full rounded-lg border border-blue-600 bg-white px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto"
+                      >
+                        {savingJobId === selectedMapJob.id
+                          ? "保存中..."
+                          : "保存する"}
+                      </button>
+                      <button
+                        onClick={() => handleApplyJob(selectedMapJob)}
+                        disabled={savingJobId === selectedMapJob.id}
+                        className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-300 sm:w-auto"
+                      >
+                        {savingJobId === selectedMapJob.id
+                          ? "準備中..."
+                          : "応募する"}
+                      </button>
+                      {selectedMapJob.apply_url ? (
+                        <a
+                          href={selectedMapJob.apply_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                        >
+                          外部ページを見る
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ) : mapJobs.length ? (
+              <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-5 text-sm font-bold text-gray-700">
+                表示したい求人のピンを地図上で選択してください。
+              </div>
+            ) : null}
+          </div>
         ) : (
           <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
             {filteredJobs.map((job) => (

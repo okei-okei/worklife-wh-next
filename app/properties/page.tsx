@@ -198,6 +198,9 @@ export default function PropertiesPage() {
   >("all");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [expandedPropertyIds, setExpandedPropertyIds] = useState<string[]>([]);
+  const [selectedMapPropertyId, setSelectedMapPropertyId] = useState<
+    string | null
+  >(null);
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     inquiry?: (property: PublicProperty) => void;
@@ -712,6 +715,14 @@ export default function PropertiesPage() {
     [filteredProperties],
   );
 
+  const selectedMapProperty = useMemo(
+    () =>
+      filteredProperties.find(
+        (property) => property.id === selectedMapPropertyId,
+      ) || null,
+    [filteredProperties, selectedMapPropertyId],
+  );
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -941,15 +952,160 @@ export default function PropertiesPage() {
             </p>
           </div>
         ) : viewMode === "map" ? (
-          <section className="rounded-2xl bg-white p-3 shadow md:p-4">
-            {mapProperties.length ? (
-              <MapView jobs={[]} properties={mapProperties} />
-            ) : (
-              <p className="p-4 font-medium text-gray-700">
-                地図に表示できる座標付き物件がありません。リスト表示ではすべての物件を確認できます。
-              </p>
-            )}
-          </section>
+          <div className="space-y-4">
+            <section className="rounded-2xl bg-white p-3 shadow md:p-4">
+              {mapProperties.length ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-bold text-gray-700">
+                    地図上のピンを選択すると、下に選択中の物件を1件だけ表示します。
+                  </p>
+                  <MapView
+                    jobs={[]}
+                    properties={mapProperties}
+                    highlightedPropertyId={selectedMapProperty?.id}
+                    onPropertySelect={setSelectedMapPropertyId}
+                  />
+                </div>
+              ) : (
+                <p className="p-4 font-medium text-gray-700">
+                  地図に表示できる座標付き物件がありません。リスト表示ではすべての物件を確認できます。
+                </p>
+              )}
+            </section>
+
+            {selectedMapProperty ? (
+              <article
+                id={`property-${selectedMapProperty.id}`}
+                className="overflow-hidden rounded-2xl bg-white shadow"
+              >
+                {selectedMapProperty.image_urls?.length ? (
+                  <div className="flex gap-2 overflow-x-auto bg-gray-50 p-2">
+                    {selectedMapProperty.image_urls.map((imageUrl, index) => (
+                      <div
+                        key={`${selectedMapProperty.id}-map-${imageUrl}`}
+                        className="relative h-24 w-40 flex-none overflow-hidden rounded-xl bg-white ring-1 ring-gray-200 md:h-28 md:w-48"
+                      >
+                        {/* Supabase Storage URLs are configured at runtime. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imageUrl}
+                          alt={`${selectedMapProperty.title}の画像${index + 1}`}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-blue-700">
+                        選択中の物件
+                      </p>
+                      <h2 className="mt-1 break-words text-lg font-bold text-gray-900 md:text-xl">
+                        {selectedMapProperty.title}
+                      </h2>
+                      <p className="mt-1 font-medium text-gray-800">
+                        {selectedMapProperty.city || "都市未設定"}
+                        {selectedMapProperty.area
+                          ? ` / ${selectedMapProperty.area}`
+                          : ""}
+                      </p>
+                    </div>
+                    <div className="w-fit rounded-full bg-green-50 px-3 py-1.5 text-sm font-bold text-green-700">
+                      {formatRent(selectedMapProperty.rent_weekly)}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    <PropertyFact
+                      label="ベッド"
+                      value={
+                        selectedMapProperty.bedrooms === null ||
+                        selectedMapProperty.bedrooms === undefined
+                          ? "未設定"
+                          : `${selectedMapProperty.bedrooms}`
+                      }
+                    />
+                    <PropertyFact
+                      label="バス"
+                      value={
+                        selectedMapProperty.bathrooms === null ||
+                        selectedMapProperty.bathrooms === undefined
+                          ? "未設定"
+                          : `${selectedMapProperty.bathrooms}`
+                      }
+                    />
+                    <PropertyFact
+                      label="駐車場"
+                      value={
+                        selectedMapProperty.parking_spaces === null ||
+                        selectedMapProperty.parking_spaces === undefined
+                          ? "未設定"
+                          : `${selectedMapProperty.parking_spaces}`
+                      }
+                    />
+                    <PropertyFact
+                      label="光熱費"
+                      value={formatUtilitiesIncluded(selectedMapProperty)}
+                    />
+                    <PropertyFact
+                      label="ペット"
+                      value={formatNullableBoolean(
+                        selectedMapProperty.pets_allowed,
+                      )}
+                    />
+                    <PropertyFact
+                      label="喫煙"
+                      value={formatNullableBoolean(
+                        selectedMapProperty.smoking_allowed,
+                      )}
+                    />
+                  </div>
+
+                  <p className="mt-3 line-clamp-2 text-sm font-medium leading-6 text-gray-700">
+                    {selectedMapProperty.description ||
+                      "物件説明は未設定です。"}
+                  </p>
+
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <button
+                      onClick={() => handleSaveProperty(selectedMapProperty)}
+                      disabled={savingPropertyId === selectedMapProperty.id}
+                      className="w-full rounded-lg border border-blue-700 bg-white px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto"
+                    >
+                      {savingPropertyId === selectedMapProperty.id
+                        ? "保存中..."
+                        : "保存する"}
+                    </button>
+                    <button
+                      onClick={() => handleInquiryProperty(selectedMapProperty)}
+                      disabled={savingPropertyId === selectedMapProperty.id}
+                      className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-800 disabled:bg-gray-300 sm:w-auto"
+                    >
+                      {savingPropertyId === selectedMapProperty.id
+                        ? "準備中..."
+                        : "問い合わせる"}
+                    </button>
+                    {selectedMapProperty.url ? (
+                      <a
+                        href={selectedMapProperty.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                      >
+                        物件ページを見る
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              </article>
+            ) : mapProperties.length ? (
+              <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-5 text-sm font-bold text-gray-700">
+                表示したい物件のピンを地図上で選択してください。
+              </div>
+            ) : null}
+          </div>
         ) : (
           <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
             {filteredProperties.map((property) => (

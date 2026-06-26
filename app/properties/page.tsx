@@ -223,7 +223,7 @@ export default function PropertiesPage() {
           ? await supabase
               .from("public_properties")
               .select(
-                "id, title, city, area, address, rent_weekly, description, url, latitude, longitude",
+                "id, title, city, area, address, rent_weekly, description, inquiry_method, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, image_urls",
               )
               .eq("is_active", true)
               .order("created_at", {
@@ -295,6 +295,7 @@ export default function PropertiesPage() {
       available_from: property.available_from,
       pets_allowed: property.pets_allowed,
       smoking_allowed: property.smoking_allowed,
+      image_urls: property.image_urls || [],
       source_type: "public",
       public_property_id: property.id,
       utilities_included:
@@ -325,6 +326,16 @@ export default function PropertiesPage() {
         location: property.area || property.city || "",
         address: property.address || property.area || property.city || "",
         rent_weekly: property.rent_weekly,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        parking_spaces: property.parking_spaces,
+        available_from: property.available_from,
+        pets_allowed: property.pets_allowed,
+        utilities_included:
+          property.utilities_included ?? property.bills_included ?? null,
+        bills_included:
+          property.utilities_included ?? property.bills_included ?? null,
+        image_urls: property.image_urls || [],
         status: "気になる",
         latitude: property.latitude,
         longitude: property.longitude,

@@ -7,8 +7,15 @@ export type Job = {
   location?: string | null;
   employment_type?: string | null;
   hourly_rate: number | null;
+  hourly_rate_min?: number | null;
+  hourly_rate_max?: number | null;
   work_hours: number | null;
+  weekly_hours?: number | null;
   accommodation_available?: boolean | null;
+  japanese_ok?: boolean | null;
+  english_level?: string | null;
+  visa_conditions?: string | null;
+  start_date?: string | null;
   image_urls?: string[] | null;
   status: string | null;
   address: string | null;

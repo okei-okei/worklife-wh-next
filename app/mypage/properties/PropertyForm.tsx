@@ -5,6 +5,13 @@ import { supabase } from "@/lib/supabase";
 import { geocodeAddress } from "@/lib/geocoder";
 import NzLocationPicker from "@/components/NzLocationPicker";
 
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("column") ||
+      error?.message?.includes("schema cache"),
+  );
+}
+
 export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
@@ -71,7 +78,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
 
     const geo = await geocodeAddress(address);
 
-    const { error } = await supabase.from("saved_properties").insert({
+    const fullPayload = {
       user_id: user.id,
       title,
       url,
@@ -92,9 +99,55 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
       status: "気になる",
       latitude: geo.latitude,
       longitude: geo.longitude,
-    });
+    };
 
-    if (error) return alert(error.message);
+    const compatiblePayload = {
+      user_id: user.id,
+      title,
+      url,
+      location,
+      address,
+      rent_weekly: rent ? Number(rent) : null,
+      bedrooms: bedrooms ? Number(bedrooms) : null,
+      bathrooms: bathrooms ? Number(bathrooms) : null,
+      parking_spaces: parkingSpaces ? Number(parkingSpaces) : null,
+      utilities_included:
+        utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
+      bills_included:
+        utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
+      status: "気になる",
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+    };
+
+    const basicPayload = {
+      user_id: user.id,
+      title,
+      url,
+      location,
+      address,
+      rent_weekly: rent ? Number(rent) : null,
+      status: "気になる",
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+    };
+
+    const attempts = [fullPayload, compatiblePayload, basicPayload];
+    let lastError: { message?: string } | null = null;
+
+    for (const payload of attempts) {
+      const { error } = await supabase.from("saved_properties").insert(payload);
+
+      if (!error) {
+        lastError = null;
+        break;
+      }
+
+      lastError = error;
+      if (!isMissingColumnError(error)) break;
+    }
+
+    if (lastError) return alert(lastError.message);
 
     setTitle("");
     setUrl("");

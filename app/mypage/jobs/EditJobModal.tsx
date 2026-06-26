@@ -13,6 +13,13 @@ type Props = {
   onUpdated: () => void;
 };
 
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("column") ||
+      error?.message?.includes("schema cache"),
+  );
+}
+
 export default function EditJobModal({
   job,
   userId,
@@ -76,28 +83,62 @@ export default function EditJobModal({
       }
     }
 
+    const fullPayload = {
+      title,
+      company: company || null,
+      url,
+      location: location || null,
+      employment_type: employmentType || null,
+      hourly_rate: hourlyRate ? Number(hourlyRate) : null,
+      work_hours: workHours ? Number(workHours) : null,
+      accommodation_available:
+        accommodationAvailable === ""
+          ? null
+          : accommodationAvailable === "true",
+      status,
+      address,
+      latitude,
+      longitude,
+    };
+
+    const basicPayload = {
+      title,
+      company: company || null,
+      url,
+      location: location || null,
+      hourly_rate: hourlyRate ? Number(hourlyRate) : null,
+      work_hours: workHours ? Number(workHours) : null,
+      status,
+      address,
+      latitude,
+      longitude,
+    };
+
     const { error } = await supabase
       .from("saved_jobs")
-      .update({
-        title,
-        company: company || null,
-        url,
-        location: location || null,
-        employment_type: employmentType || null,
-        hourly_rate: hourlyRate ? Number(hourlyRate) : null,
-        work_hours: workHours ? Number(workHours) : null,
-        accommodation_available:
-          accommodationAvailable === ""
-            ? null
-            : accommodationAvailable === "true",
-        status,
-        address,
-        latitude,
-        longitude,
-      })
+      .update(fullPayload)
       .eq("id", job.id)
       .eq("user_id", userId)
       .select();
+
+    if (error && isMissingColumnError(error)) {
+      const { error: fallbackError } = await supabase
+        .from("saved_jobs")
+        .update(basicPayload)
+        .eq("id", job.id)
+        .eq("user_id", userId)
+        .select();
+
+      if (fallbackError) {
+        alert(fallbackError.message);
+        return;
+      }
+
+      alert("更新しました");
+      await onUpdated();
+      onClose();
+      return;
+    }
 
     if (error) {
       alert(error.message);

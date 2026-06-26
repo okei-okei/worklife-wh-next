@@ -5,6 +5,13 @@ import { supabase } from "@/lib/supabase";
 import { geocodeAddress } from "@/lib/geocoder";
 import NzLocationPicker from "@/components/NzLocationPicker";
 
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("column") ||
+      error?.message?.includes("schema cache"),
+  );
+}
+
 export default function JobForm({ onSaved }: { onSaved: () => void }) {
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
@@ -69,7 +76,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
 
     const geo = await geocodeAddress(address);
 
-    const { error } = await supabase.from("saved_jobs").insert({
+    const fullPayload = {
       user_id: user.id,
       title,
       company: company || null,
@@ -86,9 +93,34 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
       address,
       latitude: geo.latitude,
       longitude: geo.longitude,
-    });
+    };
 
-    if (error) return alert(error.message);
+    const basicPayload = {
+      user_id: user.id,
+      title,
+      company: company || null,
+      url,
+      location: location || null,
+      hourly_rate: hourlyRate ? Number(hourlyRate) : null,
+      work_hours: workHours ? Number(workHours) : null,
+      status,
+      address,
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+    };
+
+    const { error } = await supabase.from("saved_jobs").insert(fullPayload);
+
+    if (error && isMissingColumnError(error)) {
+      const { error: fallbackError } = await supabase
+        .from("saved_jobs")
+        .insert(basicPayload);
+
+      if (fallbackError) return alert(fallbackError.message);
+    } else if (error) {
+      return alert(error.message);
+    }
+
 
     setTitle("");
     setCompany("");

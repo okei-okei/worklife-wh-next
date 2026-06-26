@@ -34,6 +34,15 @@ function JobFact({ label, value }: { label: string; value: string }) {
   );
 }
 
+function formatHourlyRate(job: Job) {
+  const min = job.hourly_rate_min ?? job.hourly_rate;
+  const max = job.hourly_rate_max;
+
+  if (min == null && max == null) return "未設定";
+  if (max != null) return `$${min ?? 0} - $${max}/時`;
+  return `$${min}/時`;
+}
+
 export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
   const handleStatusChange = async (job: Job, status: string) => {
     if (!userId) {
@@ -79,7 +88,7 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
       {jobs.map((job) => (
         <article
           key={job.id}
@@ -91,14 +100,14 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
             <img
               src={job.image_urls[0]}
               alt=""
-              className="h-28 w-full object-cover sm:h-32 md:h-36"
+              className="h-20 w-full bg-gray-50 object-contain sm:h-24 md:h-28"
             />
           ) : null}
 
-          <div className="p-4 md:p-5">
+          <div className="p-3 md:p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <h2 className="break-words text-xl font-bold md:text-2xl">
+                <h2 className="break-words text-lg font-bold md:text-xl">
                   {job.title}
                 </h2>
                 <p className="mt-1 font-medium text-gray-800">
@@ -117,14 +126,43 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               </span>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <JobFact
-                label="時給"
-                value={job.hourly_rate ? `$${job.hourly_rate}` : "未設定"}
-              />
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {job.visa_conditions ? (
+                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                  {job.visa_conditions}
+                </span>
+              ) : null}
+              {job.japanese_ok ? (
+                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
+                  日本語OK
+                </span>
+              ) : null}
+              {job.english_level ? (
+                <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-700">
+                  英語{job.english_level}
+                </span>
+              ) : null}
+              {job.employment_type ? (
+                <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700">
+                  {job.employment_type}
+                </span>
+              ) : null}
+              {job.accommodation_available ? (
+                <span className="rounded-full bg-purple-50 px-2.5 py-1 text-xs font-bold text-purple-700">
+                  住み込み可能
+                </span>
+              ) : null}
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <JobFact label="時給" value={formatHourlyRate(job)} />
               <JobFact
                 label="週時間"
-                value={job.work_hours ? `${job.work_hours}h` : "未設定"}
+                value={
+                  (job.weekly_hours ?? job.work_hours) != null
+                    ? `${job.weekly_hours ?? job.work_hours}h`
+                    : "未設定"
+                }
               />
               <JobFact
                 label="採用形態"
@@ -142,7 +180,8 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               />
             </div>
 
-            <div className="mt-4 grid gap-2 text-sm font-medium text-gray-800">
+            <div className="mt-3 grid gap-1.5 text-sm font-medium text-gray-800">
+              {job.start_date ? <p>開始日: {job.start_date}</p> : null}
               {job.address ? <p className="break-words">住所: {job.address}</p> : null}
               {job.url ? (
                 <a

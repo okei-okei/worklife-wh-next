@@ -153,7 +153,7 @@ export default function JobsPage() {
       return;
     }
 
-    const saveUrl = job.apply_url || "";
+    const saveUrl = job.apply_url || `/jobs#job-${job.id}`;
     const { data: existingJob, error: existingError } = await supabase
       .from("saved_jobs")
       .select("id")
@@ -180,29 +180,77 @@ export default function JobsPage() {
       url: saveUrl,
       apply_url: job.apply_url,
       hourly_rate: job.hourly_rate,
+      hourly_rate_min: job.hourly_rate_min ?? job.hourly_rate,
+      hourly_rate_max: job.hourly_rate_max,
       work_hours: job.work_hours,
+      weekly_hours: job.weekly_hours ?? job.work_hours,
+      employment_type: job.employment_type,
+      accommodation_available: job.accommodation_available,
+      japanese_ok: job.japanese_ok,
+      english_level: job.english_level,
+      visa_conditions: job.visa_conditions,
+      start_date: job.start_date,
       status: "気になる",
-      address: job.address || job.city || "",
+      location: job.area || job.suburb || job.district || job.city || "",
+      address:
+        job.address || job.area || job.suburb || job.district || job.city || "",
       latitude: job.latitude,
       longitude: job.longitude,
       source_type: "public",
       public_job_id: job.id,
     };
 
-    const { data: insertedJob, error } = await supabase
-      .from("saved_jobs")
-      .insert(extendedPayload)
-      .select("id")
-      .single();
+    const compatiblePayload = {
+      user_id: user.id,
+      title: job.title,
+      company: job.company,
+      url: saveUrl,
+      hourly_rate: job.hourly_rate_min ?? job.hourly_rate,
+      work_hours: job.weekly_hours ?? job.work_hours,
+      employment_type: job.employment_type,
+      status: "気になる",
+      location: job.area || job.suburb || job.district || job.city || "",
+      address:
+        job.address || job.area || job.suburb || job.district || job.city || "",
+      latitude: job.latitude,
+      longitude: job.longitude,
+    };
 
-    if (!error) {
-      return { id: insertedJob.id as string, alreadySaved: false };
+    const basicPayload = {
+      user_id: user.id,
+      title: job.title,
+      url: saveUrl,
+      hourly_rate: job.hourly_rate_min ?? job.hourly_rate,
+      work_hours: job.weekly_hours ?? job.work_hours,
+      status: "気になる",
+      address:
+        job.address || job.area || job.suburb || job.district || job.city || "",
+      latitude: job.latitude,
+      longitude: job.longitude,
+    };
+
+    const insertAttempts = [extendedPayload, compatiblePayload, basicPayload];
+    const insertErrors: string[] = [];
+
+    for (const payload of insertAttempts) {
+      const { data: insertedJob, error } = await supabase
+        .from("saved_jobs")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (!error) {
+        return { id: insertedJob.id as string, alreadySaved: false };
+      }
+
+      insertErrors.push(error.message);
+
+      if (!isMissingColumnError(error)) {
+        break;
+      }
     }
 
-    if (!isMissingColumnError(error)) {
-      console.error(error);
-      throw new Error("保存に失敗しました。時間をおいて再度お試しください。");
-    }
+    console.error("saved_jobs insert failed:", insertErrors);
 
     const { data: fallbackJob, error: fallbackError } = await supabase
       .from("saved_jobs")
@@ -210,12 +258,9 @@ export default function JobsPage() {
         user_id: user.id,
         title: job.title,
         url: saveUrl,
-        hourly_rate: job.hourly_rate,
-        work_hours: job.work_hours,
+        hourly_rate: job.hourly_rate_min ?? job.hourly_rate,
+        work_hours: job.weekly_hours ?? job.work_hours,
         status: "気になる",
-        address: job.address || job.city || "",
-        latitude: job.latitude,
-        longitude: job.longitude,
       })
       .select("id")
       .single();

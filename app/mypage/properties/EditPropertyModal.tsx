@@ -13,6 +13,13 @@ type Props = {
   onUpdated: () => void;
 };
 
+function isMissingColumnError(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("column") ||
+      error?.message?.includes("schema cache"),
+  );
+}
+
 export default function EditPropertyModal({
   property,
   userId,
@@ -84,40 +91,82 @@ export default function EditPropertyModal({
       longitude = geo.longitude;
     }
 
-    const { error } = await supabase
-      .from("saved_properties")
-      .update({
-        title,
-        url,
-        location,
-        address,
-        rent_weekly: rent ? Number(rent) : null,
-        bedrooms: bedrooms ? Number(bedrooms) : null,
-        bathrooms: bathrooms ? Number(bathrooms) : null,
-        parking_spaces: parkingSpaces ? Number(parkingSpaces) : null,
-        available_from: availableFrom || null,
-        utilities_included:
-          utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
-        bills_included:
-          utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
-        pets_allowed: petsAllowed === "" ? null : petsAllowed === "true",
-        smoking_allowed:
-          smokingAllowed === "" ? null : smokingAllowed === "true",
-        latitude,
-        longitude,
-      })
-      .eq("id", property.id)
-      .eq("user_id", userId);
+    const fullPayload = {
+      title,
+      url,
+      location,
+      address,
+      rent_weekly: rent ? Number(rent) : null,
+      bedrooms: bedrooms ? Number(bedrooms) : null,
+      bathrooms: bathrooms ? Number(bathrooms) : null,
+      parking_spaces: parkingSpaces ? Number(parkingSpaces) : null,
+      available_from: availableFrom || null,
+      utilities_included:
+        utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
+      bills_included:
+        utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
+      pets_allowed: petsAllowed === "" ? null : petsAllowed === "true",
+      smoking_allowed:
+        smokingAllowed === "" ? null : smokingAllowed === "true",
+      latitude,
+      longitude,
+    };
 
-    if (error) {
-      alert(error.message);
-      return;
+    const compatiblePayload = {
+      title,
+      url,
+      location,
+      address,
+      rent_weekly: rent ? Number(rent) : null,
+      bedrooms: bedrooms ? Number(bedrooms) : null,
+      bathrooms: bathrooms ? Number(bathrooms) : null,
+      parking_spaces: parkingSpaces ? Number(parkingSpaces) : null,
+      utilities_included:
+        utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
+      bills_included:
+        utilitiesIncluded === "" ? null : utilitiesIncluded === "true",
+      latitude,
+      longitude,
+    };
+
+    const basicPayload = {
+      title,
+      url,
+      location,
+      address,
+      rent_weekly: rent ? Number(rent) : null,
+      latitude,
+      longitude,
+    };
+
+    const attempts = [fullPayload, compatiblePayload, basicPayload];
+    let lastError: { message?: string } | null = null;
+
+    for (const payload of attempts) {
+      const { error } = await supabase
+        .from("saved_properties")
+        .update(payload)
+        .eq("id", property.id)
+        .eq("user_id", userId);
+
+      if (!error) {
+        alert("更新しました");
+        onUpdated();
+        onClose();
+        return;
+      }
+
+      lastError = error;
+
+      if (!isMissingColumnError(error)) {
+        break;
+      }
     }
 
-    alert("更新しました");
-
-    onUpdated();
-    onClose();
+    if (lastError) {
+      alert(lastError.message);
+      return;
+    }
   };
 
   return (

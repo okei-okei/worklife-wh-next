@@ -98,7 +98,7 @@ export default function PropertyList({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
       {properties.map((p) => (
         <article
           key={p.id}
@@ -109,24 +109,24 @@ export default function PropertyList({
               {p.image_urls.map((imageUrl, index) => (
                 <div
                   key={`${p.id}-${imageUrl}`}
-                  className="h-28 w-44 flex-none overflow-hidden rounded-xl bg-gray-100 sm:h-32 sm:w-52 md:h-36 md:w-56"
+                  className="h-20 w-32 flex-none overflow-hidden rounded-xl bg-white ring-1 ring-gray-200 sm:h-24 sm:w-40 md:h-28 md:w-44"
                 >
                   {/* Supabase Storage URLs are configured at runtime. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={imageUrl}
                     alt={`${p.title}の画像${index + 1}`}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                   />
                 </div>
               ))}
             </div>
           ) : null}
 
-          <div className="p-4 md:p-5">
+          <div className="p-3 md:p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <h2 className="break-words text-xl font-bold md:text-2xl">
+                <h2 className="break-words text-lg font-bold md:text-xl">
                   {p.title}
                 </h2>
                 <p className="mt-1 font-medium text-gray-800">
@@ -142,7 +142,7 @@ export default function PropertyList({
               </span>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               <PropertyFact
                 label="家賃"
                 value={p.rent_weekly ? `$${p.rent_weekly}/週` : "未設定"}
@@ -179,7 +179,7 @@ export default function PropertyList({
               />
             </div>
 
-            <div className="mt-4 grid gap-2 text-sm font-medium text-gray-800">
+            <div className="mt-3 grid gap-1.5 text-sm font-medium text-gray-800">
               {p.address ? (
                 <p className="break-words">住所: {p.address}</p>
               ) : null}

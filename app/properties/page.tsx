@@ -261,7 +261,7 @@ export default function PropertiesPage() {
       return;
     }
 
-    const saveUrl = property.url || "";
+    const saveUrl = property.url || `/properties#property-${property.id}`;
     const { data: existingProperty, error: existingError } = await supabase
       .from("saved_properties")
       .select("id")
@@ -305,44 +305,76 @@ export default function PropertiesPage() {
         property.utilities_included ?? property.bills_included ?? null,
     };
 
-    const { data: insertedProperty, error } = await supabase
-      .from("saved_properties")
-      .insert(extendedPayload)
-      .select("id")
-      .single();
+    const compatiblePayload = {
+      user_id: user.id,
+      title: property.title,
+      url: saveUrl,
+      location: property.area || property.city || "",
+      address: property.address || property.area || property.city || "",
+      rent_weekly: property.rent_weekly,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      parking_spaces: property.parking_spaces,
+      available_from: property.available_from,
+      pets_allowed: property.pets_allowed,
+      utilities_included:
+        property.utilities_included ?? property.bills_included ?? null,
+      bills_included:
+        property.utilities_included ?? property.bills_included ?? null,
+      image_urls: property.image_urls || [],
+      status: "気になる",
+      latitude: property.latitude,
+      longitude: property.longitude,
+    };
 
-    if (!error) {
-      return { id: insertedProperty.id as string, alreadySaved: false };
+    const basicPayload = {
+      user_id: user.id,
+      title: property.title,
+      url: saveUrl,
+      location: property.area || property.city || "",
+      address: property.address || property.area || property.city || "",
+      rent_weekly: property.rent_weekly,
+      status: "気になる",
+      latitude: property.latitude,
+      longitude: property.longitude,
+    };
+
+    const insertAttempts = [extendedPayload, compatiblePayload, basicPayload];
+    const insertErrors: string[] = [];
+
+    for (const payload of insertAttempts) {
+      const { data: insertedProperty, error } = await supabase
+        .from("saved_properties")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (!error) {
+        return { id: insertedProperty.id as string, alreadySaved: false };
+      }
+
+      insertErrors.push(error.message);
+
+      if (!isMissingColumnError(error)) {
+        break;
+      }
     }
 
-    if (!isMissingColumnError(error)) {
-      console.error(error);
-      throw new Error("保存に失敗しました。時間をおいて再度お試しください。");
-    }
+    console.error("saved_properties insert failed:", insertErrors);
 
-    const { data: fallbackProperty, error: fallbackError } = await supabase
-      .from("saved_properties")
-      .insert({
+    const minimalRetryPayload = {
         user_id: user.id,
         title: property.title,
         url: saveUrl,
         location: property.area || property.city || "",
         address: property.address || property.area || property.city || "",
         rent_weekly: property.rent_weekly,
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms,
-        parking_spaces: property.parking_spaces,
-        available_from: property.available_from,
-        pets_allowed: property.pets_allowed,
-        utilities_included:
-          property.utilities_included ?? property.bills_included ?? null,
-        bills_included:
-          property.utilities_included ?? property.bills_included ?? null,
-        image_urls: property.image_urls || [],
         status: "気になる",
-        latitude: property.latitude,
-        longitude: property.longitude,
-      })
+      };
+
+    const { data: fallbackProperty, error: fallbackError } = await supabase
+      .from("saved_properties")
+      .insert(minimalRetryPayload)
       .select("id")
       .single();
 

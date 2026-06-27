@@ -22,6 +22,25 @@ export default function MoneyTransferComparisonPage() {
       <MoneyTransferSimulator services={moneyTransferServices} />
 
       <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+        <h2 className="text-xl font-bold text-gray-900">関連カテゴリ</h2>
+        <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+          <p className="text-sm font-bold text-blue-700">銀行口座</p>
+          <h3 className="mt-2 text-lg font-bold text-gray-900">
+            送金先のNZ銀行口座も確認する
+          </h3>
+          <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
+            送金方法を決めたら、給与受取や家賃支払いに使うNZ銀行口座・多通貨サービスも確認しておきましょう。
+          </p>
+          <Link
+            href="/partners/bank"
+            className="mt-4 inline-flex w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white hover:bg-blue-800 sm:w-auto"
+          >
+            送金先のNZ銀行口座も確認する
+          </Link>
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-white p-4 shadow md:p-6">
         <h2 className="text-xl font-bold text-gray-900">関連記事</h2>
         <article className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
           <p className="text-sm font-bold text-blue-700">海外送金</p>

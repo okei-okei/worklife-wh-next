@@ -12,7 +12,8 @@ export const PARTNER_CATEGORIES = [
   {
     key: "bank",
     label: "銀行口座",
-    description: "給与受け取りや生活費管理に使う銀行口座を確認できます。",
+    description:
+      "給与受取、家賃支払い、生活費管理に使う銀行口座や多通貨サービスを確認できます。",
   },
   {
     key: "money_transfer",

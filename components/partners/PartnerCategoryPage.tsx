@@ -19,12 +19,14 @@ type Props = {
   filters: PartnerFilter[];
   comparisonFields: PartnerComparisonField[];
   recommendations: PartnerRecommendation[];
+  noticeText?: string;
   children?: ReactNode;
 };
 
 function formatValue(value: string | boolean | number | null | undefined) {
   if (value === true) return "○";
   if (value === false) return "—";
+  if (value === "depends") return "条件による";
   if (value === null || value === undefined || value === "") return "要確認";
   return String(value);
 }
@@ -47,6 +49,7 @@ export default function PartnerCategoryPage({
   filters,
   comparisonFields,
   recommendations,
+  noticeText,
   children,
 }: Props) {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -95,7 +98,8 @@ export default function PartnerCategoryPage({
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm font-medium leading-6 text-gray-700">
-          掲載サービスには広告・紹介リンクが含まれる場合があります。契約前に必ず公式サイトで最新情報をご確認ください。
+          {noticeText ||
+            "掲載サービスには広告・紹介リンクが含まれる場合があります。契約前に必ず公式サイトで最新情報をご確認ください。"}
         </section>
 
         {hasServices ? (

@@ -53,16 +53,16 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
     title: "銀行口座",
     icon: "🏦",
     description:
-      "NZ到着後の給与受取や生活費管理に使う銀行口座を比較できます。",
+      "給与受取、家賃支払い、生活費管理に使う銀行口座や多通貨サービスを比較できます。",
     href: "/partners/bank",
     buttonLabel: "銀行口座を比較する",
-    services: ["ANZ", "ASB", "BNZ", "Westpac", "Kiwibank"],
+    services: ["ANZ", "ASB", "BNZ", "Westpac", "Kiwibank", "Wise"],
     comparisonItems: [
-      "口座開設",
-      "カード発行",
-      "アプリ",
+      "オンライン開設",
+      "給与受取",
+      "家賃支払い",
+      "海外送金",
       "支店サポート",
-      "送金相性",
     ],
   },
   {

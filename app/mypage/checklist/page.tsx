@@ -116,6 +116,17 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     urgency: "medium",
   },
   {
+    key: "money_transfer_receiving_account",
+    phase: "渡航前",
+    label: "海外送金後の受取口座を確認する",
+    description:
+      "日本からNZへ送金した資金を、どの銀行口座や多通貨サービスで受け取るか確認します。",
+    primaryHref: "/partners/bank",
+    primaryLabel: "銀行口座を比較する",
+    partnerCategory: "bank",
+    urgency: "medium",
+  },
+  {
     key: "initial_costs",
     phase: "渡航前",
     label: "初期費用の目安を確認する",
@@ -146,10 +157,22 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
   {
     key: "bank_prepare",
     phase: "到着後すぐ",
-    label: "銀行口座を準備する",
-    description: "給与受け取りや生活費管理に使う銀行口座を確認します。",
+    label: "銀行口座を開設する",
+    description:
+      "給与受け取りや生活費管理に使う銀行口座を確認します。",
     primaryHref: "/partners/bank",
-    primaryLabel: "比較を見る",
+    primaryLabel: "銀行口座を比較する",
+    partnerCategory: "bank",
+    urgency: "high",
+  },
+  {
+    key: "salary_receiving_account",
+    phase: "到着後すぐ",
+    label: "給与受取用の口座を準備する",
+    description:
+      "現地で働く予定がある場合は、雇用主が給与を振り込める口座条件を確認します。",
+    primaryHref: "/partners/bank",
+    primaryLabel: "銀行口座を比較する",
     partnerCategory: "bank",
     urgency: "high",
   },
@@ -274,6 +297,17 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     primaryLabel: "比較を見る",
     partnerCategory: "furniture",
     urgency: "low",
+  },
+  {
+    key: "rent_living_payment_method",
+    phase: "生活インフラ",
+    label: "家賃支払い・生活費管理の方法を決める",
+    description:
+      "家賃、デポジット、生活費をどの口座やカードで管理するか確認します。",
+    primaryHref: "/partners/bank",
+    primaryLabel: "銀行口座を比較する",
+    partnerCategory: "bank",
+    urgency: "medium",
   },
   {
     key: "resume_saved",

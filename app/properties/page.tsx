@@ -40,11 +40,55 @@ type PublicProperty = {
   image_urls?: string[] | null;
 };
 
+type Coordinates = {
+  latitude: number | null;
+  longitude: number | null;
+};
+
+type GeocodedCoordinates = Record<string, { latitude: number; longitude: number }>;
+
 function isMissingColumnError(error: { message?: string } | null) {
   return Boolean(
     error?.message?.includes("column") ||
       error?.message?.includes("schema cache"),
   );
+}
+
+function getPropertyGeocodeQuery(property: PublicProperty) {
+  return [
+    property.address,
+    property.area || property.suburb,
+    property.district || property.city,
+    property.region,
+    property.country_code || "NZ",
+  ]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .filter((part, index, all) => all.indexOf(part) === index)
+    .join(", ");
+}
+
+async function fetchCoordinates(query: string): Promise<Coordinates> {
+  if (!query) return { latitude: null, longitude: null };
+
+  const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+  if (!response.ok) return { latitude: null, longitude: null };
+
+  return response.json() as Promise<Coordinates>;
+}
+
+function resolvePropertyCoordinates(
+  property: PublicProperty,
+  geocodedCoordinates: GeocodedCoordinates,
+) {
+  if (
+    typeof property.latitude === "number" &&
+    typeof property.longitude === "number"
+  ) {
+    return { latitude: property.latitude, longitude: property.longitude };
+  }
+
+  return geocodedCoordinates[property.id] || null;
 }
 
 function buildLoginRedirect(path: string) {
@@ -201,6 +245,8 @@ export default function PropertiesPage() {
   const [selectedMapPropertyId, setSelectedMapPropertyId] = useState<
     string | null
   >(null);
+  const [geocodedPropertyCoordinates, setGeocodedPropertyCoordinates] =
+    useState<GeocodedCoordinates>({});
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     inquiry?: (property: PublicProperty) => void;
@@ -718,34 +764,101 @@ export default function PropertiesPage() {
     setUtilitiesFilter("all");
   };
 
+  useEffect(() => {
+    if (viewMode !== "map") return;
+
+    const targets = filteredProperties
+      .filter(
+        (property) =>
+          !(
+            typeof property.latitude === "number" &&
+            typeof property.longitude === "number"
+          ) &&
+          !geocodedPropertyCoordinates[property.id] &&
+          getPropertyGeocodeQuery(property),
+      )
+      .slice(0, 12);
+
+    if (!targets.length) return;
+
+    let isCancelled = false;
+
+    const run = async () => {
+      const entries = await Promise.all(
+        targets.map(async (property) => {
+          const coordinates = await fetchCoordinates(
+            getPropertyGeocodeQuery(property),
+          );
+          if (
+            typeof coordinates.latitude === "number" &&
+            typeof coordinates.longitude === "number"
+          ) {
+            return [property.id, coordinates] as const;
+          }
+          return null;
+        }),
+      );
+
+      if (isCancelled) return;
+
+      setGeocodedPropertyCoordinates((current) => {
+        const validEntries = entries.filter(
+          (entry): entry is NonNullable<typeof entry> => Boolean(entry),
+        );
+        if (!validEntries.length) return current;
+
+        const next = { ...current };
+        validEntries.forEach((entry) => {
+          next[entry[0]] = {
+            latitude: entry[1].latitude as number,
+            longitude: entry[1].longitude as number,
+          };
+        });
+        return next;
+      });
+    };
+
+    void run();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [filteredProperties, geocodedPropertyCoordinates, viewMode]);
+
   const mapProperties = useMemo(
     () =>
       filteredProperties
-        .filter(
-          (property) =>
-            typeof property.latitude === "number" &&
-            typeof property.longitude === "number",
-        )
-        .map((property) => ({
-          id: property.id,
-          lat: property.latitude as number,
-          lng: property.longitude as number,
-          label: property.title,
-          subtitle:
-            property.area ||
-            property.suburb ||
-            property.district ||
-            property.city ||
-            "地域未設定",
-          details: [
-            formatRent(property.rent_weekly),
-            `ベッドルーム: ${property.bedrooms ?? "未設定"}`,
-            `入居可能日: ${property.available_from || "要確認"}`,
-          ],
-          href: property.url || `/properties#property-${property.id}`,
-          selectLabel: "この物件を選択",
-        })),
-    [filteredProperties],
+        .map((property) => {
+          const coordinates = resolvePropertyCoordinates(
+            property,
+            geocodedPropertyCoordinates,
+          );
+          if (!coordinates) return null;
+
+          return {
+            id: property.id,
+            lat: coordinates.latitude,
+            lng: coordinates.longitude,
+            label: property.title,
+            subtitle:
+              property.area ||
+              property.suburb ||
+              property.district ||
+              property.city ||
+              "地域未設定",
+            details: [
+              formatRent(property.rent_weekly),
+              `ベッドルーム: ${property.bedrooms ?? "未設定"}`,
+              `入居可能日: ${property.available_from || "要確認"}`,
+            ],
+            href: property.url || `/properties#property-${property.id}`,
+            selectLabel: "この物件を選択",
+          };
+        })
+        .filter((property): property is NonNullable<typeof property> =>
+          Boolean(property),
+        ),
+    [filteredProperties, geocodedPropertyCoordinates],
   );
 
   const propertiesWithoutCoordinates =

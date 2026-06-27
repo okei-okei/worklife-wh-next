@@ -42,6 +42,13 @@ type PublicJob = {
   image_url?: string | null;
 };
 
+type Coordinates = {
+  latitude: number | null;
+  longitude: number | null;
+};
+
+type GeocodedCoordinates = Record<string, { latitude: number; longitude: number }>;
+
 function isMissingColumnError(error: { message?: string } | null) {
   return Boolean(
     error?.message?.includes("column") ||
@@ -73,6 +80,40 @@ function calculateDistanceKm(
   return earthRadiusKm * c;
 }
 
+function getJobGeocodeQuery(job: PublicJob) {
+  return [
+    job.address,
+    job.area || job.suburb,
+    job.district || job.city,
+    job.region,
+    job.country_code || "NZ",
+  ]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .filter((part, index, all) => all.indexOf(part) === index)
+    .join(", ");
+}
+
+async function fetchCoordinates(query: string): Promise<Coordinates> {
+  if (!query) return { latitude: null, longitude: null };
+
+  const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+  if (!response.ok) return { latitude: null, longitude: null };
+
+  return response.json() as Promise<Coordinates>;
+}
+
+function resolveJobCoordinates(
+  job: PublicJob,
+  geocodedCoordinates: GeocodedCoordinates,
+) {
+  if (typeof job.latitude === "number" && typeof job.longitude === "number") {
+    return { latitude: job.latitude, longitude: job.longitude };
+  }
+
+  return geocodedCoordinates[job.id] || null;
+}
+
 export default function JobsPage() {
   const router = useRouter();
   const [jobs, setJobs] = useState<PublicJob[]>([]);
@@ -96,6 +137,8 @@ export default function JobsPage() {
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [expandedJobIds, setExpandedJobIds] = useState<string[]>([]);
   const [selectedMapJobId, setSelectedMapJobId] = useState<string | null>(null);
+  const [geocodedJobCoordinates, setGeocodedJobCoordinates] =
+    useState<GeocodedCoordinates>({});
   const handledPendingActionRef = useRef(false);
   const pendingActionHandlersRef = useRef<{
     apply?: (job: PublicJob) => void;
@@ -522,31 +565,88 @@ export default function JobsPage() {
     setAccommodationOnly(false);
   };
 
+  useEffect(() => {
+    if (viewMode !== "map") return;
+
+    const targets = filteredJobs
+      .filter(
+        (job) =>
+          !(typeof job.latitude === "number" && typeof job.longitude === "number") &&
+          !geocodedJobCoordinates[job.id] &&
+          getJobGeocodeQuery(job),
+      )
+      .slice(0, 12);
+
+    if (!targets.length) return;
+
+    let isCancelled = false;
+
+    const run = async () => {
+      const entries = await Promise.all(
+        targets.map(async (job) => {
+          const coordinates = await fetchCoordinates(getJobGeocodeQuery(job));
+          if (
+            typeof coordinates.latitude === "number" &&
+            typeof coordinates.longitude === "number"
+          ) {
+            return [job.id, coordinates] as const;
+          }
+          return null;
+        }),
+      );
+
+      if (isCancelled) return;
+
+      setGeocodedJobCoordinates((current) => {
+        const validEntries = entries.filter(
+          (entry): entry is NonNullable<typeof entry> => Boolean(entry),
+        );
+        if (!validEntries.length) return current;
+
+        const next = { ...current };
+        validEntries.forEach((entry) => {
+          next[entry[0]] = {
+            latitude: entry[1].latitude as number,
+            longitude: entry[1].longitude as number,
+          };
+        });
+        return next;
+      });
+    };
+
+    void run();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [filteredJobs, geocodedJobCoordinates, viewMode]);
+
   const mapJobs = useMemo(
     () =>
       filteredJobs
-        .filter(
-          (job) =>
-            typeof job.latitude === "number" &&
-            typeof job.longitude === "number",
-        )
-        .map((job) => ({
-          id: job.id,
-          lat: job.latitude as number,
-          lng: job.longitude as number,
-          label: job.title,
-          subtitle: `${job.company || "掲載企業未設定"} / ${
-            job.area || job.suburb || job.district || job.city || "地域未設定"
-          }`,
-          details: [
-            job.company || "掲載企業未設定",
-            job.employment_type || "採用形態未設定",
-            formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate),
-          ],
-          href: job.apply_url || `/jobs#job-${job.id}`,
-          selectLabel: "この求人を選択",
-        })),
-    [filteredJobs],
+        .map((job) => {
+          const coordinates = resolveJobCoordinates(job, geocodedJobCoordinates);
+          if (!coordinates) return null;
+
+          return {
+            id: job.id,
+            lat: coordinates.latitude,
+            lng: coordinates.longitude,
+            label: job.title,
+            subtitle: `${job.company || "掲載企業未設定"} / ${
+              job.area || job.suburb || job.district || job.city || "地域未設定"
+            }`,
+            details: [
+              job.company || "掲載企業未設定",
+              job.employment_type || "採用形態未設定",
+              formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate),
+            ],
+            href: job.apply_url || `/jobs#job-${job.id}`,
+            selectLabel: "この求人を選択",
+          };
+        })
+        .filter((job): job is NonNullable<typeof job> => Boolean(job)),
+    [filteredJobs, geocodedJobCoordinates],
   );
 
   const jobsWithoutCoordinates = filteredJobs.length - mapJobs.length;
@@ -837,6 +937,11 @@ export default function JobsPage() {
                               }`
                             : ""}
                         </p>
+                        {selectedMapJob.address ? (
+                          <p className="mt-1 break-words text-sm font-medium text-gray-700">
+                            住所: {selectedMapJob.address}
+                          </p>
+                        ) : null}
                       </div>
                       <div className="w-fit rounded-full bg-green-50 px-3 py-1.5 text-sm font-bold text-green-700">
                         {selectedMapJob.hourly_rate_max
@@ -951,6 +1056,11 @@ export default function JobsPage() {
                         ? ` / ${job.area || job.suburb || job.district || job.city}`
                         : ""}
                     </p>
+                    {job.address ? (
+                      <p className="mt-1 break-words text-sm font-medium text-gray-700">
+                        住所: {job.address}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="w-fit rounded-full bg-green-50 px-3 py-1.5 text-sm font-bold text-green-700">

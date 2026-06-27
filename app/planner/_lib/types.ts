@@ -10,6 +10,7 @@ export type Job = {
   work_hours: number | null;
   latitude: number | null;
   longitude: number | null;
+  updated_at?: string | null;
 };
 
 export type Property = {
@@ -18,6 +19,7 @@ export type Property = {
   rent_weekly: number | null;
   latitude: number | null;
   longitude: number | null;
+  updated_at?: string | null;
 };
 
 export type ScoreResult = {

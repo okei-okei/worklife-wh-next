@@ -9,7 +9,17 @@ import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
 
-const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
+const PublicListingsMap = dynamic(
+  () => import("@/components/maps/PublicListingsMap"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[360px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-4 text-center font-bold text-gray-800 md:h-[520px]">
+        地図を読み込み中...
+      </div>
+    ),
+  },
+);
 
 type PublicJob = {
   id: string;
@@ -94,6 +104,15 @@ function getJobGeocodeQuery(job: PublicJob) {
     .join(", ");
 }
 
+function hasValidCoordinates(latitude: unknown, longitude: unknown) {
+  return (
+    typeof latitude === "number" &&
+    typeof longitude === "number" &&
+    latitude !== 0 &&
+    longitude !== 0
+  );
+}
+
 async function fetchCoordinates(query: string): Promise<Coordinates> {
   if (!query) return { latitude: null, longitude: null };
 
@@ -106,9 +125,9 @@ async function fetchCoordinates(query: string): Promise<Coordinates> {
 function resolveJobCoordinates(
   job: PublicJob,
   geocodedCoordinates: GeocodedCoordinates,
-) {
-  if (typeof job.latitude === "number" && typeof job.longitude === "number") {
-    return { latitude: job.latitude, longitude: job.longitude };
+): { latitude: number; longitude: number } | null {
+  if (hasValidCoordinates(job.latitude, job.longitude)) {
+    return { latitude: job.latitude as number, longitude: job.longitude as number };
   }
 
   return geocodedCoordinates[job.id] || null;
@@ -571,7 +590,7 @@ export default function JobsPage() {
     const targets = filteredJobs
       .filter(
         (job) =>
-          !(typeof job.latitude === "number" && typeof job.longitude === "number") &&
+          !hasValidCoordinates(job.latitude, job.longitude) &&
           !geocodedJobCoordinates[job.id] &&
           getJobGeocodeQuery(job),
       )
@@ -587,7 +606,8 @@ export default function JobsPage() {
           const coordinates = await fetchCoordinates(getJobGeocodeQuery(job));
           if (
             typeof coordinates.latitude === "number" &&
-            typeof coordinates.longitude === "number"
+            typeof coordinates.longitude === "number" &&
+            hasValidCoordinates(coordinates.latitude, coordinates.longitude)
           ) {
             return [job.id, coordinates] as const;
           }
@@ -630,19 +650,17 @@ export default function JobsPage() {
 
           return {
             id: job.id,
-            lat: coordinates.latitude,
-            lng: coordinates.longitude,
-            label: job.title,
-            subtitle: `${job.company || "掲載企業未設定"} / ${
-              job.area || job.suburb || job.district || job.city || "地域未設定"
-            }`,
-            details: [
-              job.company || "掲載企業未設定",
-              job.employment_type || "採用形態未設定",
-              formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate),
-            ],
-            href: job.apply_url || `/jobs#job-${job.id}`,
-            selectLabel: "この求人を選択",
+            type: "job" as const,
+            title: job.title,
+            subtitle: job.company || "掲載企業未設定",
+            locationLabel:
+              [job.region, job.district || job.city, job.area || job.suburb]
+                .filter(Boolean)
+                .join(" / ") || "地域未設定",
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            priceLabel: formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate),
+            metaLabel: job.employment_type || "採用形態未設定",
           };
         })
         .filter((job): job is NonNullable<typeof job> => Boolean(job)),
@@ -880,11 +898,11 @@ export default function JobsPage() {
                       ) : null}
                     </div>
                   </div>
-                  <MapView
-                    jobs={mapJobs}
-                    properties={[]}
-                    highlightedJobId={selectedMapJob?.id}
-                    onJobSelect={setSelectedMapJobId}
+                  <PublicListingsMap
+                    points={mapJobs}
+                    selectedId={selectedMapJob?.id}
+                    onSelect={setSelectedMapJobId}
+                    type="job"
                   />
                 </div>
               ) : (

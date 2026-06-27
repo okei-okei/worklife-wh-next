@@ -42,6 +42,17 @@ export function PlannerMapSection({
   canRefresh,
   onRefresh,
 }: PlannerMapSectionProps) {
+  const mapKey = [
+    ...jobs.map((job) => `${job.id}:${job.lat}:${job.lng}`),
+    ...properties.map((property) => `${property.id}:${property.lat}:${property.lng}`),
+    ...lines.map(
+      (line, index) =>
+        `${index}:${line.from.lat}:${line.from.lng}:${line.to.lat}:${line.to.lng}:${line.coordinates?.length ?? 0}`,
+    ),
+    selectedResult?.job.id ?? "",
+    selectedResult?.property.id ?? "",
+  ].join("|");
+
   return (
     <>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -96,6 +107,7 @@ export function PlannerMapSection({
 
       <div className="mb-6 rounded-2xl bg-white p-3 shadow md:p-4">
         <MapView
+          key={mapKey}
           jobs={jobs}
           properties={properties}
           lines={lines}

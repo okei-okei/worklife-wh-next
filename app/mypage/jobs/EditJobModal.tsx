@@ -74,8 +74,14 @@ export default function EditJobModal({
     let latitude = job.latitude;
     let longitude = job.longitude;
 
-    if (address && address.trim() !== "") {
-      const geo = await geocodeAddress(address);
+    const locationText = [address, location, "New Zealand"]
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .filter((part, index, all) => all.indexOf(part) === index)
+      .join(", ");
+
+    if (locationText) {
+      const geo = await geocodeAddress(locationText);
 
       if (geo.latitude && geo.longitude) {
         latitude = geo.latitude;
@@ -99,6 +105,7 @@ export default function EditJobModal({
       address,
       latitude,
       longitude,
+      updated_at: new Date().toISOString(),
     };
 
     const basicPayload = {

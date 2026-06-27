@@ -9,7 +9,17 @@ import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
 
-const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
+const PublicListingsMap = dynamic(
+  () => import("@/components/maps/PublicListingsMap"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[360px] items-center justify-center rounded-2xl border border-gray-200 bg-white p-4 text-center font-bold text-gray-800 md:h-[520px]">
+        地図を読み込み中...
+      </div>
+    ),
+  },
+);
 
 type PublicProperty = {
   id: string;
@@ -68,6 +78,15 @@ function getPropertyGeocodeQuery(property: PublicProperty) {
     .join(", ");
 }
 
+function hasValidCoordinates(latitude: unknown, longitude: unknown) {
+  return (
+    typeof latitude === "number" &&
+    typeof longitude === "number" &&
+    latitude !== 0 &&
+    longitude !== 0
+  );
+}
+
 async function fetchCoordinates(query: string): Promise<Coordinates> {
   if (!query) return { latitude: null, longitude: null };
 
@@ -80,12 +99,14 @@ async function fetchCoordinates(query: string): Promise<Coordinates> {
 function resolvePropertyCoordinates(
   property: PublicProperty,
   geocodedCoordinates: GeocodedCoordinates,
-) {
+): { latitude: number; longitude: number } | null {
   if (
-    typeof property.latitude === "number" &&
-    typeof property.longitude === "number"
+    hasValidCoordinates(property.latitude, property.longitude)
   ) {
-    return { latitude: property.latitude, longitude: property.longitude };
+    return {
+      latitude: property.latitude as number,
+      longitude: property.longitude as number,
+    };
   }
 
   return geocodedCoordinates[property.id] || null;
@@ -770,10 +791,7 @@ export default function PropertiesPage() {
     const targets = filteredProperties
       .filter(
         (property) =>
-          !(
-            typeof property.latitude === "number" &&
-            typeof property.longitude === "number"
-          ) &&
+          !hasValidCoordinates(property.latitude, property.longitude) &&
           !geocodedPropertyCoordinates[property.id] &&
           getPropertyGeocodeQuery(property),
       )
@@ -791,7 +809,8 @@ export default function PropertiesPage() {
           );
           if (
             typeof coordinates.latitude === "number" &&
-            typeof coordinates.longitude === "number"
+            typeof coordinates.longitude === "number" &&
+            hasValidCoordinates(coordinates.latitude, coordinates.longitude)
           ) {
             return [property.id, coordinates] as const;
           }
@@ -837,22 +856,23 @@ export default function PropertiesPage() {
 
           return {
             id: property.id,
-            lat: coordinates.latitude,
-            lng: coordinates.longitude,
-            label: property.title,
-            subtitle:
-              property.area ||
-              property.suburb ||
-              property.district ||
-              property.city ||
-              "地域未設定",
-            details: [
-              formatRent(property.rent_weekly),
-              `ベッドルーム: ${property.bedrooms ?? "未設定"}`,
-              `入居可能日: ${property.available_from || "要確認"}`,
-            ],
-            href: property.url || `/properties#property-${property.id}`,
-            selectLabel: "この物件を選択",
+            type: "property" as const,
+            title: property.title,
+            locationLabel:
+              [
+                property.region,
+                property.district || property.city,
+                property.area || property.suburb,
+              ]
+                .filter(Boolean)
+                .join(" / ") || "地域未設定",
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            priceLabel: formatRent(property.rent_weekly),
+            metaLabel:
+              property.bedrooms === null || property.bedrooms === undefined
+                ? "ベッドルーム未設定"
+                : `${property.bedrooms} bed`,
           };
         })
         .filter((property): property is NonNullable<typeof property> =>
@@ -1120,11 +1140,11 @@ export default function PropertiesPage() {
                       ) : null}
                     </div>
                   </div>
-                  <MapView
-                    jobs={[]}
-                    properties={mapProperties}
-                    highlightedPropertyId={selectedMapProperty?.id}
-                    onPropertySelect={setSelectedMapPropertyId}
+                  <PublicListingsMap
+                    points={mapProperties}
+                    selectedId={selectedMapProperty?.id}
+                    onSelect={setSelectedMapPropertyId}
+                    type="property"
                   />
                 </div>
               ) : (

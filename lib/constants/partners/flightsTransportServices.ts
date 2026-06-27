@@ -9,14 +9,16 @@ export const flightsTransportFilters: PartnerFilter[] = [
 ];
 
 export const flightsTransportComparisonFields: PartnerComparisonField[] = [
+  { key: "flightCompare", label: "航空券比較", important: true },
+  { key: "domesticTravel", label: "NZ国内移動", important: true },
+  { key: "cityTransport", label: "市内移動", important: true },
   { key: "priceCompare", label: "価格比較", important: true },
   { key: "baggage", label: "荷物条件", important: true },
   { key: "change", label: "変更可否" },
   { key: "cancel", label: "キャンセル" },
   { key: "japanese", label: "日本語" },
-  { key: "transfer", label: "乗継" },
+  { key: "arrival", label: "到着直後" },
   { key: "longDistance", label: "長距離" },
-  { key: "cityTransport", label: "市内移動" },
   { key: "app", label: "アプリ" },
 ];
 
@@ -36,6 +38,7 @@ export const flightsTransportServices: PartnerService[] = [
   { id: "google-flights", category: "flights_transport", name: "Google Flights", countryCode: "GLOBAL", serviceType: "航空券検索", shortDescription: "日付や路線ごとの価格傾向を確認できます。", priceNote: "予約先の価格と条件が最終です。", keyFeatures: ["価格比較", "日付検索", "ルート比較"], recommendedFor: ["安さ重視", "日程調整"], cautions: ["予約は航空会社や予約サイト側で条件確認してください。"], comparison: { priceCompare: true, baggage: "予約先確認", change: "予約先確認", cancel: "予約先確認", japanese: true, transfer: "比較しやすい", longDistance: true, cityTransport: false, app: true }, officialUrl: "https://www.google.com/travel/flights", isAffiliate: false, lastCheckedAt: "2026-06-23", filterTags: ["flight", "budget"] },
   { id: "trip-com", category: "flights_transport", name: "Trip.com", countryCode: "GLOBAL", serviceType: "旅行予約", shortDescription: "航空券、ホテル、移動をまとめて確認できます。", priceNote: "予約条件や手数料で変わります。", keyFeatures: ["予約サイト", "航空券", "アプリ"], recommendedFor: ["価格比較", "アプリ予約"], cautions: ["予約条件、変更、キャンセル規定を確認してください。"], comparison: { priceCompare: true, baggage: "予約先確認", change: "条件あり", cancel: "条件あり", japanese: true, transfer: "要確認", longDistance: true, cityTransport: false, app: true }, officialUrl: "https://www.trip.com/", isAffiliate: false, lastCheckedAt: "2026-06-23", filterTags: ["flight", "budget"] },
   { id: "expedia", category: "flights_transport", name: "Expedia", countryCode: "GLOBAL", serviceType: "旅行予約", shortDescription: "航空券や宿泊をまとめて比較できます。", priceNote: "予約条件やキャンペーンで変わります。", keyFeatures: ["予約サイト", "航空券", "宿泊"], recommendedFor: ["航空券比較", "まとめて予約"], cautions: ["予約先条件とサポート窓口を確認してください。"], comparison: { priceCompare: true, baggage: "予約先確認", change: "条件あり", cancel: "条件あり", japanese: true, transfer: "要確認", longDistance: true, cityTransport: false, app: true }, officialUrl: "https://www.expedia.com/", isAffiliate: false, lastCheckedAt: "2026-06-23", filterTags: ["flight", "budget"] },
+  { id: "booking-com", category: "flights_transport", name: "Booking.com", countryCode: "GLOBAL", serviceType: "旅行予約", shortDescription: "航空券、宿泊、空港送迎などをまとめて確認できます。", priceNote: "予約先、時期、キャンセル条件で変わります。", keyFeatures: ["旅行予約", "宿泊", "空港送迎"], recommendedFor: ["到着直後", "まとめて予約"], cautions: ["航空券や送迎は予約条件、キャンセル条件、手数料を確認してください。"], comparison: { flightCompare: true, domesticTravel: "要確認", cityTransport: "送迎あり", priceCompare: true, baggage: "予約先確認", change: "条件あり", cancel: "条件あり", japanese: true, arrival: true, longDistance: "要確認", app: true }, officialUrl: "https://www.booking.com/", isAffiliate: false, lastCheckedAt: "2026-06-27", filterTags: ["flight", "city", "budget"] },
   { id: "intercity", category: "flights_transport", name: "InterCity", countryCode: "NZ", serviceType: "長距離バス", shortDescription: "NZ国内の都市間移動をバスで確認できます。", priceNote: "路線、時期、予約時期で変わります。", keyFeatures: ["国内移動", "長距離バス", "都市間"], recommendedFor: ["NZ国内移動", "安さ重視"], cautions: ["所要時間と荷物条件を確認してください。"], comparison: { priceCompare: "路線別", baggage: "条件あり", change: "条件あり", cancel: "条件あり", japanese: false, transfer: "都市間", longDistance: true, cityTransport: false, app: true }, officialUrl: "https://www.intercity.co.nz/", isAffiliate: false, lastCheckedAt: "2026-06-23", filterTags: ["domestic", "budget"] },
   { id: "auckland-transport", category: "flights_transport", name: "Auckland Transport", countryCode: "NZ", serviceType: "市内交通", shortDescription: "オークランドのバス、電車、フェリー移動を確認できます。", priceNote: "運賃は距離や支払い方法で変わります。", keyFeatures: ["市内交通", "AT HOP", "アプリ"], recommendedFor: ["到着直後", "市内移動"], cautions: ["運賃、支払い方法、運行状況を確認してください。"], comparison: { priceCompare: "運賃表", baggage: "通常荷物向け", change: "不要", cancel: "不要", japanese: false, transfer: "市内", longDistance: false, cityTransport: true, app: true }, officialUrl: "https://at.govt.nz/", isAffiliate: false, lastCheckedAt: "2026-06-23", filterTags: ["city"] },
   { id: "uber", category: "flights_transport", name: "Uber", countryCode: "GLOBAL", serviceType: "配車アプリ", shortDescription: "空港から宿泊先など到着直後の移動に使いやすい配車アプリです。", priceNote: "需要、距離、時間帯で変わります。", keyFeatures: ["配車", "アプリ", "空港移動"], recommendedFor: ["到着直後", "荷物多め"], cautions: ["ピーク料金や対応エリアを確認してください。"], comparison: { priceCompare: "アプリ表示", baggage: "車種による", change: "アプリで可能", cancel: "条件あり", japanese: "アプリ表示", transfer: "ドアツードア", longDistance: "要確認", cityTransport: true, app: true }, officialUrl: "https://www.uber.com/nz/en/", isAffiliate: false, lastCheckedAt: "2026-06-23", filterTags: ["city", "baggage"] },

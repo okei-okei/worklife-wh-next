@@ -6,9 +6,11 @@ import {
   Marker,
   Popup,
   Polyline,
+  useMap,
 } from "react-leaflet";
 
 import L from "leaflet";
+import { useEffect } from "react";
 
 function createPinIcon(color: string, size = 28) {
   return L.divIcon({
@@ -62,6 +64,74 @@ type Props = {
   onPropertySelect?: (id: string) => void;
 };
 
+function MapBoundsUpdater({
+  jobs,
+  properties,
+  lines,
+  highlightedLine,
+}: {
+  jobs: Point[];
+  properties: Point[];
+  lines: Line[];
+  highlightedLine?: Line | null;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    const positions: Array<[number, number]> = [
+      ...jobs.map((job) => [job.lat, job.lng] as [number, number]),
+      ...properties.map(
+        (property) => [property.lat, property.lng] as [number, number],
+      ),
+      ...lines.flatMap((line) =>
+        line.coordinates?.length
+          ? line.coordinates.map(
+              (coordinate) =>
+                [coordinate.lat, coordinate.lng] as [number, number],
+            )
+          : [
+              [line.from.lat, line.from.lng] as [number, number],
+              [line.to.lat, line.to.lng] as [number, number],
+            ],
+      ),
+      ...(highlightedLine
+        ? highlightedLine.coordinates?.length
+          ? highlightedLine.coordinates.map(
+              (coordinate) =>
+                [coordinate.lat, coordinate.lng] as [number, number],
+            )
+          : [
+              [
+                highlightedLine.from.lat,
+                highlightedLine.from.lng,
+              ] as [number, number],
+              [
+                highlightedLine.to.lat,
+                highlightedLine.to.lng,
+              ] as [number, number],
+            ]
+        : []),
+    ];
+
+    if (!positions.length) {
+      map.setView([-36.8485, 174.7633], 11);
+      return;
+    }
+
+    if (positions.length === 1) {
+      map.setView(positions[0], 13);
+      return;
+    }
+
+    map.fitBounds(L.latLngBounds(positions), {
+      padding: [30, 30],
+      maxZoom: 14,
+    });
+  }, [jobs, properties, lines, highlightedLine, map]);
+
+  return null;
+}
+
 export default function MapView({
   jobs,
   properties,
@@ -89,6 +159,12 @@ export default function MapView({
           width: "100%",
         }}
       >
+        <MapBoundsUpdater
+          jobs={jobs}
+          properties={properties}
+          lines={lines}
+          highlightedLine={highlightedLine}
+        />
         <TileLayer
           attribution="&copy; OpenStreetMap"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

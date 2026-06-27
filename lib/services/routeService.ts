@@ -16,9 +16,18 @@ export type RoutePoint = {
   longitude: number;
 };
 
+export type { LatLng };
+
 export type RouteCoordinates = {
   latitude: number;
   longitude: number;
+};
+
+export type RouteResult = {
+  distanceKm: number | null;
+  durationMinutes: number | null;
+  coordinates: [number, number][];
+  source: "osrm" | "fallback";
 };
 
 export type RouteInfo = {
@@ -86,7 +95,7 @@ function createFallbackRouteInfo({
     isFallback: true,
     message:
       message ||
-      "経路APIの結果を取得できなかったため、直線距離をフォールバック表示しています。",
+      "道路経路を取得できなかったため、直線距離をもとにした推定時間を表示しています。",
   };
 }
 
@@ -174,4 +183,28 @@ export async function getRouteInfo({
       mode,
     });
   }
+}
+
+export async function getDrivingRoute(
+  from: LatLng,
+  to: LatLng,
+): Promise<RouteResult> {
+  const routeInfo = await getRouteInfo({
+    origin: from,
+    destination: to,
+    mode: "driving",
+    provider: "osrm",
+  });
+
+  return {
+    distanceKm: routeInfo.distanceKm,
+    durationMinutes: routeInfo.durationMin,
+    coordinates: routeInfo.coordinates.map((coordinate) => [
+      coordinate.latitude,
+      coordinate.longitude,
+    ]),
+    source: routeInfo.provider === "osrm" && !routeInfo.isFallback
+      ? "osrm"
+      : "fallback",
+  };
 }

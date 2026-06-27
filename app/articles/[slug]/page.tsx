@@ -21,6 +21,12 @@ function getPartnerLinkLabel(article: Article, partnerUrl: string) {
   if (partnerUrl.includes("/partners/sim-esim") || article.category === "SIM/eSIM") {
     return "SIM/eSIM比較を見る";
   }
+  if (
+    partnerUrl.includes("/partners/flights-transport") ||
+    article.category === "航空券・移動"
+  ) {
+    return "航空券・移動比較を見る";
+  }
   return "比較ページを見る";
 }
 
@@ -96,6 +102,7 @@ export default async function ArticlePage({ params }: Props) {
   const relatedPartnerUrl = article.related_partner_url || "/partners";
   const relatedChecklistUrl = article.related_checklist_url || "/mypage/checklist";
   const partnerLinkLabel = getPartnerLinkLabel(article, relatedPartnerUrl);
+  const showSimLink = article.category === "航空券・移動";
 
   return (
     <main className="min-h-screen bg-gray-100 px-4 py-8 text-gray-900 md:px-6 md:py-10">
@@ -144,6 +151,14 @@ export default async function ArticlePage({ params }: Props) {
               >
                 {partnerLinkLabel}
               </Link>
+              {showSimLink ? (
+                <Link
+                  href="/partners/sim-esim"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
+                >
+                  SIM/eSIM比較へ
+                </Link>
+              ) : null}
               <Link
                 href={relatedChecklistUrl}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"

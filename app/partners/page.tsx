@@ -162,6 +162,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
       "Qantas",
       "Jetstar",
       "Skyscanner",
+      "Booking.com",
       "InterCity",
     ],
     comparisonItems: [

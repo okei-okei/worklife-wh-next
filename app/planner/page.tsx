@@ -196,8 +196,8 @@ export default function PlannerPage() {
       setIsLoadingRoutes(false);
       setRouteStatusMessage(
         entries.some(([, routeInfo]) => routeInfo.isFallback)
-          ? "一部の経路はAPI結果を取得できなかったため、直線距離をフォールバック表示しています。"
-          : "推定経路距離・推定移動時間を表示中です。",
+          ? "一部の道路経路を取得できなかったため、直線距離をもとにした推定時間を表示しています。"
+          : "道路経路にもとづく推定距離・推定移動時間を表示中です。",
       );
     };
 

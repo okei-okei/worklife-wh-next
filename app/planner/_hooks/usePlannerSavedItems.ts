@@ -3,7 +3,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { resolveNzApproximateCoordinates } from "@/lib/locationCoordinates";
 import type { Job, Property } from "../_lib/types";
+
+function withResolvedCoordinates<T extends Job | Property>(item: T): T {
+  if (item.latitude && item.longitude) return item;
+
+  const coordinates = resolveNzApproximateCoordinates(item);
+  if (!coordinates) return item;
+
+  return {
+    ...item,
+    latitude: coordinates.latitude,
+    longitude: coordinates.longitude,
+  };
+}
 
 export function usePlannerSavedItems() {
   const router = useRouter();
@@ -28,8 +42,12 @@ export function usePlannerSavedItems() {
         .select("*")
         .eq("user_id", userId);
 
-      if (jobsData) setJobs(jobsData as Job[]);
-      if (propertyData) setProperties(propertyData as Property[]);
+      if (jobsData) {
+        setJobs((jobsData as Job[]).map(withResolvedCoordinates));
+      }
+      if (propertyData) {
+        setProperties((propertyData as Property[]).map(withResolvedCoordinates));
+      }
 
       setLastUpdatedAt(new Date());
     } finally {

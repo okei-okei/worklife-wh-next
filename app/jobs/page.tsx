@@ -539,13 +539,17 @@ export default function JobsPage() {
             job.area || job.suburb || job.district || job.city || "地域未設定"
           }`,
           details: [
+            job.company || "掲載企業未設定",
             job.employment_type || "採用形態未設定",
             formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate),
           ],
           href: job.apply_url || `/jobs#job-${job.id}`,
+          selectLabel: "この求人を選択",
         })),
     [filteredJobs],
   );
+
+  const jobsWithoutCoordinates = filteredJobs.length - mapJobs.length;
 
   const selectedMapJob = useMemo(
     () => filteredJobs.find((job) => job.id === selectedMapJobId) || null,
@@ -761,9 +765,21 @@ export default function JobsPage() {
             <section className="rounded-2xl bg-white p-3 shadow md:p-4">
               {mapJobs.length ? (
                 <div className="space-y-3">
-                  <p className="text-sm font-bold text-gray-700">
-                    地図上のピンを選択すると、下に選択中の求人を1件だけ表示します。
-                  </p>
+                  <div className="flex flex-col gap-1 text-sm font-bold text-gray-700 sm:flex-row sm:items-center sm:justify-between">
+                    <p>
+                      地図上のピンを選択すると、下に選択中の求人を1件だけ表示します。
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+                        地図に表示中: {mapJobs.length}件
+                      </span>
+                      {jobsWithoutCoordinates > 0 ? (
+                        <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+                          位置情報なし: {jobsWithoutCoordinates}件
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
                   <MapView
                     jobs={mapJobs}
                     properties={[]}
@@ -772,9 +788,14 @@ export default function JobsPage() {
                   />
                 </div>
               ) : (
-                <p className="p-4 font-medium text-gray-700">
-                  地図に表示できる座標付き求人がありません。リスト表示ではすべての求人を確認できます。
-                </p>
+                <div className="space-y-2 p-4 font-medium text-gray-700">
+                  <p>
+                    地図に表示できる座標付き求人がありません。リスト表示ではすべての求人を確認できます。
+                  </p>
+                  <p className="text-sm">
+                    位置情報がないため地図に表示されない項目: {jobsWithoutCoordinates}件
+                  </p>
+                </div>
               )}
             </section>
 

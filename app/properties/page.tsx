@@ -743,9 +743,13 @@ export default function PropertiesPage() {
             `入居可能日: ${property.available_from || "要確認"}`,
           ],
           href: property.url || `/properties#property-${property.id}`,
+          selectLabel: "この物件を選択",
         })),
     [filteredProperties],
   );
+
+  const propertiesWithoutCoordinates =
+    filteredProperties.length - mapProperties.length;
 
   const selectedMapProperty = useMemo(
     () =>
@@ -988,9 +992,21 @@ export default function PropertiesPage() {
             <section className="rounded-2xl bg-white p-3 shadow md:p-4">
               {mapProperties.length ? (
                 <div className="space-y-3">
-                  <p className="text-sm font-bold text-gray-700">
-                    地図上のピンを選択すると、下に選択中の物件を1件だけ表示します。
-                  </p>
+                  <div className="flex flex-col gap-1 text-sm font-bold text-gray-700 sm:flex-row sm:items-center sm:justify-between">
+                    <p>
+                      地図上のピンを選択すると、下に選択中の物件を1件だけ表示します。
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+                        地図に表示中: {mapProperties.length}件
+                      </span>
+                      {propertiesWithoutCoordinates > 0 ? (
+                        <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+                          位置情報なし: {propertiesWithoutCoordinates}件
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
                   <MapView
                     jobs={[]}
                     properties={mapProperties}
@@ -999,9 +1015,14 @@ export default function PropertiesPage() {
                   />
                 </div>
               ) : (
-                <p className="p-4 font-medium text-gray-700">
-                  地図に表示できる座標付き物件がありません。リスト表示ではすべての物件を確認できます。
-                </p>
+                <div className="space-y-2 p-4 font-medium text-gray-700">
+                  <p>
+                    地図に表示できる座標付き物件がありません。リスト表示ではすべての物件を確認できます。
+                  </p>
+                  <p className="text-sm">
+                    位置情報がないため地図に表示されない項目: {propertiesWithoutCoordinates}件
+                  </p>
+                </div>
               )}
             </section>
 

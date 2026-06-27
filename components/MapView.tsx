@@ -38,6 +38,7 @@ type Point = {
   subtitle?: string;
   details?: string[];
   href?: string;
+  selectLabel?: string;
 };
 
 type Line = {
@@ -116,6 +117,15 @@ export default function MapView({
                     {detail}
                   </p>
                 ))}
+                {onJobSelect ? (
+                  <button
+                    type="button"
+                    onClick={() => onJobSelect(job.id)}
+                    className="inline-block rounded-md bg-blue-600 px-3 py-2 text-sm font-bold text-white"
+                  >
+                    {job.selectLabel || "この求人を選択"}
+                  </button>
+                ) : null}
                 {job.href ? (
                   <a
                     href={job.href}
@@ -153,6 +163,15 @@ export default function MapView({
                     {detail}
                   </p>
                 ))}
+                {onPropertySelect ? (
+                  <button
+                    type="button"
+                    onClick={() => onPropertySelect(property.id)}
+                    className="inline-block rounded-md bg-blue-600 px-3 py-2 text-sm font-bold text-white"
+                  >
+                    {property.selectLabel || "この物件を選択"}
+                  </button>
+                ) : null}
                 {property.href ? (
                   <a
                     href={property.href}

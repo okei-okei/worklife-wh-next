@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/server/adminAuth";
+import { geocodeAddress } from "@/lib/geocoder";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type ListingType = "job" | "property";
@@ -24,6 +25,8 @@ type UpdateBody = {
   url?: string | null;
   image_url?: string | null;
   image_urls?: string[] | null;
+  latitude?: number | null;
+  longitude?: number | null;
   hourly_rate_min?: number | null;
   hourly_rate_max?: number | null;
   hourly_rate?: number | null;
@@ -62,6 +65,37 @@ function isMissingColumnError(error: { code?: string; message?: string }) {
         error.message?.includes("schema cache"),
     )
   );
+}
+
+function getMissingColumnName(error: { message?: string }) {
+  const message = error.message || "";
+  return (
+    message.match(/'([^']+)' column/)?.[1] ||
+    message.match(/column "([^"]+)"/)?.[1] ||
+    null
+  );
+}
+
+async function resolveCoordinates(body: UpdateBody) {
+  if (typeof body.latitude === "number" && typeof body.longitude === "number") {
+    return { latitude: body.latitude, longitude: body.longitude };
+  }
+
+  const addressParts = [
+    body.address,
+    body.suburb || body.area,
+    body.district || body.city,
+    body.region,
+    body.country_code || "NZ",
+  ]
+    .map((part) => part?.trim())
+    .filter(Boolean);
+
+  if (!addressParts.length) {
+    return { latitude: null, longitude: null };
+  }
+
+  return geocodeAddress(addressParts.join(", "));
 }
 
 function adminDbClients(admin: Extract<Awaited<ReturnType<typeof getAdminContext>>, { ok: true }>) {
@@ -115,17 +149,35 @@ async function updateListing(
   const errors: string[] = [];
 
   for (const { label, client } of clients) {
-    const result = await client.from(table).update(payload).eq("id", id);
-    if (!result.error) return;
-    errors.push(`${label}: ${result.error.message}`);
+    let currentPayload = { ...payload };
 
-    if (isMissingColumnError(result.error)) {
-      const fallback = await client
-        .from(table)
-        .update(fallbackPayload)
-        .eq("id", id);
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const result = await client.from(table).update(currentPayload).eq("id", id);
+      if (!result.error) return;
+      errors.push(`${label}: ${result.error.message}`);
+
+      const missingColumn = getMissingColumnName(result.error);
+      if (!isMissingColumnError(result.error) || !missingColumn) {
+        break;
+      }
+
+      currentPayload = { ...currentPayload };
+      delete currentPayload[missingColumn];
+    }
+
+    let currentFallbackPayload = { ...fallbackPayload };
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const fallback = await client.from(table).update(currentFallbackPayload).eq("id", id);
       if (!fallback.error) return;
       errors.push(`${label} fallback: ${fallback.error.message}`);
+
+      const missingColumn = getMissingColumnName(fallback.error);
+      if (!isMissingColumnError(fallback.error) || !missingColumn) {
+        break;
+      }
+
+      currentFallbackPayload = { ...currentFallbackPayload };
+      delete currentFallbackPayload[missingColumn];
     }
   }
 
@@ -167,14 +219,14 @@ export async function GET(request: NextRequest) {
       selectListings(
         clients,
         "public_jobs",
-        "id, title, company, country_code, region, district, suburb, city, area, address, hourly_rate, hourly_rate_min, hourly_rate_max, work_hours, weekly_hours, employment_type, start_date, accommodation_available, japanese_ok, english_level, visa_conditions, visa_support, description, application_method, apply_url, image_url, is_active, created_at",
-        "id, title, company, city, address, hourly_rate, work_hours, description, apply_url, is_active, created_at",
+        "id, title, company, country_code, region, district, suburb, city, area, address, latitude, longitude, hourly_rate, hourly_rate_min, hourly_rate_max, work_hours, weekly_hours, employment_type, start_date, accommodation_available, japanese_ok, english_level, visa_conditions, visa_support, description, application_method, apply_url, image_url, is_active, created_at",
+        "id, title, company, city, address, latitude, longitude, hourly_rate, work_hours, description, apply_url, is_active, created_at",
       ),
       selectListings(
         clients,
         "public_properties",
-        "id, title, owner_name, country_code, region, district, suburb, city, area, address, rent_weekly, bedrooms, bathrooms, parking_spaces, available_from, pets_allowed, smoking_allowed, furnished, utilities_included, bills_included, description, inquiry_method, url, image_urls, is_active, created_at",
-        "id, title, owner_name, city, area, address, rent_weekly, description, url, image_urls, is_active, created_at",
+        "id, title, owner_name, country_code, region, district, suburb, city, area, address, latitude, longitude, rent_weekly, bedrooms, bathrooms, parking_spaces, available_from, pets_allowed, smoking_allowed, furnished, utilities_included, bills_included, description, inquiry_method, url, image_urls, is_active, created_at",
+        "id, title, owner_name, city, area, address, latitude, longitude, rent_weekly, description, url, image_urls, is_active, created_at",
       ),
     ]);
 
@@ -203,6 +255,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const table = body.type === "job" ? "public_jobs" : "public_properties";
+  const coordinates = await resolveCoordinates(body);
   const payload =
     body.type === "job"
       ? {
@@ -215,6 +268,8 @@ export async function PATCH(request: NextRequest) {
           city: body.city?.trim() || null,
           area: body.area?.trim() || null,
           address: body.address?.trim() || null,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
           hourly_rate: body.hourly_rate ?? body.hourly_rate_min ?? null,
           hourly_rate_min: body.hourly_rate_min ?? null,
           hourly_rate_max: body.hourly_rate_max ?? null,
@@ -247,6 +302,8 @@ export async function PATCH(request: NextRequest) {
           city: body.city?.trim() || null,
           area: body.area?.trim() || null,
           address: body.address?.trim() || null,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
           rent_weekly: body.rent_weekly ?? null,
           bedrooms: body.bedrooms ?? null,
           bathrooms: body.bathrooms ?? null,
@@ -271,6 +328,8 @@ export async function PATCH(request: NextRequest) {
           company: body.company?.trim() || null,
           city: body.city?.trim() || null,
           address: body.address?.trim() || null,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
           hourly_rate: body.hourly_rate ?? body.hourly_rate_min ?? null,
           work_hours: body.work_hours ?? body.weekly_hours ?? null,
           description: body.description?.trim() || null,
@@ -284,6 +343,8 @@ export async function PATCH(request: NextRequest) {
           city: body.city?.trim() || null,
           area: body.area?.trim() || null,
           address: body.address?.trim() || null,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
           rent_weekly: body.rent_weekly ?? null,
           description: body.description?.trim() || null,
           url: body.url?.trim() || null,

@@ -10,25 +10,20 @@ import {
 
 import L from "leaflet";
 
-const jobIcon = new L.Icon({
-  iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-  iconSize: [32, 32],
-});
+function createPinIcon(color: string, size = 28) {
+  return L.divIcon({
+    className: "",
+    html: `<span style="display:block;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 8px 18px rgba(15,23,42,.28);outline:2px solid white"></span>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
+}
 
-const propertyIcon = new L.Icon({
-  iconUrl: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-  iconSize: [32, 32],
-});
-
-const highlightedJobIcon = new L.Icon({
-  iconUrl: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
-  iconSize: [40, 40],
-});
-
-const highlightedPropertyIcon = new L.Icon({
-  iconUrl: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
-  iconSize: [40, 40],
-});
+const jobIcon = createPinIcon("#2563eb");
+const propertyIcon = createPinIcon("#dc2626");
+const highlightedJobIcon = createPinIcon("#eab308", 36);
+const highlightedPropertyIcon = createPinIcon("#16a34a", 36);
 
 type Point = {
   id: string;

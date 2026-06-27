@@ -17,6 +17,8 @@ type AdminJob = {
   city: string | null;
   area?: string | null;
   address: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   hourly_rate: number | null;
   hourly_rate_min?: number | null;
   hourly_rate_max?: number | null;
@@ -47,6 +49,8 @@ type AdminProperty = {
   city: string | null;
   area: string | null;
   address: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   rent_weekly: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
@@ -74,6 +78,8 @@ type EditForm = {
   city: string;
   area: string;
   address: string;
+  latitude: string;
+  longitude: string;
   priceMin: string;
   priceMax: string;
   hours: string;
@@ -113,6 +119,8 @@ function jobToForm(job: AdminJob): EditForm {
     city: job.city || job.district || "",
     area: job.area || job.suburb || "",
     address: job.address || "",
+    latitude: String(job.latitude ?? ""),
+    longitude: String(job.longitude ?? ""),
     priceMin: String(job.hourly_rate_min ?? job.hourly_rate ?? ""),
     priceMax: String(job.hourly_rate_max ?? ""),
     hours: String(job.weekly_hours ?? job.work_hours ?? ""),
@@ -150,6 +158,8 @@ function propertyToForm(property: AdminProperty): EditForm {
     city: property.city || property.district || "",
     area: property.area || property.suburb || "",
     address: property.address || "",
+    latitude: String(property.latitude ?? ""),
+    longitude: String(property.longitude ?? ""),
     priceMin: String(property.rent_weekly ?? ""),
     priceMax: "",
     hours: "",
@@ -327,6 +337,8 @@ export default function AdminListingsPage() {
             city: form.city || form.district,
             area: form.area || form.suburb,
             address: form.address,
+            latitude: form.latitude ? Number(form.latitude) : null,
+            longitude: form.longitude ? Number(form.longitude) : null,
             hourly_rate: form.priceMin ? Number(form.priceMin) : null,
             hourly_rate_min: form.priceMin ? Number(form.priceMin) : null,
             hourly_rate_max: form.priceMax ? Number(form.priceMax) : null,
@@ -360,6 +372,8 @@ export default function AdminListingsPage() {
             city: form.city || form.district,
             area: form.area || form.suburb,
             address: form.address,
+            latitude: form.latitude ? Number(form.latitude) : null,
+            longitude: form.longitude ? Number(form.longitude) : null,
             rent_weekly: form.priceMin ? Number(form.priceMin) : null,
             bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
             bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
@@ -714,6 +728,35 @@ export default function AdminListingsPage() {
                     setForm({ ...form, address: event.target.value })
                   }
                   className={inputClass}
+                />
+                <span className="mt-1 block text-xs font-medium text-gray-600">
+                  住所を保存すると地図用の座標を自動補完します。自動取得できない場合は下の緯度・経度を入力してください。
+                </span>
+              </label>
+              <label>
+                <span className="text-sm font-bold">緯度（地図用）</span>
+                <input
+                  type="number"
+                  step="any"
+                  value={form.latitude}
+                  onChange={(event) =>
+                    setForm({ ...form, latitude: event.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="例: -36.8485"
+                />
+              </label>
+              <label>
+                <span className="text-sm font-bold">経度（地図用）</span>
+                <input
+                  type="number"
+                  step="any"
+                  value={form.longitude}
+                  onChange={(event) =>
+                    setForm({ ...form, longitude: event.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="例: 174.7633"
                 />
               </label>
               <label>

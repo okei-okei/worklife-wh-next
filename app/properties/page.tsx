@@ -8,6 +8,7 @@ import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
+import { resolveNzApproximateCoordinates } from "@/lib/locationCoordinates";
 
 const PublicListingsMap = dynamic(
   () => import("@/components/maps/PublicListingsMap"),
@@ -79,11 +80,18 @@ function getPropertyGeocodeQuery(property: PublicProperty) {
 }
 
 function hasValidCoordinates(latitude: unknown, longitude: unknown) {
+  const numericLatitude =
+    typeof latitude === "string" ? Number(latitude) : latitude;
+  const numericLongitude =
+    typeof longitude === "string" ? Number(longitude) : longitude;
+
   return (
-    typeof latitude === "number" &&
-    typeof longitude === "number" &&
-    latitude !== 0 &&
-    longitude !== 0
+    typeof numericLatitude === "number" &&
+    typeof numericLongitude === "number" &&
+    Number.isFinite(numericLatitude) &&
+    Number.isFinite(numericLongitude) &&
+    numericLatitude !== 0 &&
+    numericLongitude !== 0
   );
 }
 
@@ -104,12 +112,16 @@ function resolvePropertyCoordinates(
     hasValidCoordinates(property.latitude, property.longitude)
   ) {
     return {
-      latitude: property.latitude as number,
-      longitude: property.longitude as number,
+      latitude: Number(property.latitude),
+      longitude: Number(property.longitude),
     };
   }
 
-  return geocodedCoordinates[property.id] || null;
+  return (
+    geocodedCoordinates[property.id] ||
+    resolveNzApproximateCoordinates(property) ||
+    null
+  );
 }
 
 function buildLoginRedirect(path: string) {

@@ -1,25 +1,55 @@
 import type { Job, MapLine, Property, ScoreResult } from "./types";
+import { resolveNzApproximateCoordinates } from "@/lib/locationCoordinates";
+
+function getCoordinates(item: Job | Property) {
+  if (item.latitude && item.longitude) {
+    return {
+      lat: Number(item.latitude),
+      lng: Number(item.longitude),
+    };
+  }
+
+  const approximate = resolveNzApproximateCoordinates(item);
+  if (!approximate) return null;
+
+  return {
+    lat: approximate.latitude,
+    lng: approximate.longitude,
+  };
+}
 
 export function getJobPoints(jobs: Job[]) {
   return jobs
-    .filter((job) => job.latitude && job.longitude)
-    .map((job) => ({
-      id: job.id,
-      lat: job.latitude!,
-      lng: job.longitude!,
-      label: job.title,
-    }));
+    .map((job) => {
+      const coordinates = getCoordinates(job);
+      if (!coordinates) return null;
+
+      return {
+        id: job.id,
+        lat: coordinates.lat,
+        lng: coordinates.lng,
+        label: job.title,
+      };
+    })
+    .filter((job): job is NonNullable<typeof job> => Boolean(job));
 }
 
 export function getPropertyPoints(properties: Property[]) {
   return properties
-    .filter((property) => property.latitude && property.longitude)
-    .map((property) => ({
-      id: property.id,
-      lat: property.latitude!,
-      lng: property.longitude!,
-      label: property.title,
-    }));
+    .map((property) => {
+      const coordinates = getCoordinates(property);
+      if (!coordinates) return null;
+
+      return {
+        id: property.id,
+        lat: coordinates.lat,
+        lng: coordinates.lng,
+        label: property.title,
+      };
+    })
+    .filter((property): property is NonNullable<typeof property> =>
+      Boolean(property),
+    );
 }
 
 export function getResultLines(results: ScoreResult[]): MapLine[] {

@@ -6,6 +6,14 @@ import type {
 export type Job = {
   id: string;
   title: string;
+  address?: string | null;
+  location?: string | null;
+  region?: string | null;
+  district?: string | null;
+  city?: string | null;
+  suburb?: string | null;
+  area?: string | null;
+  country_code?: string | null;
   hourly_rate: number | null;
   work_hours: number | null;
   latitude: number | null;
@@ -16,6 +24,14 @@ export type Job = {
 export type Property = {
   id: string;
   title: string;
+  address?: string | null;
+  location?: string | null;
+  region?: string | null;
+  district?: string | null;
+  city?: string | null;
+  suburb?: string | null;
+  area?: string | null;
+  country_code?: string | null;
   rent_weekly: number | null;
   latitude: number | null;
   longitude: number | null;

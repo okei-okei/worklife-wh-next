@@ -8,6 +8,7 @@ import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
+import { resolveNzApproximateCoordinates } from "@/lib/locationCoordinates";
 
 const PublicListingsMap = dynamic(
   () => import("@/components/maps/PublicListingsMap"),
@@ -105,11 +106,18 @@ function getJobGeocodeQuery(job: PublicJob) {
 }
 
 function hasValidCoordinates(latitude: unknown, longitude: unknown) {
+  const numericLatitude =
+    typeof latitude === "string" ? Number(latitude) : latitude;
+  const numericLongitude =
+    typeof longitude === "string" ? Number(longitude) : longitude;
+
   return (
-    typeof latitude === "number" &&
-    typeof longitude === "number" &&
-    latitude !== 0 &&
-    longitude !== 0
+    typeof numericLatitude === "number" &&
+    typeof numericLongitude === "number" &&
+    Number.isFinite(numericLatitude) &&
+    Number.isFinite(numericLongitude) &&
+    numericLatitude !== 0 &&
+    numericLongitude !== 0
   );
 }
 
@@ -127,10 +135,14 @@ function resolveJobCoordinates(
   geocodedCoordinates: GeocodedCoordinates,
 ): { latitude: number; longitude: number } | null {
   if (hasValidCoordinates(job.latitude, job.longitude)) {
-    return { latitude: job.latitude as number, longitude: job.longitude as number };
+    return { latitude: Number(job.latitude), longitude: Number(job.longitude) };
   }
 
-  return geocodedCoordinates[job.id] || null;
+  return (
+    geocodedCoordinates[job.id] ||
+    resolveNzApproximateCoordinates(job) ||
+    null
+  );
 }
 
 export default function JobsPage() {

@@ -92,8 +92,15 @@ function calculateDistanceKm(
 }
 
 function getJobGeocodeQuery(job: PublicJob) {
+  if (job.address?.trim()) {
+    return [job.address, job.country_code || "NZ"]
+      .map((part) => part?.trim())
+      .filter(Boolean)
+      .filter((part, index, all) => all.indexOf(part) === index)
+      .join(", ");
+  }
+
   return [
-    job.address,
     job.area || job.suburb,
     job.district || job.city,
     job.region,
@@ -134,15 +141,17 @@ function resolveJobCoordinates(
   job: PublicJob,
   geocodedCoordinates: GeocodedCoordinates,
 ): { latitude: number; longitude: number } | null {
+  if (geocodedCoordinates[job.id]) {
+    return geocodedCoordinates[job.id];
+  }
+
   if (hasValidCoordinates(job.latitude, job.longitude)) {
     return { latitude: Number(job.latitude), longitude: Number(job.longitude) };
   }
 
-  return (
-    geocodedCoordinates[job.id] ||
-    resolveNzApproximateCoordinates(job) ||
-    null
-  );
+  if (job.address?.trim()) return null;
+
+  return resolveNzApproximateCoordinates(job) || null;
 }
 
 export default function JobsPage() {
@@ -602,11 +611,10 @@ export default function JobsPage() {
     const targets = filteredJobs
       .filter(
         (job) =>
-          !hasValidCoordinates(job.latitude, job.longitude) &&
           !geocodedJobCoordinates[job.id] &&
           getJobGeocodeQuery(job),
       )
-      .slice(0, 12);
+      .slice(0, 50);
 
     if (!targets.length) return;
 

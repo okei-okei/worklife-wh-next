@@ -26,12 +26,16 @@ type Props = {
 };
 
 function createPinIcon(color: string, size = 28) {
+  const pinWidth = size;
+  const pinHeight = Math.round(size * 1.35);
+  const dotSize = Math.max(8, Math.round(size * 0.34));
+
   return L.divIcon({
     className: "",
-    html: `<span style="display:block;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 8px 18px rgba(15,23,42,.28);outline:2px solid white"></span>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-    popupAnchor: [0, -size / 2],
+    html: `<span style="position:relative;display:block;width:${pinWidth}px;height:${pinHeight}px;"><span style="position:absolute;left:50%;top:0;width:${pinWidth}px;height:${pinWidth}px;transform:translateX(-50%) rotate(45deg);border-radius:999px 999px 999px 0;background:${color};border:2px solid white;box-shadow:0 8px 18px rgba(15,23,42,.32);"></span><span style="position:absolute;left:50%;top:${Math.round(size * 0.28)}px;width:${dotSize}px;height:${dotSize}px;transform:translateX(-50%);border-radius:9999px;background:white;"></span></span>`,
+    iconSize: [pinWidth, pinHeight],
+    iconAnchor: [pinWidth / 2, pinHeight - 2],
+    popupAnchor: [0, -pinHeight + 4],
   });
 }
 

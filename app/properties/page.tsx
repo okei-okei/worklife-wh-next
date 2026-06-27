@@ -66,8 +66,15 @@ function isMissingColumnError(error: { message?: string } | null) {
 }
 
 function getPropertyGeocodeQuery(property: PublicProperty) {
+  if (property.address?.trim()) {
+    return [property.address, property.country_code || "NZ"]
+      .map((part) => part?.trim())
+      .filter(Boolean)
+      .filter((part, index, all) => all.indexOf(part) === index)
+      .join(", ");
+  }
+
   return [
-    property.address,
     property.area || property.suburb,
     property.district || property.city,
     property.region,
@@ -108,6 +115,10 @@ function resolvePropertyCoordinates(
   property: PublicProperty,
   geocodedCoordinates: GeocodedCoordinates,
 ): { latitude: number; longitude: number } | null {
+  if (geocodedCoordinates[property.id]) {
+    return geocodedCoordinates[property.id];
+  }
+
   if (
     hasValidCoordinates(property.latitude, property.longitude)
   ) {
@@ -117,11 +128,9 @@ function resolvePropertyCoordinates(
     };
   }
 
-  return (
-    geocodedCoordinates[property.id] ||
-    resolveNzApproximateCoordinates(property) ||
-    null
-  );
+  if (property.address?.trim()) return null;
+
+  return resolveNzApproximateCoordinates(property) || null;
 }
 
 function buildLoginRedirect(path: string) {
@@ -803,11 +812,10 @@ export default function PropertiesPage() {
     const targets = filteredProperties
       .filter(
         (property) =>
-          !hasValidCoordinates(property.latitude, property.longitude) &&
           !geocodedPropertyCoordinates[property.id] &&
           getPropertyGeocodeQuery(property),
       )
-      .slice(0, 12);
+      .slice(0, 50);
 
     if (!targets.length) return;
 

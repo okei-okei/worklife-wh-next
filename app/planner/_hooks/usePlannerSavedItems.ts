@@ -6,7 +6,54 @@ import { supabase } from "@/lib/supabase";
 import { resolveNzApproximateCoordinates } from "@/lib/locationCoordinates";
 import type { Job, Property } from "../_lib/types";
 
-function withResolvedCoordinates<T extends Job | Property>(item: T): T {
+type Coordinates = {
+  latitude: number | null;
+  longitude: number | null;
+};
+
+function hasCoordinates(item: Job | Property) {
+  return Boolean(item.latitude && item.longitude);
+}
+
+function buildAddressQuery(item: Job | Property) {
+  if (!item.address?.trim()) return "";
+
+  return [item.address, item.country_code || "NZ"]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .filter((part, index, all) => all.indexOf(part) === index)
+    .join(", ");
+}
+
+async function geocodeAddress(query: string): Promise<Coordinates> {
+  if (!query) return { latitude: null, longitude: null };
+
+  try {
+    const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+    if (!response.ok) return { latitude: null, longitude: null };
+    return (await response.json()) as Coordinates;
+  } catch (error) {
+    console.error("planner geocode failed:", error);
+    return { latitude: null, longitude: null };
+  }
+}
+
+async function withResolvedCoordinates<T extends Job | Property>(
+  item: T,
+): Promise<T> {
+  const addressQuery = buildAddressQuery(item);
+
+  if (addressQuery) {
+    const coordinates = await geocodeAddress(addressQuery);
+    if (coordinates.latitude && coordinates.longitude) {
+      return {
+        ...item,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+      };
+    }
+  }
+
   if (item.latitude && item.longitude) return item;
 
   const coordinates = resolveNzApproximateCoordinates(item);
@@ -43,10 +90,24 @@ export function usePlannerSavedItems() {
         .eq("user_id", userId);
 
       if (jobsData) {
-        setJobs((jobsData as Job[]).map(withResolvedCoordinates));
+        const resolvedJobs = await Promise.all(
+          (jobsData as Job[]).map((job) =>
+            hasCoordinates(job) && !job.address?.trim()
+              ? Promise.resolve(job)
+              : withResolvedCoordinates(job),
+          ),
+        );
+        setJobs(resolvedJobs);
       }
       if (propertyData) {
-        setProperties((propertyData as Property[]).map(withResolvedCoordinates));
+        const resolvedProperties = await Promise.all(
+          (propertyData as Property[]).map((property) =>
+            hasCoordinates(property) && !property.address?.trim()
+              ? Promise.resolve(property)
+              : withResolvedCoordinates(property),
+          ),
+        );
+        setProperties(resolvedProperties);
       }
 
       setLastUpdatedAt(new Date());

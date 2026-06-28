@@ -109,3 +109,17 @@ textarea {
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+
+.leaflet-container {
+  z-index: 0;
+}
+
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 10;
+}
+
+.leaflet-popup-pane {
+  z-index: 20;
+}

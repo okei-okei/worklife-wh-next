@@ -33,6 +33,9 @@ function getPartnerLinkLabel(article: Article, partnerUrl: string) {
   if (partnerUrl.includes("/partners/internet") || article.category === "インターネット") {
     return "インターネット比較を見る";
   }
+  if (partnerUrl.includes("/partners/furniture") || article.category === "家具・生活用品") {
+    return "家具・生活用品比較を見る";
+  }
   return "比較ページを見る";
 }
 

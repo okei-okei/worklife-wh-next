@@ -54,7 +54,7 @@ export default function Header() {
       : "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-100";
 
   return (
-    <header className="fixed left-0 top-0 z-50 h-16 w-full border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur">
+    <header className="fixed left-0 top-0 z-[10000] h-16 w-full border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-3 px-4 md:px-6">
         <Link
           href="/"

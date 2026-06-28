@@ -345,6 +345,73 @@ export default function PartnerCategoryPage({
             ))}
           </div>
 
+          <div className="mt-4 md:hidden">
+            <p className="mb-2 text-sm font-medium leading-6 text-gray-700">
+              詳しく比較したい場合は、横にスクロールして各項目を確認できます。
+            </p>
+            <div className="overflow-x-auto rounded-xl border border-gray-200">
+              <table className="min-w-[760px] border-collapse text-left text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-gray-900">
+                    <th className="sticky left-0 z-20 min-w-36 bg-gray-50 px-2 py-2 font-bold">
+                      サービス
+                    </th>
+                    <th className="px-2 py-2 font-bold">種別</th>
+                    {comparisonFields.map((field) => (
+                      <th
+                        key={field.key}
+                        className={`px-2 py-2 font-bold ${
+                          field.important ? "bg-blue-50" : "bg-gray-50"
+                        }`}
+                      >
+                        {field.label}
+                      </th>
+                    ))}
+                    <th className="px-2 py-2 font-bold">公式</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredServices.map((service) => (
+                    <tr
+                      key={`mobile-table-${service.id}`}
+                      className="border-b border-gray-100 align-top"
+                    >
+                      <td className="sticky left-0 z-10 min-w-36 bg-white px-2 py-2 font-bold text-gray-900">
+                        {service.name}
+                      </td>
+                      <td className="px-2 py-2 font-medium text-gray-800">
+                        {service.serviceType}
+                      </td>
+                      {comparisonFields.map((field) => (
+                        <td
+                          key={field.key}
+                          className={`px-2 py-2 font-medium leading-5 text-gray-800 ${
+                            field.important ? "bg-blue-50/40" : ""
+                          }`}
+                        >
+                          {formatValue(service.comparison[field.key])}
+                        </td>
+                      ))}
+                      <td className="px-2 py-2">
+                        <a
+                          href={getDestinationUrl(service)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => {
+                            void handleClickService(service);
+                          }}
+                          className="inline-flex rounded-lg border border-gray-300 bg-white px-2 py-2 font-bold text-gray-900 hover:bg-gray-50"
+                        >
+                          見る
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div className="hidden overflow-x-auto rounded-xl border border-gray-200 md:block">
             <table className="min-w-[1180px] border-collapse text-left text-sm">
               <thead>

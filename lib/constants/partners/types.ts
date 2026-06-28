@@ -26,6 +26,7 @@ export type PartnerService = {
   affiliateStatus?: "official" | "available" | "pending" | "none";
   affiliateNetwork?: string;
   affiliateLink?: string;
+  directAdStatus?: "not_contacted" | "contacted" | "negotiating" | "active";
   lastCheckedAt: string;
   filterTags: string[];
 };

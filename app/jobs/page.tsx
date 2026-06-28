@@ -8,7 +8,7 @@ import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
-import { resolveNzApproximateCoordinates } from "@/lib/locationCoordinates";
+import { resolveNzAddressApproximateCoordinates } from "@/lib/locationCoordinates";
 
 const PublicListingsMap = dynamic(
   () => import("@/components/maps/PublicListingsMap"),
@@ -92,20 +92,7 @@ function calculateDistanceKm(
 }
 
 function getJobGeocodeQuery(job: PublicJob) {
-  if (job.address?.trim()) {
-    return [job.address, job.country_code || "NZ"]
-      .map((part) => part?.trim())
-      .filter(Boolean)
-      .filter((part, index, all) => all.indexOf(part) === index)
-      .join(", ");
-  }
-
-  return [
-    job.area || job.suburb,
-    job.district || job.city,
-    job.region,
-    job.country_code || "NZ",
-  ]
+  return [job.address, job.country_code === "NZ" ? "New Zealand" : job.country_code]
     .map((part) => part?.trim())
     .filter(Boolean)
     .filter((part, index, all) => all.indexOf(part) === index)
@@ -145,13 +132,7 @@ function resolveJobCoordinates(
     return geocodedCoordinates[job.id];
   }
 
-  if (hasValidCoordinates(job.latitude, job.longitude)) {
-    return { latitude: Number(job.latitude), longitude: Number(job.longitude) };
-  }
-
-  if (job.address?.trim()) return null;
-
-  return resolveNzApproximateCoordinates(job) || null;
+  return resolveNzAddressApproximateCoordinates(job);
 }
 
 export default function JobsPage() {

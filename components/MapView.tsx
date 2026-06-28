@@ -12,24 +12,16 @@ import {
 import L from "leaflet";
 import { useEffect } from "react";
 
-function createPinIcon(color: string, size = 28) {
-  const pinWidth = size;
-  const pinHeight = Math.round(size * 1.35);
-  const dotSize = Math.max(8, Math.round(size * 0.34));
-
-  return L.divIcon({
-    className: "",
-    html: `<span style="position:relative;display:block;width:${pinWidth}px;height:${pinHeight}px;"><span style="position:absolute;left:50%;top:0;width:${pinWidth}px;height:${pinWidth}px;transform:translateX(-50%) rotate(45deg);border-radius:999px 999px 999px 0;background:${color};border:2px solid white;box-shadow:0 8px 18px rgba(15,23,42,.32);"></span><span style="position:absolute;left:50%;top:${Math.round(size * 0.28)}px;width:${dotSize}px;height:${dotSize}px;transform:translateX(-50%);border-radius:9999px;background:white;"></span></span>`,
-    iconSize: [pinWidth, pinHeight],
-    iconAnchor: [pinWidth / 2, pinHeight - 2],
-    popupAnchor: [0, -pinHeight + 4],
-  });
-}
-
-const jobIcon = createPinIcon("#2563eb");
-const propertyIcon = createPinIcon("#dc2626");
-const highlightedJobIcon = createPinIcon("#eab308", 36);
-const highlightedPropertyIcon = createPinIcon("#16a34a", 36);
+const standardMarkerIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 type Point = {
   id: string;
@@ -178,7 +170,8 @@ export default function MapView({
           <Marker
             key={`${job.id}-${job.lat}-${job.lng}`}
             position={[job.lat, job.lng]}
-            icon={job.id === highlightedJobId ? highlightedJobIcon : jobIcon}
+            icon={standardMarkerIcon}
+            zIndexOffset={job.id === highlightedJobId ? 1000 : 0}
             eventHandlers={{
               click: () => onJobSelect?.(job.id),
             }}
@@ -218,11 +211,8 @@ export default function MapView({
           <Marker
             key={`${property.id}-${property.lat}-${property.lng}`}
             position={[property.lat, property.lng]}
-            icon={
-              property.id === highlightedPropertyId
-                ? highlightedPropertyIcon
-                : propertyIcon
-            }
+            icon={standardMarkerIcon}
+            zIndexOffset={property.id === highlightedPropertyId ? 1000 : 0}
             eventHandlers={{
               click: () => onPropertySelect?.(property.id),
             }}

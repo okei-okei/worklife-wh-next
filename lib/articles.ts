@@ -10,6 +10,7 @@ export const ARTICLE_CATEGORIES = [
   "送金",
   "海外送金",
   "航空券・移動",
+  "電気",
   "仕事探し",
   "家探し",
   "物件探し",

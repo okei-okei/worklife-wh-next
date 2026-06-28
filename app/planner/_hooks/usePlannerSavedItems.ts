@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { resolveNzApproximateCoordinates } from "@/lib/locationCoordinates";
+import { resolveNzAddressApproximateCoordinates } from "@/lib/locationCoordinates";
 import type { Job, Property } from "../_lib/types";
 
 type Coordinates = {
@@ -18,7 +18,10 @@ function hasCoordinates(item: Job | Property) {
 function buildAddressQuery(item: Job | Property) {
   if (!item.address?.trim()) return "";
 
-  return [item.address, item.country_code || "NZ"]
+  return [
+    item.address,
+    item.country_code === "NZ" ? "New Zealand" : item.country_code,
+  ]
     .map((part) => part?.trim())
     .filter(Boolean)
     .filter((part, index, all) => all.indexOf(part) === index)
@@ -52,18 +55,26 @@ async function withResolvedCoordinates<T extends Job | Property>(
         longitude: coordinates.longitude,
       };
     }
+
+    const approximate = resolveNzAddressApproximateCoordinates(item);
+    if (approximate) {
+      return {
+        ...item,
+        latitude: approximate.latitude,
+        longitude: approximate.longitude,
+      };
+    }
+
+    return {
+      ...item,
+      latitude: null,
+      longitude: null,
+    };
   }
 
   if (item.latitude && item.longitude) return item;
 
-  const coordinates = resolveNzApproximateCoordinates(item);
-  if (!coordinates) return item;
-
-  return {
-    ...item,
-    latitude: coordinates.latitude,
-    longitude: coordinates.longitude,
-  };
+  return item;
 }
 
 export function usePlannerSavedItems() {

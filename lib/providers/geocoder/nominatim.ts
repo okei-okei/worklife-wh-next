@@ -14,6 +14,7 @@ export async function geocodeWithNominatim(
       {
         headers: {
           "Accept-Language": "en",
+          "User-Agent": "WorkLife-WH/1.0 (worklife.wh@gmail.com)",
         },
       },
     );

@@ -83,8 +83,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   {
     title: "電気",
     icon: "⚡",
-    description:
-      "フラットや長期滞在で必要になる電気会社を比較できます。",
+    description: "住居決定後に必要になる電気会社を比較できます。",
     href: "/partners/electricity",
     buttonLabel: "電気サービスを比較する",
     services: [
@@ -99,7 +98,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
       "電力量料金",
       "契約期間",
       "アプリ管理",
-      "解約条件",
+      "引っ越し手続き",
     ],
   },
   {

@@ -8,7 +8,7 @@ import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
-import { resolveNzApproximateCoordinates } from "@/lib/locationCoordinates";
+import { resolveNzAddressApproximateCoordinates } from "@/lib/locationCoordinates";
 
 const PublicListingsMap = dynamic(
   () => import("@/components/maps/PublicListingsMap"),
@@ -66,19 +66,9 @@ function isMissingColumnError(error: { message?: string } | null) {
 }
 
 function getPropertyGeocodeQuery(property: PublicProperty) {
-  if (property.address?.trim()) {
-    return [property.address, property.country_code || "NZ"]
-      .map((part) => part?.trim())
-      .filter(Boolean)
-      .filter((part, index, all) => all.indexOf(part) === index)
-      .join(", ");
-  }
-
   return [
-    property.area || property.suburb,
-    property.district || property.city,
-    property.region,
-    property.country_code || "NZ",
+    property.address,
+    property.country_code === "NZ" ? "New Zealand" : property.country_code,
   ]
     .map((part) => part?.trim())
     .filter(Boolean)
@@ -119,18 +109,7 @@ function resolvePropertyCoordinates(
     return geocodedCoordinates[property.id];
   }
 
-  if (
-    hasValidCoordinates(property.latitude, property.longitude)
-  ) {
-    return {
-      latitude: Number(property.latitude),
-      longitude: Number(property.longitude),
-    };
-  }
-
-  if (property.address?.trim()) return null;
-
-  return resolveNzApproximateCoordinates(property) || null;
+  return resolveNzAddressApproximateCoordinates(property);
 }
 
 function buildLoginRedirect(path: string) {

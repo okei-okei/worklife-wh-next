@@ -187,3 +187,15 @@ export function resolveNzApproximateCoordinates(
   const combined = directFields.filter(Boolean).join(" ");
   return lookupByText(combined) || nzFallbackCenter;
 }
+
+export function resolveNzAddressApproximateCoordinates({
+  address,
+  country_code,
+}: Pick<LocationLike, "address" | "country_code">): Coordinate | null {
+  const countryCode = normalize(country_code);
+  if (countryCode && countryCode !== "nz") return null;
+
+  if (!address?.trim()) return null;
+
+  return lookupByText(address);
+}

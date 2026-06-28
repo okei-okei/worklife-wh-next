@@ -16,6 +16,7 @@ export default function ElectricityComparisonPage() {
       filters={electricityFilters}
       comparisonFields={electricityComparisonFields}
       recommendations={electricityRecommendations}
+      noticeText="掲載サービスには広告・紹介リンクが含まれる場合があります。電気料金、契約条件、提供エリア、解約手数料は変更される場合があるため、必ず公式サイトで最新情報をご確認ください。"
     />
   );
 }

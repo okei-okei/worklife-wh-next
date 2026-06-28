@@ -25,23 +25,16 @@ type Props = {
   type: MapListingType;
 };
 
-function createPinIcon(color: string, size = 28) {
-  const pinWidth = size;
-  const pinHeight = Math.round(size * 1.35);
-  const dotSize = Math.max(8, Math.round(size * 0.34));
-
-  return L.divIcon({
-    className: "",
-    html: `<span style="position:relative;display:block;width:${pinWidth}px;height:${pinHeight}px;"><span style="position:absolute;left:50%;top:0;width:${pinWidth}px;height:${pinWidth}px;transform:translateX(-50%) rotate(45deg);border-radius:999px 999px 999px 0;background:${color};border:2px solid white;box-shadow:0 8px 18px rgba(15,23,42,.32);"></span><span style="position:absolute;left:50%;top:${Math.round(size * 0.28)}px;width:${dotSize}px;height:${dotSize}px;transform:translateX(-50%);border-radius:9999px;background:white;"></span></span>`,
-    iconSize: [pinWidth, pinHeight],
-    iconAnchor: [pinWidth / 2, pinHeight - 2],
-    popupAnchor: [0, -pinHeight + 4],
-  });
-}
-
-const jobIcon = createPinIcon("#2563eb");
-const propertyIcon = createPinIcon("#dc2626");
-const selectedIcon = createPinIcon("#16a34a", 36);
+const standardMarkerIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 function MapBoundsUpdater({ points }: { points: MapPoint[] }) {
   const map = useMap();
@@ -75,7 +68,6 @@ export default function PublicListingsMap({
   const center = points[0]
     ? ([points[0].latitude, points[0].longitude] as [number, number])
     : ([-36.8485, 174.7633] as [number, number]);
-  const defaultIcon = type === "job" ? jobIcon : propertyIcon;
   const selectLabel = type === "job" ? "この求人を選択" : "この物件を選択";
 
   return (
@@ -96,7 +88,8 @@ export default function PublicListingsMap({
           <Marker
             key={`${point.id}-${point.latitude}-${point.longitude}`}
             position={[point.latitude, point.longitude]}
-            icon={point.id === selectedId ? selectedIcon : defaultIcon}
+            icon={standardMarkerIcon}
+            zIndexOffset={point.id === selectedId ? 1000 : 0}
             eventHandlers={{
               click: () => onSelect(point.id),
             }}

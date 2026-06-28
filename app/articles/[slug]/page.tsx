@@ -36,6 +36,9 @@ function getPartnerLinkLabel(article: Article, partnerUrl: string) {
   if (partnerUrl.includes("/partners/furniture") || article.category === "家具・生活用品") {
     return "家具・生活用品比較を見る";
   }
+  if (partnerUrl.includes("/partners/language-school") || article.category === "語学学校") {
+    return "語学学校比較を見る";
+  }
   return "比較ページを見る";
 }
 

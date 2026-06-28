@@ -140,9 +140,9 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   },
   {
     title: "語学学校",
-    icon: "📚",
+    icon: "🎓",
     description:
-      "英語学習や仕事探し準備に使える語学学校を比較できます。",
+      "英語学習、IELTS対策、仕事探し準備に使える語学学校を比較できます。",
     href: "/partners/language-school",
     buttonLabel: "語学学校を比較する",
     services: ["Languages International", "NZLC", "Kaplan", "EC English", "LSI"],

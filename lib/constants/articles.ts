@@ -926,6 +926,78 @@ WorkLife WHでは、家具・生活用品の比較ページで、購入先や中
     updated_at: "2026-06-28T00:00:00.000Z",
     published_at: "2026-06-28T00:00:00.000Z",
   },
+  {
+    id: "static-nz-working-holiday-language-school-guide",
+    title: "ニュージーランドワーホリで語学学校は必要？選び方と比較ポイント",
+    slug: "nz-working-holiday-language-school-guide",
+    excerpt:
+      "ニュージーランドで語学学校に通うメリット、選び方、仕事探しとの関係を整理します。",
+    content: `# ニュージーランドワーホリで語学学校は必要？選び方と比較ポイント
+
+ニュージーランドでワーホリをする場合、語学学校に通うかどうかは人によって大きく変わります。
+
+英語に不安がある人、到着直後に友人や生活情報を得たい人、仕事探し前に英語環境に慣れたい人にとって、語学学校は選択肢の一つです。
+
+掲載サービスには広告・紹介リンクが含まれる場合があります。学費、コース内容、サポート内容、入学条件は変更される場合があるため、必ず公式サイトで最新情報をご確認ください。
+
+## 語学学校に通うメリット
+
+* 英語環境に慣れやすい
+* 到着直後の生活情報を得やすい
+* 友人を作りやすい
+* 履歴書や面接準備につながる場合がある
+* IELTSやビジネス英語を学べる場合がある
+
+## 注意点
+
+* 学費がかかる
+* 仕事探しを保証するものではない
+* 学校によって日本人比率やサポート内容が異なる
+* コース内容や料金は変更される場合がある
+
+## 選ぶときの比較ポイント
+
+* 都市
+* 学費
+* コース内容
+* 日本語サポート
+* 仕事探しサポート
+* 滞在先サポート
+* 生徒の国籍バランス
+* 短期向きか長期向きか
+
+## まとめ
+
+語学学校は必須ではありませんが、英語や生活立ち上げに不安がある人には有効な選択肢です。
+
+学費、通学期間、サポート内容を確認し、自分の目的に合うかを比較してから判断しましょう。`,
+    category: "語学学校",
+    country_code: "NZ",
+    region: null,
+    article_type: "general",
+    cover_image_url: null,
+    status: "approved",
+    is_user_submitted: false,
+    submitted_by: null,
+    approved_by: null,
+    approved_at: "2026-06-28T00:00:00.000Z",
+    rejected_reason: null,
+    is_sponsored: false,
+    is_affiliate: false,
+    sponsor_name: null,
+    related_checklist_items: [
+      "語学学校を検討する",
+      "英語学習の方法を決める",
+      "IELTS対策を確認する",
+    ],
+    related_service_ids: [],
+    related_partner_url: "/partners/language-school",
+    related_checklist_url: "/mypage/checklist",
+    views: 0,
+    created_at: "2026-06-28T00:00:00.000Z",
+    updated_at: "2026-06-28T00:00:00.000Z",
+    published_at: "2026-06-28T00:00:00.000Z",
+  },
 ];
 
 export function getStaticArticleBySlug(slug: string) {

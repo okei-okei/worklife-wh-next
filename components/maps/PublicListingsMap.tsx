@@ -25,16 +25,27 @@ type Props = {
   type: MapListingType;
 };
 
-const standardMarkerIcon = new L.Icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+function createStandardMarkerIcon(color: "blue" | "red" | "green") {
+  return new L.Icon({
+    iconUrl:
+      color === "blue"
+        ? "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png"
+        : `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+    iconRetinaUrl:
+      color === "blue"
+        ? "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png"
+        : `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41],
+  });
+}
+
+const jobMarkerIcon = createStandardMarkerIcon("blue");
+const propertyMarkerIcon = createStandardMarkerIcon("red");
+const selectedMarkerIcon = createStandardMarkerIcon("green");
 
 function MapBoundsUpdater({ points }: { points: MapPoint[] }) {
   const map = useMap();
@@ -88,7 +99,13 @@ export default function PublicListingsMap({
           <Marker
             key={`${point.id}-${point.latitude}-${point.longitude}`}
             position={[point.latitude, point.longitude]}
-            icon={standardMarkerIcon}
+            icon={
+              point.id === selectedId
+                ? selectedMarkerIcon
+                : point.type === "job"
+                  ? jobMarkerIcon
+                  : propertyMarkerIcon
+            }
             zIndexOffset={point.id === selectedId ? 1000 : 0}
             eventHandlers={{
               click: () => onSelect(point.id),

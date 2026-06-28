@@ -1196,6 +1196,11 @@ export default function PropertiesPage() {
                           ? ` / ${selectedMapProperty.area}`
                           : ""}
                       </p>
+                      {selectedMapProperty.address ? (
+                        <p className="mt-1 break-words text-sm font-medium text-gray-700">
+                          住所: {selectedMapProperty.address}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="w-fit rounded-full bg-green-50 px-3 py-1.5 text-sm font-bold text-green-700">
                       {formatRent(selectedMapProperty.rent_weekly)}
@@ -1248,10 +1253,31 @@ export default function PropertiesPage() {
                     />
                   </div>
 
-                  <p className="mt-3 line-clamp-2 text-sm font-medium leading-6 text-gray-700">
-                    {selectedMapProperty.description ||
-                      "物件説明は未設定です。"}
-                  </p>
+                  <div className="mt-4 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-800">
+                    <div>
+                      <p className="font-bold text-gray-900">物件説明</p>
+                      <p className="mt-1 whitespace-pre-wrap break-words">
+                        {selectedMapProperty.description ||
+                          "物件説明は未設定です。"}
+                      </p>
+                    </div>
+                    {selectedMapProperty.inquiry_method ? (
+                      <div>
+                        <p className="font-bold text-gray-900">問い合わせ方法</p>
+                        <p className="mt-1 whitespace-pre-wrap break-words">
+                          {selectedMapProperty.inquiry_method}
+                        </p>
+                      </div>
+                    ) : null}
+                    {selectedMapProperty.address ? (
+                      <div>
+                        <p className="font-bold text-gray-900">住所</p>
+                        <p className="mt-1 whitespace-pre-wrap break-words">
+                          {selectedMapProperty.address}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
 
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     <button

@@ -999,9 +999,31 @@ export default function JobsPage() {
                       ) : null}
                     </div>
 
-                    <p className="mt-3 line-clamp-2 text-sm font-medium leading-6 text-gray-700">
-                      {selectedMapJob.description || "職務内容は未設定です。"}
-                    </p>
+                    <div className="mt-4 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-800">
+                      <div>
+                        <p className="font-bold text-gray-900">職務内容</p>
+                        <p className="mt-1 whitespace-pre-wrap break-words">
+                          {selectedMapJob.description ||
+                            "職務内容は未設定です。"}
+                        </p>
+                      </div>
+                      {selectedMapJob.application_method ? (
+                        <div>
+                          <p className="font-bold text-gray-900">応募方法</p>
+                          <p className="mt-1 whitespace-pre-wrap break-words">
+                            {selectedMapJob.application_method}
+                          </p>
+                        </div>
+                      ) : null}
+                      {selectedMapJob.address ? (
+                        <div>
+                          <p className="font-bold text-gray-900">住所</p>
+                          <p className="mt-1 whitespace-pre-wrap break-words">
+                            {selectedMapJob.address}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
 
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                       <button

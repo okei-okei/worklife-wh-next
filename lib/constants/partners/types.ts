@@ -6,6 +6,7 @@ export type PartnerCategoryKey =
   | "internet"
   | "furniture"
   | "language_school"
+  | "study_agency"
   | "flights_transport";
 
 export type PartnerService = {

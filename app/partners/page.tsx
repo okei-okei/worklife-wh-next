@@ -155,6 +155,27 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
     ],
   },
   {
+    title: "留学エージェント",
+    icon: "🎒",
+    description: "無料相談、語学学校紹介、ワーホリサポートを比較できます。",
+    href: "/partners/study-agency",
+    buttonLabel: "留学エージェントを比較する",
+    services: [
+      "School With",
+      "スマ留",
+      "EF",
+      "留学ジャーナル",
+      "ラストリゾート",
+    ],
+    comparisonItems: [
+      "無料相談",
+      "語学学校紹介",
+      "ワーホリ対応",
+      "現地サポート",
+      "手数料",
+    ],
+  },
+  {
     title: "航空券・移動",
     icon: "✈️",
     description:

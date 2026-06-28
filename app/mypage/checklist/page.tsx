@@ -165,6 +165,28 @@ const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
     urgency: "low",
   },
   {
+    key: "study_agency_compare",
+    phase: "渡航前",
+    label: "留学エージェントを比較する",
+    description:
+      "無料相談、語学学校紹介、ワーホリサポート、現地サポートの違いを確認します。",
+    primaryHref: "/partners/study-agency",
+    primaryLabel: "留学エージェントを比較する",
+    partnerCategory: "study-agency",
+    urgency: "low",
+  },
+  {
+    key: "study_agency_free_consultation",
+    phase: "渡航前",
+    label: "無料相談を予約する",
+    description:
+      "必要に応じて、複数の相談先でサポート範囲や費用を確認します。",
+    primaryHref: "/partners/study-agency",
+    primaryLabel: "留学エージェントを比較する",
+    partnerCategory: "study-agency",
+    urgency: "low",
+  },
+  {
     key: "sim_compare",
     phase: "到着後すぐ",
     label: "現地SIMを検討する",

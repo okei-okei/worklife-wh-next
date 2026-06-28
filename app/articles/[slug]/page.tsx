@@ -39,6 +39,9 @@ function getPartnerLinkLabel(article: Article, partnerUrl: string) {
   if (partnerUrl.includes("/partners/language-school") || article.category === "語学学校") {
     return "語学学校比較を見る";
   }
+  if (partnerUrl.includes("/partners/study-agency") || article.category === "留学エージェント") {
+    return "留学エージェント比較を見る";
+  }
   return "比較ページを見る";
 }
 

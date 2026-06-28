@@ -624,8 +624,15 @@ export default function ChecklistPage() {
     } else {
       trackMetric(nextChecked ? "checklist_item_complete" : "checklist_used", {
         eventType: "feature",
+        targetType: "checklist_item",
+        targetId: item.key,
         pagePath: "/mypage/checklist",
-        metadata: { itemKey: item.key, completed: nextChecked },
+        metadata: {
+          itemKey: item.key,
+          label: item.label,
+          partnerCategory: item.partnerCategory || null,
+          completed: nextChecked,
+        },
       });
     }
 
@@ -719,6 +726,21 @@ export default function ChecklistPage() {
                         </span>
                         <Link
                           href={item.primaryHref}
+                          onClick={() => {
+                            if (!item.primaryHref.startsWith("/partners")) return;
+                            void trackMetric("checklist_partner_click", {
+                              eventType: "click",
+                              targetType: "checklist_item",
+                              targetId: item.key,
+                              pagePath: "/mypage/checklist",
+                              metadata: {
+                                itemKey: item.key,
+                                label: item.label,
+                                partnerCategory: item.partnerCategory || null,
+                                targetUrl: item.primaryHref,
+                              },
+                            });
+                          }}
                           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
                         >
                           {item.primaryLabel}

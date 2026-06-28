@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { trackMetric } from "@/lib/analytics";
 import type {
   PartnerComparisonField,
@@ -63,6 +63,13 @@ export default function PartnerCategoryPage({
   }, [activeFilters, services]);
 
   const toggleFilter = (filter: string) => {
+    void trackMetric("partner_filter_use", {
+      eventType: "filter",
+      targetType: "partner_category",
+      targetId: categoryPath,
+      pagePath: categoryPath,
+      metadata: { categoryPath, filter },
+    });
     setActiveFilters((current) =>
       current.includes(filter)
         ? current.filter((item) => item !== filter)
@@ -71,18 +78,49 @@ export default function PartnerCategoryPage({
   };
 
   const handleClickService = async (service: PartnerService) => {
-    await trackMetric(service.isAffiliate ? "affiliate_link_click" : "partner_clicked", {
-      eventType: "click",
-      pagePath: categoryPath,
-      metadata: {
+    const destinationUrl = getDestinationUrl(service);
+    const metadata = {
+        serviceId: service.id,
         category: service.category,
         serviceName: service.name,
-        destinationUrl: getDestinationUrl(service),
-      },
-    });
+        targetUrl: destinationUrl,
+        destinationUrl,
+        affiliateStatus: service.affiliateStatus || "none",
+        affiliateNetwork: service.affiliateNetwork || null,
+    };
+
+    await Promise.all([
+      trackMetric("partner_service_click", {
+        eventType: "click",
+        targetType: "partner_service",
+        targetId: service.id,
+        pagePath: categoryPath,
+        metadata,
+      }),
+      trackMetric(
+        service.isAffiliate ? "affiliate_link_click" : "official_link_click",
+        {
+          eventType: "click",
+          targetType: "partner_service",
+          targetId: service.id,
+          pagePath: categoryPath,
+          metadata,
+        },
+      ),
+    ]);
   };
 
   const hasServices = services.length > 0;
+
+  useEffect(() => {
+    void trackMetric("partner_category_view", {
+      eventType: "page_view",
+      targetType: "partner_category",
+      targetId: categoryPath,
+      pagePath: categoryPath,
+      metadata: { categoryPath, serviceCount: services.length },
+    });
+  }, [categoryPath, services.length]);
 
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
@@ -111,6 +149,17 @@ export default function PartnerCategoryPage({
                   key={recommendation.title}
                   type="button"
                   onClick={() => {
+                    void trackMetric("partner_recommendation_click", {
+                      eventType: "click",
+                      targetType: "partner_recommendation",
+                      targetId: recommendation.filterKey || recommendation.title,
+                      pagePath: categoryPath,
+                      metadata: {
+                        categoryPath,
+                        recommendationTitle: recommendation.title,
+                        filterKey: recommendation.filterKey || null,
+                      },
+                    });
                     if (recommendation.filterKey) {
                       setActiveFilters([recommendation.filterKey]);
                     }

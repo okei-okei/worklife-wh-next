@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { trackMetric } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 
 export default function ArticleViewTracker({ slug }: { slug: string }) {
@@ -9,6 +10,13 @@ export default function ArticleViewTracker({ slug }: { slug: string }) {
       const key = `article-view:${slug}`;
       if (window.sessionStorage.getItem(key)) return;
       window.sessionStorage.setItem(key, "1");
+      void trackMetric("article_view", {
+        eventType: "page_view",
+        targetType: "article",
+        targetId: slug,
+        pagePath: `/articles/${slug}`,
+        metadata: { slug },
+      });
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -25,4 +33,3 @@ export default function ArticleViewTracker({ slug }: { slug: string }) {
 
   return null;
 }
-

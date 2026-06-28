@@ -30,9 +30,21 @@ const allowedEvents = new Set([
   "comparison_card_view",
   "comparison_card_click",
   "affiliate_link_click",
+  "official_link_click",
+  "partner_category_view",
+  "partner_service_click",
+  "partner_filter_use",
+  "partner_recommendation_click",
   "article_view",
+  "article_related_partner_click",
+  "article_related_checklist_click",
   "article_submit",
   "article_partner_transition",
+  "checklist_partner_click",
+  "public_job_map_view",
+  "public_property_map_view",
+  "public_job_pin_select",
+  "public_property_pin_select",
   "content_report_submit",
 ]);
 
@@ -48,6 +60,8 @@ export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => null)) as {
     eventName?: string;
     eventType?: string;
+    targetType?: string;
+    targetId?: string;
     pagePath?: string;
     metadata?: Record<string, unknown>;
     referrer?: string;
@@ -77,6 +91,14 @@ export async function POST(request: NextRequest) {
   const metadata = body.metadata || {};
 
   const inserts: PromiseLike<unknown>[] = [
+    serviceClient.from("analytics_events").insert({
+      user_id: userId,
+      event_name: body.eventName,
+      target_type: body.targetType?.slice(0, 100) || null,
+      target_id: body.targetId?.slice(0, 300) || null,
+      page_path: pagePath,
+      metadata,
+    }),
     serviceClient.from("admin_metrics_events").insert({
       user_id: userId,
       event_name: body.eventName,
@@ -99,6 +121,8 @@ export async function POST(request: NextRequest) {
 
   if (
     body.eventName === "partner_clicked" ||
+    body.eventName === "partner_service_click" ||
+    body.eventName === "official_link_click" ||
     body.eventName === "affiliate_clicked" ||
     body.eventName === "comparison_card_click" ||
     body.eventName === "affiliate_link_click"

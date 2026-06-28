@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
+import { trackEvent } from "@/lib/services/analytics";
 
 export type MetricEventName =
   | "sign_up"
@@ -31,57 +31,43 @@ export type MetricEventName =
   | "comparison_card_view"
   | "comparison_card_click"
   | "affiliate_link_click"
+  | "official_link_click"
+  | "partner_category_view"
+  | "partner_service_click"
+  | "partner_filter_use"
+  | "partner_recommendation_click"
   | "article_view"
+  | "article_related_partner_click"
+  | "article_related_checklist_click"
+  | "checklist_partner_click"
+  | "public_job_map_view"
+  | "public_property_map_view"
+  | "public_job_pin_select"
+  | "public_property_pin_select"
   | "article_submit"
   | "article_partner_transition"
   | "content_report_submit";
-
-function getVisitorId() {
-  if (typeof window === "undefined") return undefined;
-  const key = "worklife-wh-visitor-id";
-  const existing = window.localStorage.getItem(key);
-  if (existing) return existing;
-  const created = crypto.randomUUID();
-  window.localStorage.setItem(key, created);
-  return created;
-}
 
 export async function trackMetric(
   eventName: MetricEventName,
   options: {
     eventType?: string;
+    targetType?: string;
+    targetId?: string;
     pagePath?: string;
     metadata?: Record<string, unknown>;
     referrer?: string;
   } = {},
 ) {
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    await fetch("/api/metrics/events", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(session?.access_token
-          ? { Authorization: `Bearer ${session.access_token}` }
-          : {}),
-      },
-      body: JSON.stringify({
-        eventName,
-        eventType: options.eventType,
-        pagePath:
-          options.pagePath ||
-          (typeof window !== "undefined" ? window.location.pathname : undefined),
-        metadata: options.metadata || {},
-        referrer:
-          options.referrer ||
-          (typeof document !== "undefined" ? document.referrer : undefined),
-        visitorId: getVisitorId(),
-      }),
-      keepalive: true,
-    });
-  } catch (error) {
-    console.warn("Metric tracking failed", error);
-  }
+  await trackEvent({
+    eventName,
+    targetType: options.targetType,
+    targetId: options.targetId,
+    pagePath: options.pagePath,
+    metadata: {
+      ...(options.metadata || {}),
+      ...(options.eventType ? { eventType: options.eventType } : {}),
+      ...(options.referrer ? { referrer: options.referrer } : {}),
+    },
+  });
 }

@@ -891,6 +891,36 @@ export default function PropertiesPage() {
     [filteredProperties, selectedMapPropertyId],
   );
 
+  useEffect(() => {
+    if (viewMode !== "map") return;
+    void trackMetric("public_property_map_view", {
+      eventType: "map_view",
+      targetType: "public_properties",
+      pagePath: "/properties",
+      metadata: {
+        visibleCount: mapProperties.length,
+        withoutCoordinates: propertiesWithoutCoordinates,
+      },
+    });
+  }, [mapProperties.length, propertiesWithoutCoordinates, viewMode]);
+
+  const handleSelectMapProperty = (id: string) => {
+    setSelectedMapPropertyId(id);
+    const selected = filteredProperties.find((property) => property.id === id);
+    void trackMetric("public_property_pin_select", {
+      eventType: "map_pin_select",
+      targetType: "public_property",
+      targetId: id,
+      pagePath: "/properties",
+      metadata: {
+        propertyId: id,
+        title: selected?.title || null,
+        address: selected?.address || null,
+        rentWeekly: selected?.rent_weekly || null,
+      },
+    });
+  };
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -1142,7 +1172,7 @@ export default function PropertiesPage() {
                   <PublicListingsMap
                     points={mapProperties}
                     selectedId={selectedMapProperty?.id}
-                    onSelect={setSelectedMapPropertyId}
+                    onSelect={handleSelectMapProperty}
                     type="property"
                   />
                 </div>

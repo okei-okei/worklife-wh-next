@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trackMetric } from "@/lib/analytics";
 import {
   insuranceComparisonFields,
@@ -54,14 +54,19 @@ function OfficialButton({ service }: { service: PartnerService }) {
       rel="noopener noreferrer"
       onClick={() => {
         void trackMetric(
-          service.isAffiliate ? "affiliate_link_click" : "partner_clicked",
+          service.isAffiliate ? "affiliate_link_click" : "official_link_click",
           {
             eventType: "click",
+            targetType: "partner_service",
+            targetId: service.id,
             pagePath: "/partners/insurance",
             metadata: {
+              serviceId: service.id,
               category: service.category,
               serviceName: service.name,
+              targetUrl: destinationUrl(service),
               destinationUrl: destinationUrl(service),
+              affiliateStatus: service.affiliateStatus || "none",
             },
           },
         );
@@ -76,6 +81,19 @@ function OfficialButton({ service }: { service: PartnerService }) {
 export default function InsuranceComparison() {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
+  useEffect(() => {
+    void trackMetric("partner_category_view", {
+      eventType: "page_view",
+      targetType: "partner_category",
+      targetId: "/partners/insurance",
+      pagePath: "/partners/insurance",
+      metadata: {
+        categoryPath: "/partners/insurance",
+        serviceCount: insuranceServices.length,
+      },
+    });
+  }, []);
+
   const filteredServices =
     activeFilters.length === 0
       ? insuranceServices
@@ -84,6 +102,13 @@ export default function InsuranceComparison() {
         );
 
   const toggleFilter = (filter: string) => {
+    void trackMetric("partner_filter_use", {
+      eventType: "filter",
+      targetType: "partner_category",
+      targetId: "/partners/insurance",
+      pagePath: "/partners/insurance",
+      metadata: { categoryPath: "/partners/insurance", filter },
+    });
     setActiveFilters((current) =>
       current.includes(filter)
         ? current.filter((item) => item !== filter)
@@ -126,6 +151,17 @@ export default function InsuranceComparison() {
                 key={item.title}
                 type="button"
                 onClick={() => {
+                  void trackMetric("partner_recommendation_click", {
+                    eventType: "click",
+                    targetType: "partner_recommendation",
+                    targetId: item.filterKey || item.title,
+                    pagePath: "/partners/insurance",
+                    metadata: {
+                      categoryPath: "/partners/insurance",
+                      recommendationTitle: item.title,
+                      filterKey: item.filterKey || null,
+                    },
+                  });
                   if (item.filterKey) setActiveFilters([item.filterKey]);
                 }}
                 className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-left hover:bg-blue-50 md:p-4"

@@ -675,6 +675,36 @@ export default function JobsPage() {
     [filteredJobs, selectedMapJobId],
   );
 
+  useEffect(() => {
+    if (viewMode !== "map") return;
+    void trackMetric("public_job_map_view", {
+      eventType: "map_view",
+      targetType: "public_jobs",
+      pagePath: "/jobs",
+      metadata: {
+        visibleCount: mapJobs.length,
+        withoutCoordinates: jobsWithoutCoordinates,
+      },
+    });
+  }, [jobsWithoutCoordinates, mapJobs.length, viewMode]);
+
+  const handleSelectMapJob = (id: string) => {
+    setSelectedMapJobId(id);
+    const selected = filteredJobs.find((job) => job.id === id);
+    void trackMetric("public_job_pin_select", {
+      eventType: "map_pin_select",
+      targetType: "public_job",
+      targetId: id,
+      pagePath: "/jobs",
+      metadata: {
+        jobId: id,
+        title: selected?.title || null,
+        company: selected?.company || null,
+        address: selected?.address || null,
+      },
+    });
+  };
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -902,7 +932,7 @@ export default function JobsPage() {
                   <PublicListingsMap
                     points={mapJobs}
                     selectedId={selectedMapJob?.id}
-                    onSelect={setSelectedMapJobId}
+                    onSelect={handleSelectMapJob}
                     type="job"
                   />
                 </div>

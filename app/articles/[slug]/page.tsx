@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
+import TrackedLink from "@/components/TrackedLink";
 import type { Article } from "@/lib/articles";
 import { getStaticArticleBySlug } from "@/lib/constants/articles";
 
@@ -160,12 +161,22 @@ export default async function ArticlePage({ params }: Props) {
           <section className="mt-10 rounded-2xl border border-gray-200 bg-gray-50 p-4">
             <h2 className="text-lg font-bold">関連リンク</h2>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Link
+              <TrackedLink
                 href={relatedPartnerUrl}
+                eventName="article_related_partner_click"
+                targetType="article"
+                targetId={article.slug}
+                pagePath={`/articles/${article.slug}`}
+                metadata={{
+                  slug: article.slug,
+                  title: article.title,
+                  category: article.category,
+                  targetUrl: relatedPartnerUrl,
+                }}
                 className="rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800"
               >
                 {partnerLinkLabel}
-              </Link>
+              </TrackedLink>
               {showSimLink ? (
                 <Link
                   href="/partners/sim-esim"
@@ -174,12 +185,22 @@ export default async function ArticlePage({ params }: Props) {
                   SIM/eSIM比較へ
                 </Link>
               ) : null}
-              <Link
+              <TrackedLink
                 href={relatedChecklistUrl}
+                eventName="article_related_checklist_click"
+                targetType="article"
+                targetId={article.slug}
+                pagePath={`/articles/${article.slug}`}
+                metadata={{
+                  slug: article.slug,
+                  title: article.title,
+                  category: article.category,
+                  targetUrl: relatedChecklistUrl,
+                }}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
               >
                 チェックリストへ
-              </Link>
+              </TrackedLink>
               <Link
                 href="/partners"
                 className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"

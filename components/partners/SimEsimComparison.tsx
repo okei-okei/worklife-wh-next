@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import A8AdSlot from "@/components/partners/A8AdSlot";
+import { trackMetric } from "@/lib/analytics";
 import { getA8AdHtml } from "@/lib/constants/partners/a8Ads";
 import { simServices, type SimService } from "@/lib/constants/simServices";
 
@@ -44,6 +45,34 @@ function getDestinationUrl(service: SimService) {
   return service.affiliateUrl || service.officialUrl;
 }
 
+function getAnalytics(service: SimService, adType: string) {
+  return {
+    serviceId: service.id,
+    serviceName: service.name,
+    category: "sim-esim",
+    affiliateNetwork: service.affiliateNetwork,
+    programId: service.programId,
+    adType,
+    pagePath: "/partners/sim-esim",
+  };
+}
+
+function trackOfficialClick(service: SimService) {
+  void trackMetric("official_link_click", {
+    eventType: "click",
+    targetType: "partner_service",
+    targetId: service.id,
+    pagePath: "/partners/sim-esim",
+    metadata: {
+      serviceId: service.id,
+      serviceName: service.name,
+      category: "sim-esim",
+      affiliateStatus: service.affiliateStatus || "none",
+      targetUrl: getDestinationUrl(service),
+    },
+  });
+}
+
 function isAffiliateAvailable(service: SimService) {
   return service.affiliateStatus === "available" && Boolean(service.textAdKey);
 }
@@ -83,7 +112,12 @@ function AffiliateAction({ service }: { service: SimService }) {
     return (
       <div className="space-y-2">
         <p className="text-xs font-bold text-amber-700">広告・紹介リンク</p>
-        <A8AdSlot html={textAdHtml} size="text" variant="button" />
+        <A8AdSlot
+          html={textAdHtml}
+          size="text"
+          variant="button"
+          analytics={getAnalytics(service, "text")}
+        />
       </div>
     );
   }
@@ -93,6 +127,7 @@ function AffiliateAction({ service }: { service: SimService }) {
       href={getDestinationUrl(service)}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => trackOfficialClick(service)}
       className="block w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
     >
       公式サイトで確認する
@@ -164,11 +199,10 @@ export default function SimEsimComparison() {
   const mobileBannerAds = simServices
     .filter((service) => service.primaryAdKey)
     .map((service) => ({
-      id: service.id,
-      name: service.name,
+      service,
       html: getA8AdHtml(service.primaryAdKey),
     }))
-    .filter((ad): ad is { id: string; name: string; html: string } =>
+    .filter((ad): ad is { service: SimService; html: string } =>
       Boolean(ad.html),
     );
   const japanGlobalWideAd = getA8AdHtml(
@@ -184,12 +218,29 @@ export default function SimEsimComparison() {
         );
 
   const toggleFilter = (filter: FilterKey) => {
+    void trackMetric("partner_filter_use", {
+      eventType: "filter",
+      targetType: "partner_category",
+      targetId: "/partners/sim-esim",
+      pagePath: "/partners/sim-esim",
+      metadata: { categoryPath: "/partners/sim-esim", filter },
+    });
     setActiveFilters((current) =>
       current.includes(filter)
         ? current.filter((item) => item !== filter)
         : [...current, filter],
     );
   };
+
+  useEffect(() => {
+    void trackMetric("partner_category_view", {
+      eventType: "page_view",
+      targetType: "partner_category",
+      targetId: "/partners/sim-esim",
+      pagePath: "/partners/sim-esim",
+      metadata: { categoryPath: "/partners/sim-esim", serviceCount: simServices.length },
+    });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -394,6 +445,7 @@ export default function SimEsimComparison() {
                 <A8AdSlot
                   html={getA8AdHtml(service.primaryAdKey) ?? ""}
                   size="banner300x250"
+                  analytics={getAnalytics(service, "banner300x250")}
                 />
               </div>
             ) : null}
@@ -661,6 +713,7 @@ export default function SimEsimComparison() {
                           html={getA8AdHtml(service.textAdKey) ?? ""}
                           size="text"
                           variant="button"
+                          analytics={getAnalytics(service, "text")}
                         />
                       </div>
                     ) : (
@@ -668,6 +721,7 @@ export default function SimEsimComparison() {
                         href={getDestinationUrl(service)}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => trackOfficialClick(service)}
                         className="inline-flex rounded-lg border border-gray-300 bg-white px-3 py-2 font-bold text-gray-900 hover:bg-gray-50"
                       >
                         確認する
@@ -690,10 +744,11 @@ export default function SimEsimComparison() {
           <div className="mt-3 space-y-3">
             {mobileBannerAds.map((ad) => (
               <A8AdSlot
-                key={ad.id}
+                key={ad.service.id}
                 html={ad.html}
                 size="banner300x250"
                 className="mx-auto"
+                analytics={getAnalytics(ad.service, "banner300x250")}
               />
             ))}
           </div>
@@ -702,7 +757,15 @@ export default function SimEsimComparison() {
 
       {japanGlobalWideAd ? (
         <section className="hidden rounded-2xl bg-white p-4 shadow md:block md:p-6">
-          <A8AdSlot html={japanGlobalWideAd} size="banner728x120" />
+          <A8AdSlot
+            html={japanGlobalWideAd}
+            size="banner728x120"
+            analytics={getAnalytics(
+              simServices.find((service) => service.id === "japan-global-esim") ||
+                simServices[0],
+              "banner728x120",
+            )}
+          />
         </section>
       ) : null}
     </div>

@@ -30,6 +30,9 @@ function getPartnerLinkLabel(article: Article, partnerUrl: string) {
   if (partnerUrl.includes("/partners/electricity") || article.category === "電気") {
     return "電気会社比較を見る";
   }
+  if (partnerUrl.includes("/partners/internet") || article.category === "インターネット") {
+    return "インターネット比較を見る";
+  }
   return "比較ページを見る";
 }
 

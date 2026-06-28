@@ -104,17 +104,16 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
   {
     title: "インターネット",
     icon: "🌐",
-    description:
-      "フラット生活や長期滞在で使いやすいインターネット回線を比較できます。",
+    description: "住居決定後に必要になるインターネット契約を比較できます。",
     href: "/partners/internet",
     buttonLabel: "インターネットを比較する",
     services: ["Spark", "One NZ", "2degrees", "Skinny", "Slingshot"],
     comparisonItems: [
-      "月額目安",
-      "速度",
+      "光回線",
+      "ワイヤレス",
       "データ無制限",
       "契約期間",
-      "ルーター費用",
+      "セット割",
     ],
   },
   {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import PartnerCategoryPage from "@/components/partners/PartnerCategoryPage";
 import {
   electricityComparisonFields,
@@ -17,6 +18,19 @@ export default function ElectricityComparisonPage() {
       comparisonFields={electricityComparisonFields}
       recommendations={electricityRecommendations}
       noticeText="掲載サービスには広告・紹介リンクが含まれる場合があります。電気料金、契約条件、提供エリア、解約手数料は変更される場合があるため、必ず公式サイトで最新情報をご確認ください。"
-    />
+    >
+      <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+        <h2 className="text-xl font-bold text-gray-900">関連カテゴリ</h2>
+        <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
+          入居後は電気だけでなく、Wi-Fiやホームインターネットの開通時期も確認しておくと安心です。
+        </p>
+        <Link
+          href="/partners/internet"
+          className="mt-4 inline-flex w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+        >
+          インターネット契約も確認する
+        </Link>
+      </section>
+    </PartnerCategoryPage>
   );
 }

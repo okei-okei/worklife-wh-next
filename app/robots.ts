@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import { absoluteUrl } from "@/lib/seo";
+
+const siteUrl = "https://worklife-wh-next.vercel.app";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -10,16 +11,12 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           "/admin",
           "/admin/",
-          "/mypage",
-          "/mypage/",
-          "/login",
-          "/register",
           "/auth/",
           "/api/",
           "/cookie-preferences",
         ],
       },
     ],
-    sitemap: absoluteUrl("/sitemap.xml"),
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

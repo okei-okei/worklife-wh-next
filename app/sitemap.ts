@@ -1,7 +1,12 @@
 import type { MetadataRoute } from "next";
 import { staticArticles } from "@/lib/constants/articles";
 import { partnerSeoCategories } from "@/lib/constants/partnerSeo";
-import { absoluteUrl } from "@/lib/seo";
+
+const siteUrl = "https://worklife-wh-next.vercel.app";
+
+function absoluteUrl(path: string) {
+  return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
 
 const legalPaths = [
   "/legal",
@@ -27,12 +32,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
   const staticPaths = [
     "/",
-    "/partners",
-    "/articles",
     "/jobs",
     "/properties",
-    "/demo-planner",
     "/simulator",
+    "/compare/sim",
+    "/compare/insurance",
+    "/compare/remittance",
+    "/login",
+    "/register",
+    "/mypage",
+    "/partners",
+    "/articles",
+    "/demo-planner",
   ];
 
   return [

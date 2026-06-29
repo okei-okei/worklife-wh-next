@@ -1,7 +1,0 @@
-User-Agent: *
-Allow: /
-
-Sitemap: https://worklife-wh-next.vercel.app/sitemap-index.xml
-Sitemap: https://worklife-wh-next.vercel.app/sitemap.xml
-Sitemap: https://worklife-wh-next.vercel.app/google-sitemap.xml
-Sitemap: https://worklife-wh-next.vercel.app/sitemap.txt

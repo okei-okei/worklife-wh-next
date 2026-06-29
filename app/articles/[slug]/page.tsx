@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
+import AuthAwareCta from "@/components/AuthAwareCta";
 import TrackedLink from "@/components/TrackedLink";
 import RelatedArticles from "@/components/articles/RelatedArticles";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
@@ -307,7 +308,14 @@ export default async function ArticlePage({ params }: Props) {
             </div>
           </section>
 
-          <RelatedArticles articles={relatedArticles} />
+          <RelatedArticles articles={relatedArticles} title="次に読む記事" />
+
+          <div className="mt-8">
+            <AuthAwareCta
+              title="この記事の内容を自分の準備に反映する"
+              description="無料登録すると、チェックリスト、保存した求人・物件、生活プランをマイページでまとめて管理できます。"
+            />
+          </div>
 
           {article.related_checklist_items?.length ? (
             <section className="mt-8 border-t border-gray-200 pt-6">

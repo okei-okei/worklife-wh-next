@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
+import AuthAwareCta from "@/components/AuthAwareCta";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import type { Article } from "@/lib/articles";
 import { staticArticles } from "@/lib/constants/articles";
@@ -124,6 +125,11 @@ export default async function ArticlesPage() {
             </p>
           </section>
         )}
+
+        <AuthAwareCta
+          title="読んだ内容を準備リストに反映する"
+          description="無料登録すると、記事で確認した準備をチェックリストや生活プランナーに接続できます。"
+        />
 
         <div className="flex justify-end">
           <Link

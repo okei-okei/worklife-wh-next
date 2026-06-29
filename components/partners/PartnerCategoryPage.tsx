@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
+import AuthAwareCta from "@/components/AuthAwareCta";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { trackMetric } from "@/lib/analytics";
 import type {
@@ -41,6 +42,117 @@ function valueBadgeClass(value: string | boolean | number | null | undefined) {
 function getDestinationUrl(service: PartnerService) {
   return service.affiliateLink || service.affiliateUrl || service.officialUrl;
 }
+
+const nextCategoryLinks: Record<string, { href: string; label: string; description: string }[]> = {
+  "/partners/insurance": [
+    {
+      href: "/partners/sim-esim",
+      label: "SIM/eSIM比較",
+      description: "到着直後の通信手段をあわせて確認します。",
+    },
+    {
+      href: "/partners/flights-transport",
+      label: "航空券・移動比較",
+      description: "航空券や到着後の移動手段を整理します。",
+    },
+  ],
+  "/partners/money-transfer": [
+    {
+      href: "/partners/bank",
+      label: "銀行口座比較",
+      description: "給与受取や生活費管理の口座を確認します。",
+    },
+    {
+      href: "/partners/insurance",
+      label: "海外保険比較",
+      description: "渡航前に補償内容も確認します。",
+    },
+  ],
+  "/partners/bank": [
+    {
+      href: "/partners/money-transfer",
+      label: "海外送金比較",
+      description: "日本からNZへの送金方法を確認します。",
+    },
+    {
+      href: "/partners/sim-esim",
+      label: "SIM/eSIM比較",
+      description: "銀行手続きに必要な連絡手段を準備します。",
+    },
+  ],
+  "/partners/electricity": [
+    {
+      href: "/partners/internet",
+      label: "インターネット比較",
+      description: "住居決定後の生活インフラをまとめて確認します。",
+    },
+    {
+      href: "/partners/furniture",
+      label: "家具・生活用品比較",
+      description: "入居後に必要なものを確認します。",
+    },
+  ],
+  "/partners/internet": [
+    {
+      href: "/partners/electricity",
+      label: "電気サービス比較",
+      description: "住居の契約条件とあわせて確認します。",
+    },
+    {
+      href: "/partners/furniture",
+      label: "家具・生活用品比較",
+      description: "到着直後の買い物先を整理します。",
+    },
+  ],
+  "/partners/furniture": [
+    {
+      href: "/partners/electricity",
+      label: "電気サービス比較",
+      description: "生活インフラもあわせて確認します。",
+    },
+    {
+      href: "/partners/internet",
+      label: "インターネット比較",
+      description: "フラット生活に必要な通信環境を確認します。",
+    },
+  ],
+  "/partners/language-school": [
+    {
+      href: "/partners/study-agency",
+      label: "留学エージェント比較",
+      description: "学校選びや無料相談の違いを確認します。",
+    },
+    {
+      href: "/partners/sim-esim",
+      label: "SIM/eSIM比較",
+      description: "渡航直後の連絡手段を準備します。",
+    },
+  ],
+  "/partners/study-agency": [
+    {
+      href: "/partners/language-school",
+      label: "語学学校比較",
+      description: "紹介先候補の学校条件を自分でも確認します。",
+    },
+    {
+      href: "/partners/insurance",
+      label: "海外保険比較",
+      description: "渡航前に必要な補償も整理します。",
+    },
+  ],
+  "/partners/flights-transport": [
+    {
+      href: "/partners/sim-esim",
+      label: "SIM/eSIM比較",
+      description: "到着後すぐに地図や連絡を使えるようにします。",
+    },
+    {
+      href: "/partners/insurance",
+      label: "海外保険比較",
+      description: "出発前に保険条件も確認します。",
+    },
+  ],
+};
 
 export default function PartnerCategoryPage({
   title,
@@ -553,6 +665,45 @@ export default function PartnerCategoryPage({
         </section> : null}
 
         {children}
+
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <h2 className="text-xl font-bold text-gray-900">
+            次に比較すべきカテゴリ
+          </h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
+            このカテゴリと一緒に確認しておくと、渡航準備や生活開始の抜け漏れを減らせます。
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {(nextCategoryLinks[categoryPath] || [
+              {
+                href: "/partners/sim-esim",
+                label: "SIM/eSIM比較",
+                description: "到着直後に必要な通信手段を確認します。",
+              },
+              {
+                href: "/partners/insurance",
+                label: "海外保険比較",
+                description: "渡航前に補償内容を確認します。",
+              },
+            ]).map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-xl border border-gray-200 bg-gray-50 p-4 hover:bg-blue-50"
+              >
+                <h3 className="font-bold text-gray-900">{item.label}</h3>
+                <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+                  {item.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <AuthAwareCta
+          title="比較した内容を保存して準備を進める"
+          description="無料登録すると、チェックリスト、求人・物件、生活プランナーを使って準備状況をまとめて確認できます。"
+        />
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-700 md:p-5">
           WorkLife WHでは、契約前に条件を比較・確認しやすい形で情報を整理しています。掲載サービスには広告・紹介リンクが含まれる場合があります。掲載内容は料金、利用条件、対応エリア、ワーホリ・海外生活との相性などをもとに整理しています。実際に契約・申込みを行う前には、必ず各サービスの公式サイトで最新情報をご確認ください。

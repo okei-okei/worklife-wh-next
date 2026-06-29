@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SimEsimComparison from "@/components/partners/SimEsimComparison";
+import AuthAwareCta from "@/components/AuthAwareCta";
 import RelatedArticles from "@/components/articles/RelatedArticles";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
@@ -64,6 +65,45 @@ export default function SimEsimComparisonPage() {
 
         <RelatedArticles
           articles={relatedArticles}
+        />
+
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <h2 className="text-xl font-bold text-gray-900">
+            次に比較すべきカテゴリ
+          </h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
+            通信手段とあわせて、渡航前に必要な保険や到着後のお金まわりも確認しておくと安心です。
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {[
+              {
+                href: "/partners/insurance",
+                title: "海外保険比較",
+                description: "医療費や携行品補償など、渡航前に確認したい条件を整理します。",
+              },
+              {
+                href: "/partners/bank",
+                title: "銀行口座比較",
+                description: "給与受取や生活費管理に使う口座を確認します。",
+              },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-xl border border-gray-200 bg-gray-50 p-4 hover:bg-blue-50"
+              >
+                <h3 className="font-bold text-gray-900">{item.title}</h3>
+                <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+                  {item.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <AuthAwareCta
+          title="通信手段を決めたら生活準備へ"
+          description="無料登録すると、チェックリスト、保存した求人・物件、生活プランをマイページでまとめて確認できます。"
         />
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-700 md:p-5">

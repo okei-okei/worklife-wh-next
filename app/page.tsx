@@ -1,6 +1,7 @@
 import Hero from "../components/Hero";
 import Features from "../components/Features";
 import Link from "next/link";
+import AuthAwareCta from "@/components/AuthAwareCta";
 
 export default function Home() {
   return (
@@ -46,7 +47,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
                 title: "チェックリスト",
@@ -62,6 +63,16 @@ export default function Home() {
                 title: "役立ち情報",
                 description: "NZワーホリ準備に必要な確認ポイントを記事で整理します。",
                 href: "/articles",
+              },
+              {
+                title: "公開求人",
+                description: "公開中の求人を探し、気になる仕事を保存できます。",
+                href: "/jobs",
+              },
+              {
+                title: "公開物件",
+                description: "住まい候補を探し、生活プランの検討につなげられます。",
+                href: "/properties",
               },
               {
                 title: "ライフプランナー",
@@ -83,6 +94,13 @@ export default function Home() {
                 </span>
               </Link>
             ))}
+          </div>
+
+          <div className="mt-8">
+            <AuthAwareCta
+              title="準備した内容を保存して進める"
+              description="チェックリスト、求人・物件、生活プランを保存すると、後からマイページでまとめて確認できます。"
+            />
           </div>
         </div>
       </section>

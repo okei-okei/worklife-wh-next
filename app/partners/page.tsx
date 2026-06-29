@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AdDisclosureNotice from "@/components/AdDisclosureNotice";
+import AuthAwareCta from "@/components/AuthAwareCta";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
 import { createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
@@ -307,6 +308,11 @@ export default function PartnersPage() {
         </section>
 
         <AdDisclosureNotice detail />
+
+        <AuthAwareCta
+          title="比較したサービスを生活準備につなげる"
+          description="気になる求人・物件を保存し、チェックリストや生活プランナーとあわせて準備を進められます。"
+        />
 
         <div className="flex justify-end">
           <Link

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import PartnerCategoryPage from "@/components/partners/PartnerCategoryPage";
+import PartnerBreadcrumbJsonLd from "@/components/seo/PartnerBreadcrumbJsonLd";
+import { createPageMetadata } from "@/lib/seo";
 import {
   studyAgencyComparisonFields,
   studyAgencyFilters,
@@ -7,18 +9,27 @@ import {
   studyAgencyServices,
 } from "@/lib/constants/partners/studyAgencyServices";
 
+export const metadata = createPageMetadata({
+  title: "ニュージーランドワーホリ向け留学エージェント比較 | WorkLife WH",
+  description:
+    "無料相談、語学学校紹介、ワーホリサポートを行う留学エージェントを比較できます。",
+  path: "/partners/study-agency",
+});
+
 export default function StudyAgencyComparisonPage() {
   return (
-    <PartnerCategoryPage
-      title="留学エージェント比較"
-      description="無料相談、語学学校紹介、ワーホリサポート、現地サポートを比較できます。"
-      categoryPath="/partners/study-agency"
-      services={studyAgencyServices}
-      filters={studyAgencyFilters}
-      comparisonFields={studyAgencyComparisonFields}
-      recommendations={studyAgencyRecommendations}
-      noticeText="掲載内容・サポート内容・手数料・紹介学校は変更される場合があります。必ず公式サイトで最新情報をご確認ください。"
-    >
+    <>
+      <PartnerBreadcrumbJsonLd label="留学エージェント" path="/partners/study-agency" />
+      <PartnerCategoryPage
+        title="留学エージェント比較"
+        description="無料相談、語学学校紹介、ワーホリサポート、現地サポートを比較できます。"
+        categoryPath="/partners/study-agency"
+        services={studyAgencyServices}
+        filters={studyAgencyFilters}
+        comparisonFields={studyAgencyComparisonFields}
+        recommendations={studyAgencyRecommendations}
+        noticeText="掲載内容・サポート内容・手数料・紹介学校は変更される場合があります。必ず公式サイトで最新情報をご確認ください。"
+      >
       <section className="rounded-2xl bg-white p-4 shadow md:p-6">
         <h2 className="text-xl font-bold text-gray-900">関連記事</h2>
         <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
@@ -58,6 +69,7 @@ export default function StudyAgencyComparisonPage() {
           </Link>
         </div>
       </section>
-    </PartnerCategoryPage>
+      </PartnerCategoryPage>
+    </>
   );
 }

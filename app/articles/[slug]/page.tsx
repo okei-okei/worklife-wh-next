@@ -1,10 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import TrackedLink from "@/components/TrackedLink";
+import RelatedArticles from "@/components/articles/RelatedArticles";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
+import JsonLd from "@/components/seo/JsonLd";
 import type { Article } from "@/lib/articles";
-import { getStaticArticleBySlug } from "@/lib/constants/articles";
+import { getStaticArticleBySlug, staticArticles } from "@/lib/constants/articles";
+import { absoluteUrl, createPageMetadata } from "@/lib/seo";
+import { siteConfig } from "@/lib/siteConfig";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +73,75 @@ async function getArticle(slug: string) {
   return (data as Article | null) || null;
 }
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const article = await getArticle(slug);
+
+  if (!article) {
+    return createPageMetadata({
+      title: "記事が見つかりません | WorkLife WH",
+      description: "指定された記事は見つかりませんでした。",
+      path: `/articles/${slug}`,
+    });
+  }
+
+  return createPageMetadata({
+    title: `${article.title} | WorkLife WH`,
+    description: article.excerpt || "WorkLife WHの役立ち情報記事です。",
+    path: `/articles/${article.slug}`,
+    image: article.cover_image_url,
+    type: "article",
+    publishedTime: article.published_at,
+    modifiedTime: article.updated_at,
+  });
+}
+
+export function generateStaticParams() {
+  return staticArticles.map((article) => ({ slug: article.slug }));
+}
+
+function getRelatedArticles(article: Article) {
+  return staticArticles
+    .filter(
+      (item) =>
+        item.slug !== article.slug &&
+        (item.category === article.category ||
+          (item.country_code && item.country_code === article.country_code)),
+    )
+    .slice(0, 3);
+}
+
+function getComparisonLinks(article: Article, primaryHref: string, primaryLabel: string) {
+  const links = [{ href: primaryHref, label: primaryLabel }];
+  const add = (href: string, label: string) => {
+    if (!links.some((link) => link.href === href)) links.push({ href, label });
+  };
+
+  if (article.category === "銀行口座") {
+    add("/partners/money-transfer", "海外送金比較を見る");
+  }
+  if (article.category === "海外送金") {
+    add("/partners/bank", "銀行口座比較を見る");
+  }
+  if (article.category === "電気") {
+    add("/partners/internet", "インターネット比較を見る");
+  }
+  if (article.category === "インターネット") {
+    add("/partners/electricity", "電気会社比較を見る");
+  }
+  if (article.category === "航空券・移動") {
+    add("/partners/sim-esim", "SIM/eSIM比較を見る");
+  }
+  if (article.category === "語学学校") {
+    add("/partners/study-agency", "留学エージェント比較を見る");
+  }
+  if (article.category === "留学エージェント") {
+    add("/partners/language-school", "語学学校比較を見る");
+  }
+
+  return links;
+}
+
 function renderBlock(block: string, index: number) {
   if (block.startsWith("# ")) {
     return (
@@ -118,13 +193,36 @@ export default async function ArticlePage({ params }: Props) {
   const relatedPartnerUrl = article.related_partner_url || "/partners";
   const relatedChecklistUrl = article.related_checklist_url || "/mypage/checklist";
   const partnerLinkLabel = getPartnerLinkLabel(article, relatedPartnerUrl);
-  const showSimLink = article.category === "航空券・移動";
+  const comparisonLinks = getComparisonLinks(article, relatedPartnerUrl, partnerLinkLabel);
+  const relatedArticles = getRelatedArticles(article);
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.excerpt || article.title,
+    datePublished: article.published_at || article.created_at,
+    dateModified: article.updated_at || article.published_at || article.created_at,
+    author: { "@type": "Organization", name: siteConfig.name },
+    publisher: { "@type": "Organization", name: siteConfig.name },
+    mainEntityOfPage: absoluteUrl(`/articles/${article.slug}`),
+  };
 
   return (
     <main className="min-h-screen bg-gray-100 px-4 py-8 text-gray-900 md:px-6 md:py-10">
       <ArticleViewTracker slug={slug} />
+      <JsonLd data={articleJsonLd} />
       <article className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="p-4 md:p-8">
+          <div className="mb-5">
+            <Breadcrumbs
+              items={[
+                { label: "ホーム", href: "/" },
+                { label: "役立ち情報", href: "/articles" },
+                { label: article.title },
+              ]}
+            />
+          </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
               {article.category}
@@ -159,32 +257,31 @@ export default async function ArticlePage({ params }: Props) {
           <div className="mt-8 space-y-5">{blocks.map(renderBlock)}</div>
 
           <section className="mt-10 rounded-2xl border border-gray-200 bg-gray-50 p-4">
-            <h2 className="text-lg font-bold">関連リンク</h2>
+            <h2 className="text-lg font-bold">関連する比較ページ</h2>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <TrackedLink
-                href={relatedPartnerUrl}
-                eventName="article_related_partner_click"
-                targetType="article"
-                targetId={article.slug}
-                pagePath={`/articles/${article.slug}`}
-                metadata={{
-                  slug: article.slug,
-                  title: article.title,
-                  category: article.category,
-                  targetUrl: relatedPartnerUrl,
-                }}
-                className="rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800"
-              >
-                {partnerLinkLabel}
-              </TrackedLink>
-              {showSimLink ? (
-                <Link
-                  href="/partners/sim-esim"
-                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
+              {comparisonLinks.map((link, index) => (
+                <TrackedLink
+                  key={link.href}
+                  href={link.href}
+                  eventName="article_related_partner_click"
+                  targetType="article"
+                  targetId={article.slug}
+                  pagePath={`/articles/${article.slug}`}
+                  metadata={{
+                    slug: article.slug,
+                    title: article.title,
+                    category: article.category,
+                    targetUrl: link.href,
+                  }}
+                  className={
+                    index === 0
+                      ? "rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800"
+                      : "rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
+                  }
                 >
-                  SIM/eSIM比較へ
-                </Link>
-              ) : null}
+                  {link.label}
+                </TrackedLink>
+              ))}
               <TrackedLink
                 href={relatedChecklistUrl}
                 eventName="article_related_checklist_click"
@@ -209,6 +306,8 @@ export default async function ArticlePage({ params }: Props) {
               </Link>
             </div>
           </section>
+
+          <RelatedArticles articles={relatedArticles} />
 
           {article.related_checklist_items?.length ? (
             <section className="mt-8 border-t border-gray-200 pt-6">

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import PartnerCategoryPage from "@/components/partners/PartnerCategoryPage";
+import PartnerBreadcrumbJsonLd from "@/components/seo/PartnerBreadcrumbJsonLd";
+import { createPageMetadata } from "@/lib/seo";
 import {
   furnitureComparisonFields,
   furnitureFilters,
@@ -7,18 +9,27 @@ import {
   furnitureServices,
 } from "@/lib/constants/partners/furnitureServices";
 
+export const metadata = createPageMetadata({
+  title: "ニュージーランド生活向け家具・生活用品比較 | WorkLife WH",
+  description:
+    "到着直後や入居後に必要な家具、寝具、生活用品の購入先を比較できます。",
+  path: "/partners/furniture",
+});
+
 export default function FurnitureComparisonPage() {
   return (
-    <PartnerCategoryPage
-      title="家具・生活用品比較"
-      description="住居が決まった後や到着直後に必要な寝具、キッチン用品、家具、家電、生活用品の購入先を比較できます。"
-      categoryPath="/partners/furniture"
-      services={furnitureServices}
-      filters={furnitureFilters}
-      comparisonFields={furnitureComparisonFields}
-      recommendations={furnitureRecommendations}
-      noticeText="掲載サービスには広告・紹介リンクが含まれる場合があります。価格、在庫、配送条件、返品条件は変更される場合があるため、必ず公式サイトで最新情報をご確認ください。中古品を購入する場合は、商品の状態、受け渡し場所、支払い方法、安全性を必ず確認してください。"
-    >
+    <>
+      <PartnerBreadcrumbJsonLd label="家具・生活用品" path="/partners/furniture" />
+      <PartnerCategoryPage
+        title="家具・生活用品比較"
+        description="住居が決まった後や到着直後に必要な寝具、キッチン用品、家具、家電、生活用品の購入先を比較できます。"
+        categoryPath="/partners/furniture"
+        services={furnitureServices}
+        filters={furnitureFilters}
+        comparisonFields={furnitureComparisonFields}
+        recommendations={furnitureRecommendations}
+        noticeText="掲載サービスには広告・紹介リンクが含まれる場合があります。価格、在庫、配送条件、返品条件は変更される場合があるため、必ず公式サイトで最新情報をご確認ください。中古品を購入する場合は、商品の状態、受け渡し場所、支払い方法、安全性を必ず確認してください。"
+      >
       <section className="rounded-2xl bg-white p-4 shadow md:p-6">
         <h2 className="text-xl font-bold text-gray-900">関連記事</h2>
         <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
@@ -58,6 +69,7 @@ export default function FurnitureComparisonPage() {
           </Link>
         </div>
       </section>
-    </PartnerCategoryPage>
+      </PartnerCategoryPage>
+    </>
   );
 }

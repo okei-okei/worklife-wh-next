@@ -1,6 +1,8 @@
 import Link from "next/link";
 import PartnerCategoryPage from "@/components/partners/PartnerCategoryPage";
 import MoneyTransferSimulator from "@/components/partners/MoneyTransferSimulator";
+import PartnerBreadcrumbJsonLd from "@/components/seo/PartnerBreadcrumbJsonLd";
+import { createPageMetadata } from "@/lib/seo";
 import {
   moneyTransferComparisonFields,
   moneyTransferFilters,
@@ -8,18 +10,27 @@ import {
   moneyTransferServices,
 } from "@/lib/constants/partners/moneyTransferServices";
 
+export const metadata = createPageMetadata({
+  title: "ニュージーランドワーホリ向け海外送金サービス比較 | WorkLife WH",
+  description:
+    "日本からニュージーランドへの送金方法を、手数料、為替レート、着金速度で比較できます。",
+  path: "/partners/money-transfer",
+});
+
 export default function MoneyTransferComparisonPage() {
   return (
-    <PartnerCategoryPage
-      title="海外送金比較"
-      description="日本からニュージーランドへの送金を、手数料、為替レート、着金速度、送金方法で比較できます。"
-      categoryPath="/partners/money-transfer"
-      services={moneyTransferServices}
-      filters={moneyTransferFilters}
-      comparisonFields={moneyTransferComparisonFields}
-      recommendations={moneyTransferRecommendations}
-    >
-      <MoneyTransferSimulator services={moneyTransferServices} />
+    <>
+      <PartnerBreadcrumbJsonLd label="海外送金" path="/partners/money-transfer" />
+      <PartnerCategoryPage
+        title="海外送金比較"
+        description="日本からニュージーランドへの送金を、手数料、為替レート、着金速度、送金方法で比較できます。"
+        categoryPath="/partners/money-transfer"
+        services={moneyTransferServices}
+        filters={moneyTransferFilters}
+        comparisonFields={moneyTransferComparisonFields}
+        recommendations={moneyTransferRecommendations}
+      >
+        <MoneyTransferSimulator services={moneyTransferServices} />
 
       <section className="rounded-2xl bg-white p-4 shadow md:p-6">
         <h2 className="text-xl font-bold text-gray-900">関連カテゴリ</h2>
@@ -66,6 +77,7 @@ export default function MoneyTransferComparisonPage() {
           </div>
         </article>
       </section>
-    </PartnerCategoryPage>
+      </PartnerCategoryPage>
+    </>
   );
 }

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import PartnerCategoryPage from "@/components/partners/PartnerCategoryPage";
+import PartnerBreadcrumbJsonLd from "@/components/seo/PartnerBreadcrumbJsonLd";
+import { createPageMetadata } from "@/lib/seo";
 import {
   languageSchoolComparisonFields,
   languageSchoolFilters,
@@ -7,18 +9,27 @@ import {
   languageSchoolServices,
 } from "@/lib/constants/partners/languageSchoolServices";
 
+export const metadata = createPageMetadata({
+  title: "ニュージーランドワーホリ向け語学学校比較 | WorkLife WH",
+  description:
+    "英語学習、IELTS対策、仕事探し準備に使えるニュージーランドの語学学校を比較できます。",
+  path: "/partners/language-school",
+});
+
 export default function LanguageSchoolComparisonPage() {
   return (
-    <PartnerCategoryPage
-      title="語学学校比較"
-      description="英語学習、IELTS対策、仕事探し準備に使えるニュージーランドの語学学校を比較できます。"
-      categoryPath="/partners/language-school"
-      services={languageSchoolServices}
-      filters={languageSchoolFilters}
-      comparisonFields={languageSchoolComparisonFields}
-      recommendations={languageSchoolRecommendations}
-      noticeText="掲載サービスには広告・紹介リンクが含まれる場合があります。学費、コース内容、サポート内容、入学条件は変更される場合があるため、必ず公式サイトで最新情報をご確認ください。"
-    >
+    <>
+      <PartnerBreadcrumbJsonLd label="語学学校" path="/partners/language-school" />
+      <PartnerCategoryPage
+        title="語学学校比較"
+        description="英語学習、IELTS対策、仕事探し準備に使えるニュージーランドの語学学校を比較できます。"
+        categoryPath="/partners/language-school"
+        services={languageSchoolServices}
+        filters={languageSchoolFilters}
+        comparisonFields={languageSchoolComparisonFields}
+        recommendations={languageSchoolRecommendations}
+        noticeText="掲載サービスには広告・紹介リンクが含まれる場合があります。学費、コース内容、サポート内容、入学条件は変更される場合があるため、必ず公式サイトで最新情報をご確認ください。"
+      >
       <section className="rounded-2xl bg-white p-4 shadow md:p-6">
         <h2 className="text-xl font-bold text-gray-900">関連記事</h2>
         <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
@@ -58,6 +69,7 @@ export default function LanguageSchoolComparisonPage() {
           </Link>
         </div>
       </section>
-    </PartnerCategoryPage>
+      </PartnerCategoryPage>
+    </>
   );
 }

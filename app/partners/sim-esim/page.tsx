@@ -1,11 +1,44 @@
 import Link from "next/link";
 import SimEsimComparison from "@/components/partners/SimEsimComparison";
+import RelatedArticles from "@/components/articles/RelatedArticles";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
+import JsonLd from "@/components/seo/JsonLd";
+import type { Article } from "@/lib/articles";
+import { getStaticArticleBySlug } from "@/lib/constants/articles";
+import { createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
+
+export const metadata = createPageMetadata({
+  title: "ニュージーランドワーホリ向けSIM/eSIM比較 | WorkLife WH",
+  description:
+    "ニュージーランド渡航前後に使えるSIM/eSIM、現地SIM、通信サービスを比較できます。",
+  path: "/partners/sim-esim",
+});
 
 export default function SimEsimComparisonPage() {
+  const relatedArticles = [
+    getStaticArticleBySlug("nz-working-holiday-sim-esim-comparison"),
+  ].filter((article): article is Article => article !== null);
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
+      <JsonLd
+        data={createBreadcrumbJsonLd([
+          { label: "ホーム", href: "/" },
+          { label: "比較・おすすめ", href: "/partners" },
+          { label: "SIM/eSIM", href: "/partners/sim-esim" },
+        ])}
+      />
       <div className="mx-auto max-w-6xl space-y-6">
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <div className="mb-4">
+            <Breadcrumbs
+              items={[
+                { label: "ホーム", href: "/" },
+                { label: "比較・おすすめ", href: "/partners" },
+                { label: "SIM/eSIM" },
+              ]}
+            />
+          </div>
           <p className="mb-2 text-sm font-bold text-blue-700">
             WorkLife WH 比較・おすすめ
           </p>
@@ -28,6 +61,10 @@ export default function SimEsimComparisonPage() {
         </section>
 
         <SimEsimComparison />
+
+        <RelatedArticles
+          articles={relatedArticles}
+        />
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-700 md:p-5">
           <p>

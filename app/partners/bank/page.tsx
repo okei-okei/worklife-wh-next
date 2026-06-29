@@ -1,5 +1,7 @@
 import Link from "next/link";
 import PartnerCategoryPage from "@/components/partners/PartnerCategoryPage";
+import PartnerBreadcrumbJsonLd from "@/components/seo/PartnerBreadcrumbJsonLd";
+import { createPageMetadata } from "@/lib/seo";
 import {
   bankComparisonFields,
   bankFilters,
@@ -7,18 +9,27 @@ import {
   bankServices,
 } from "@/lib/constants/partners/bankServices";
 
+export const metadata = createPageMetadata({
+  title: "ニュージーランドワーホリ向け銀行口座比較 | WorkLife WH",
+  description:
+    "NZ到着後の給与受取、家賃支払い、生活費管理に使う銀行口座を比較できます。",
+  path: "/partners/bank",
+});
+
 export default function BankComparisonPage() {
   return (
-    <PartnerCategoryPage
-      title="銀行口座比較"
-      description="NZ到着後の給与受取や生活費管理に使う銀行口座、送金と相性のよい補助サービスを比較できます。"
-      categoryPath="/partners/bank"
-      services={bankServices}
-      filters={bankFilters}
-      comparisonFields={bankComparisonFields}
-      recommendations={bankRecommendations}
-      noticeText="掲載サービスには広告・紹介リンクが含まれる場合があります。口座開設条件、手数料、本人確認、対応サービスは変更される場合があるため、必ず公式サイトで最新情報をご確認ください。"
-    >
+    <>
+      <PartnerBreadcrumbJsonLd label="銀行口座" path="/partners/bank" />
+      <PartnerCategoryPage
+        title="銀行口座比較"
+        description="NZ到着後の給与受取や生活費管理に使う銀行口座、送金と相性のよい補助サービスを比較できます。"
+        categoryPath="/partners/bank"
+        services={bankServices}
+        filters={bankFilters}
+        comparisonFields={bankComparisonFields}
+        recommendations={bankRecommendations}
+        noticeText="掲載サービスには広告・紹介リンクが含まれる場合があります。口座開設条件、手数料、本人確認、対応サービスは変更される場合があるため、必ず公式サイトで最新情報をご確認ください。"
+      >
       <section className="rounded-2xl bg-white p-4 shadow md:p-6">
         <h2 className="text-xl font-bold text-gray-900">関連カテゴリ</h2>
         <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
@@ -64,6 +75,7 @@ export default function BankComparisonPage() {
           </div>
         </article>
       </section>
-    </PartnerCategoryPage>
+      </PartnerCategoryPage>
+    </>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { trackMetric } from "@/lib/analytics";
 import {
   insuranceComparisonFields,
@@ -120,6 +121,15 @@ export default function InsuranceComparison() {
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <div className="mb-4">
+            <Breadcrumbs
+              items={[
+                { label: "ホーム", href: "/" },
+                { label: "比較・おすすめ", href: "/partners" },
+                { label: "海外保険" },
+              ]}
+            />
+          </div>
           <p className="mb-2 text-sm font-bold text-blue-700">
             WorkLife WH 比較・おすすめ
           </p>

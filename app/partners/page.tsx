@@ -1,5 +1,15 @@
 import Link from "next/link";
 import AdDisclosureNotice from "@/components/AdDisclosureNotice";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
+import JsonLd from "@/components/seo/JsonLd";
+import { createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
+
+export const metadata = createPageMetadata({
+  title: "ニュージーランドワーホリ向け比較・おすすめサービス | WorkLife WH",
+  description:
+    "SIM/eSIM、海外保険、銀行口座、海外送金、電気、インターネット、家具、語学学校などをカテゴリ別に比較できます。",
+  path: "/partners",
+});
 
 type PartnerCategoryCard = {
   title: string;
@@ -218,8 +228,22 @@ function TagList({ items }: { items: string[] }) {
 export default function PartnersPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
+      <JsonLd
+        data={createBreadcrumbJsonLd([
+          { label: "ホーム", href: "/" },
+          { label: "比較・おすすめ", href: "/partners" },
+        ])}
+      />
       <div className="mx-auto max-w-6xl space-y-6">
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <div className="mb-4">
+            <Breadcrumbs
+              items={[
+                { label: "ホーム", href: "/" },
+                { label: "比較・おすすめ" },
+              ]}
+            />
+          </div>
           <p className="mb-2 text-sm font-bold text-blue-700">
             WorkLife WH 比較・おすすめ
           </p>

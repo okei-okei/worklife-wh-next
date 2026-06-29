@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import type { Article } from "@/lib/articles";
 import { staticArticles } from "@/lib/constants/articles";
+import { createPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = createPageMetadata({
+  title: "ニュージーランドワーホリの役立ち情報 | WorkLife WH",
+  description:
+    "ニュージーランドのワーホリ準備、仕事探し、家探し、お金、生活インフラに関する記事を整理しています。",
+  path: "/articles",
+});
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "-";
@@ -47,6 +56,14 @@ export default async function ArticlesPage() {
     <main className="min-h-screen bg-gray-100 px-4 py-8 text-gray-900 md:px-6 md:py-10">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="max-w-3xl">
+          <div className="mb-4">
+            <Breadcrumbs
+              items={[
+                { label: "ホーム", href: "/" },
+                { label: "役立ち情報" },
+              ]}
+            />
+          </div>
           <p className="text-sm font-bold text-blue-700">WorkLife WH コラム</p>
           <h1 className="mt-2 text-2xl font-bold md:text-4xl">
             海外生活の役立ち情報

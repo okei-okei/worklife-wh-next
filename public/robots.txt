@@ -2,3 +2,4 @@ User-Agent: *
 Allow: /
 
 Sitemap: https://worklife-wh-next.vercel.app/sitemap.xml
+Sitemap: https://worklife-wh-next.vercel.app/google-sitemap.xml

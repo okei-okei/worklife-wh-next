@@ -24,6 +24,9 @@ export const metadata: Metadata = {
     type: "website",
     url: absoluteUrl("/"),
   },
+  verification: {
+    google: "ytCGn5QIlmLC9JVUPsbK_TAXizHlt0nH-ucXPsPM32M",
+  },
 };
 
 export default function RootLayout({

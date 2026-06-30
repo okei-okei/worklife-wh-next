@@ -259,7 +259,7 @@ export default async function ArticlePage({ params }: Props) {
 
           <section className="mt-10 rounded-2xl border border-gray-200 bg-gray-50 p-4">
             <h2 className="text-lg font-bold">関連する比較ページ</h2>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {comparisonLinks.map((link, index) => (
                 <TrackedLink
                   key={link.href}
@@ -297,13 +297,19 @@ export default async function ArticlePage({ params }: Props) {
                 }}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
               >
-                チェックリストへ
+                チェックリストを見る
               </TrackedLink>
+              <Link
+                href="/planner"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
+              >
+                ライフプランナーを使う
+              </Link>
               <Link
                 href="/partners"
                 className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
               >
-                比較トップへ
+                比較トップを見る
               </Link>
             </div>
           </section>

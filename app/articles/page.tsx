@@ -188,7 +188,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
               チェックリストを見る
             </Link>
           </div>
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-5">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {beginnerArticles.map((article, index) => (
               <Link
                 key={article.slug}
@@ -221,7 +221,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
               href="/articles"
-              className={`rounded-lg px-4 py-3 text-sm font-bold ${
+              className={`rounded-lg px-3 py-2 text-sm font-bold md:px-4 md:py-3 ${
                 selectedCategory === "all"
                   ? "bg-blue-700 text-white"
                   : "bg-gray-100 text-gray-900 hover:bg-gray-200"
@@ -233,7 +233,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
               <Link
                 key={category}
                 href={`/articles?category=${encodeURIComponent(category)}`}
-                className={`rounded-lg px-4 py-3 text-sm font-bold ${
+                className={`rounded-lg px-3 py-2 text-sm font-bold md:px-4 md:py-3 ${
                   selectedCategory === category
                     ? "bg-blue-700 text-white"
                     : "bg-gray-100 text-gray-900 hover:bg-gray-200"
@@ -247,7 +247,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
 
         <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
           <h2 className="text-lg font-bold text-gray-900">人気記事</h2>
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-5">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {popularArticles.map((article) => (
               <Link
                 key={article.slug}

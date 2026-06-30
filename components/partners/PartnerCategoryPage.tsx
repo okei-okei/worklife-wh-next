@@ -154,6 +154,102 @@ const nextCategoryLinks: Record<string, { href: string; label: string; descripti
   ],
 };
 
+const relatedArticleLinks: Record<string, { href: string; title: string; description: string }[]> = {
+  "/partners/insurance": [
+    {
+      href: "/articles/nz-working-holiday-insurance-guide",
+      title: "ニュージーランドワーホリに海外保険は必要？",
+      description: "海外保険を検討する理由と比較ポイントを整理します。",
+    },
+  ],
+  "/partners/money-transfer": [
+    {
+      href: "/articles/nz-working-holiday-money-transfer-guide",
+      title: "ニュージーランドワーホリにおすすめの海外送金サービス比較",
+      description: "手数料、為替レート、送金速度の見方を整理します。",
+    },
+    {
+      href: "/articles/nz-arrival-ird-bank-transport-real",
+      title: "到着後の手続きと交通",
+      description: "銀行口座、IRD、交通の実体験ベースの注意点です。",
+    },
+  ],
+  "/partners/bank": [
+    {
+      href: "/articles/nz-working-holiday-bank-account-guide",
+      title: "ニュージーランドワーホリで銀行口座は必要？",
+      description: "給与受取や生活費管理に使う銀行口座の考え方を整理します。",
+    },
+    {
+      href: "/articles/nz-arrival-ird-bank-transport-real",
+      title: "到着後の手続きと交通",
+      description: "銀行、IRD、交通まわりのリアルな注意点を確認できます。",
+    },
+  ],
+  "/partners/electricity": [
+    {
+      href: "/articles/nz-rental-electricity-setup-guide",
+      title: "住居決定後の電気契約ガイド",
+      description: "入居前に確認したい電気契約と光熱費のポイントです。",
+    },
+    {
+      href: "/articles/nz-rental-checkpoints-real",
+      title: "物件探しで確認すべきこと",
+      description: "光熱費、家具、契約条件を入居前に確認します。",
+    },
+  ],
+  "/partners/internet": [
+    {
+      href: "/articles/nz-rental-internet-setup-guide",
+      title: "住居決定後のインターネット契約ガイド",
+      description: "Wi-Fi、固定回線、開通時期の確認ポイントです。",
+    },
+    {
+      href: "/articles/nz-rental-checkpoints-real",
+      title: "物件探しで確認すべきこと",
+      description: "入居前に通信環境や契約条件を確認します。",
+    },
+  ],
+  "/partners/furniture": [
+    {
+      href: "/articles/nz-arrival-furniture-daily-items-guide",
+      title: "到着直後の家具・生活用品ガイド",
+      description: "寝具、キッチン用品、日用品の購入先を整理します。",
+    },
+    {
+      href: "/articles/nz-working-holiday-what-to-bring",
+      title: "日本から持ってくると便利なもの",
+      description: "生活用品、衣類、体調管理グッズを実体験ベースで整理します。",
+    },
+  ],
+  "/partners/language-school": [
+    {
+      href: "/articles/nz-working-holiday-language-school-guide",
+      title: "語学学校は必要？選び方と比較ポイント",
+      description: "英語学習や仕事探し準備との関係を整理します。",
+    },
+  ],
+  "/partners/study-agency": [
+    {
+      href: "/articles/nz-working-holiday-study-agency-guide",
+      title: "留学エージェントは使うべき？",
+      description: "メリット、デメリット、無料相談の考え方を整理します。",
+    },
+  ],
+  "/partners/flights-transport": [
+    {
+      href: "/articles/nz-working-holiday-flights-transport-guide",
+      title: "航空券・現地移動の選び方",
+      description: "航空券、空港移動、国内移動、市内交通を整理します。",
+    },
+    {
+      href: "/articles/nz-arrival-ird-bank-transport-real",
+      title: "到着後の手続きと交通",
+      description: "バス利用や交通費の実体験ベースの注意点です。",
+    },
+  ],
+};
+
 export default function PartnerCategoryPage({
   title,
   description,
@@ -665,6 +761,33 @@ export default function PartnerCategoryPage({
         </section> : null}
 
         {children}
+
+        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <h2 className="text-xl font-bold text-gray-900">関連記事</h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
+            比較前後に読んでおくと、契約前に確認すべきポイントを整理しやすくなります。
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+            {(relatedArticleLinks[categoryPath] || [
+              {
+                href: "/articles/nz-working-holiday-real-experience",
+                title: "実際にNZワーホリに来て分かったこと",
+                description: "生活、仕事、家探しのリアルを実体験ベースで整理します。",
+              },
+            ]).map((article) => (
+              <Link
+                key={article.href}
+                href={article.href}
+                className="rounded-xl border border-gray-200 bg-gray-50 p-4 hover:bg-blue-50"
+              >
+                <h3 className="font-bold text-gray-900">{article.title}</h3>
+                <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+                  {article.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <h2 className="text-xl font-bold text-gray-900">

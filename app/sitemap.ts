@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
+import { staticArticles } from "@/lib/constants/articles";
 
 const baseUrl = "https://worklife-wh-next.vercel.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = [
+  const publicRoutes = [
     "",
     "/jobs",
     "/properties",
@@ -20,21 +21,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/partners/study-agency",
     "/partners/flights-transport",
     "/articles",
-    "/articles/nz-working-holiday-real-experience",
-    "/articles/nz-homestay-vs-sharehouse",
-    "/articles/nz-working-holiday-job-search-real",
-    "/articles/nz-rental-checkpoints-real",
-    "/articles/nz-working-holiday-what-to-bring",
-    "/articles/nz-arrival-ird-bank-transport-real",
-    "/articles/nz-safety-nightlife-real",
+  ];
+
+  const articleRoutes = staticArticles
+    .filter((article) => article.status === "approved" || article.status === "published")
+    .map((article) => `/articles/${article.slug}`);
+
+  const legalRoutes = [
+    "/legal",
     "/legal/terms",
     "/legal/privacy",
     "/legal/cookies",
     "/legal/affiliate-disclosure",
     "/legal/ai-policy",
+    "/legal/business-terms",
     "/legal/community-guidelines",
+    "/legal/company-terms",
     "/legal/data-policy",
+    "/legal/data-transfer",
+    "/legal/data-use-transfer",
+    "/legal/job-listing-terms",
+    "/legal/job-posting",
+    "/legal/privacy-request",
+    "/legal/property-listing-terms",
+    "/legal/property-posting",
   ];
+
+  const routes = [...publicRoutes, ...articleRoutes, ...legalRoutes];
 
   return routes.map((route) => ({
     url: `${baseUrl}${route}`,

@@ -36,8 +36,14 @@ type Metrics = {
       partnerViews7Days: number;
       affiliateClicksToday: number;
       affiliateClicks7Days: number;
+      affiliateClicksTotal: number;
+      officialClicksToday: number;
+      officialClicks7Days: number;
+      officialClicksTotal: number;
       articleViewsToday: number;
       articleViews7Days: number;
+      articleViewsTotal: number;
+      partnerViewsTotal: number;
       checklistPartnerClicks: number;
     };
     categories: CategoryAnalytics[];
@@ -61,10 +67,10 @@ export default function AdminPage() {
   if (checking) return <main className="min-h-screen bg-gray-100 p-6 text-gray-900"><p className="mx-auto max-w-7xl rounded-lg bg-white p-5 font-bold">管理者権限を確認中...</p></main>;
   const m = metrics;
   return <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6"><div className="mx-auto max-w-7xl space-y-6">
-    <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-sm font-bold text-emerald-700">WorkLife WH Admin</p><h1 className="mt-1 text-2xl font-bold md:text-4xl">管理者ダッシュボード</h1><p className="mt-2 text-sm font-medium text-gray-700">利用状況、掲載申請、比較サービスの状況を確認できます。</p></div><div className="flex flex-col gap-2 sm:flex-row"><Link href="/admin/listings" className="rounded-md border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900">公開掲載を管理</Link><Link href="/admin/submissions" className="rounded-md bg-slate-900 px-4 py-3 text-center font-bold text-white">掲載申請 {(m?.jobs.pending ?? 0) + (m?.properties.pending ?? 0)}件</Link></div></header>
+    <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-sm font-bold text-emerald-700">WorkLife WH Admin</p><h1 className="mt-1 text-2xl font-bold md:text-4xl">管理者ダッシュボード</h1><p className="mt-2 text-sm font-medium text-gray-700">利用状況、掲載申請、比較サービスの状況を確認できます。</p></div><div className="flex flex-col gap-2 sm:flex-row"><Link href="/admin/launch-checklist" className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-center font-bold text-emerald-800">公開前チェック</Link><Link href="/admin/listings" className="rounded-md border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900">公開掲載を管理</Link><Link href="/admin/submissions" className="rounded-md bg-slate-900 px-4 py-3 text-center font-bold text-white">掲載申請 {(m?.jobs.pending ?? 0) + (m?.properties.pending ?? 0)}件</Link></div></header>
     {error ? <p className="rounded-md border border-red-200 bg-red-50 p-4 font-bold text-red-700">{error}<span className="mt-2 block text-sm">Supabaseで最新版の analytics_and_articles.sql を実行してください。</span></p> : null}
     <section><h2 className="mb-3 text-lg font-bold">主要KPI</h2><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"><Card label="総ユーザー数" value={m?.users.total ?? 0} note={`30日アクティブ率 ${(m?.users.activeRate ?? 0).toFixed(1)}%`} /><Card label="30日間新規登録" value={m?.users.newUsers.days30 ?? 0} note={`今日 ${m?.users.newUsers.today ?? 0} / 7日 ${m?.users.newUsers.days7 ?? 0}`} /><Card label="30日アクティブ" value={m?.users.active30 ?? 0} note={`7日 ${m?.users.active7 ?? 0}`} /><Card label="紹介リンククリック" value={m?.comparison.affiliateClicks ?? 0} note={`CTR ${(m?.comparison.ctr ?? 0).toFixed(1)}%`} /></div></section>
-    <section><h2 className="mb-3 text-lg font-bold">比較・記事計測KPI</h2><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"><Card label="今日の比較閲覧" value={m?.analytics?.kpis.partnerViewsToday ?? 0} note={`7日 ${m?.analytics?.kpis.partnerViews7Days ?? 0}`} /><Card label="今日の広告クリック" value={m?.analytics?.kpis.affiliateClicksToday ?? 0} note={`7日 ${m?.analytics?.kpis.affiliateClicks7Days ?? 0}`} /><Card label="今日の記事閲覧" value={m?.analytics?.kpis.articleViewsToday ?? 0} note={`7日 ${m?.analytics?.kpis.articleViews7Days ?? 0}`} /><Card label="チェックリスト→比較" value={m?.analytics?.kpis.checklistPartnerClicks ?? 0} note="チェックリスト導線クリック" /></div></section>
+    <section><h2 className="mb-3 text-lg font-bold">比較・記事計測KPI</h2><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5"><Card label="記事PV" value={m?.analytics?.kpis.articleViewsTotal ?? 0} note={`今日 ${m?.analytics?.kpis.articleViewsToday ?? 0} / 7日 ${m?.analytics?.kpis.articleViews7Days ?? 0}`} /><Card label="比較ページPV" value={m?.analytics?.kpis.partnerViewsTotal ?? 0} note={`今日 ${m?.analytics?.kpis.partnerViewsToday ?? 0} / 7日 ${m?.analytics?.kpis.partnerViews7Days ?? 0}`} /><Card label="広告クリック数" value={m?.analytics?.kpis.affiliateClicksTotal ?? 0} note={`今日 ${m?.analytics?.kpis.affiliateClicksToday ?? 0} / 7日 ${m?.analytics?.kpis.affiliateClicks7Days ?? 0}`} /><Card label="公式リンククリック数" value={m?.analytics?.kpis.officialClicksTotal ?? 0} note={`今日 ${m?.analytics?.kpis.officialClicksToday ?? 0} / 7日 ${m?.analytics?.kpis.officialClicks7Days ?? 0}`} /><Card label="チェックリスト遷移数" value={m?.analytics?.kpis.checklistPartnerClicks ?? 0} note="チェックリスト→比較ページ" /></div></section>
     <CategoryTable rows={m?.analytics?.categories || []} />
     <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       <Group title="ユーザー" values={[["ログイン済み", m?.users.loggedIn ?? 0], ["NZ", m?.users.countries.NZ ?? 0], ["AU", m?.users.countries.AU ?? 0], ["CA", m?.users.countries.CA ?? 0], ["その他", m?.users.countries.other ?? 0], ["訪問→登録CVR", `${(m?.conversion.visitorToSignup ?? 0).toFixed(1)}%`]]} />

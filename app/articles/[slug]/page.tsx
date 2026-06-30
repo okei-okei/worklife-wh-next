@@ -310,6 +310,42 @@ export default async function ArticlePage({ params }: Props) {
 
           <RelatedArticles articles={relatedArticles} title="次に読む記事" />
 
+          <section className="mt-8 rounded-2xl border border-blue-100 bg-blue-50 p-4 md:p-5">
+            <h2 className="text-lg font-bold text-gray-900">
+              WorkLife WHでできること
+            </h2>
+            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+              {[
+                {
+                  href: "/mypage/checklist",
+                  title: "準備をチェックする",
+                  description: "渡航前、到着後、仕事・住まい探しの抜け漏れを確認できます。",
+                },
+                {
+                  href: "/partners",
+                  title: "サービスを比較する",
+                  description: "SIM、保険、銀行、送金、生活インフラを比較できます。",
+                },
+                {
+                  href: "/planner",
+                  title: "生活プランを見る",
+                  description: "仕事と住まいを組み合わせて収支を確認できます。",
+                },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-xl border border-blue-100 bg-white p-4 hover:bg-blue-50"
+                >
+                  <h3 className="font-bold text-gray-900">{item.title}</h3>
+                  <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+                    {item.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+
           <div className="mt-8">
             <AuthAwareCta
               title="この記事の内容を自分の準備に反映する"

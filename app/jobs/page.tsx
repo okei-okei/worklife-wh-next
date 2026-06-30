@@ -959,7 +959,7 @@ export default function JobsPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={selectedMapJob.image_url}
-                      alt=""
+                      alt={`${selectedMapJob.title}の求人画像`}
                       className="h-28 w-full bg-gray-50 object-contain md:h-full"
                     />
                   ) : null}
@@ -1107,7 +1107,7 @@ export default function JobsPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={job.image_url}
-                    alt=""
+                    alt={`${job.title}の求人画像`}
                     className={`w-full bg-gray-50 object-contain ${
                       expandedJobIds.includes(job.id)
                         ? "h-40 sm:h-44 md:h-48"

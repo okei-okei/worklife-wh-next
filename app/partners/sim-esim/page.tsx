@@ -4,8 +4,10 @@ import AuthAwareCta from "@/components/AuthAwareCta";
 import RelatedArticles from "@/components/articles/RelatedArticles";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
+import SeoFaqSection from "@/components/seo/SeoFaqSection";
 import type { Article } from "@/lib/articles";
 import { getStaticArticleBySlug } from "@/lib/constants/articles";
+import { getPartnerFaqs } from "@/lib/constants/partnerFaqs";
 import { createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
@@ -66,6 +68,8 @@ export default function SimEsimComparisonPage() {
         <RelatedArticles
           articles={relatedArticles}
         />
+
+        <SeoFaqSection items={getPartnerFaqs("/partners/sim-esim")} />
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <h2 className="text-xl font-bold text-gray-900">

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
+import SeoFaqSection from "@/components/seo/SeoFaqSection";
 import { trackMetric } from "@/lib/analytics";
+import { getPartnerFaqs } from "@/lib/constants/partnerFaqs";
 import {
   insuranceComparisonFields,
   insuranceFilters,
@@ -442,6 +444,8 @@ export default function InsuranceComparison() {
             </Link>
           </article>
         </section>
+
+        <SeoFaqSection items={getPartnerFaqs("/partners/insurance")} />
 
         <section className="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-700 md:p-5">
           WorkLife WHでは、契約前に条件を比較・確認しやすい形で情報を整理しています。保険商品は、料金、補償条件、加入条件、対応エリア、サポート体制が変更される場合があります。契約・申込みを行う前には、必ず各サービスの公式サイトで最新情報をご確認ください。

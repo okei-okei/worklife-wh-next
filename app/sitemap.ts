@@ -8,6 +8,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "",
     "/jobs",
     "/properties",
+    "/planner",
+    "/demo-planner",
     "/simulator",
     "/partners",
     "/partners/sim-esim",
@@ -21,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/partners/study-agency",
     "/partners/flights-transport",
     "/articles",
+    "/company/submit",
   ];
 
   const articleRoutes = staticArticles
@@ -45,6 +48,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/legal/privacy-request",
     "/legal/property-listing-terms",
     "/legal/property-posting",
+    "/terms",
+    "/privacy",
+    "/company-terms",
   ];
 
   const routes = [...publicRoutes, ...articleRoutes, ...legalRoutes];

@@ -55,6 +55,12 @@ export function createPageMetadata({
           }
         : {}),
     },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: images.map((item) => item.url),
+    },
   };
 }
 

@@ -14,7 +14,7 @@ import type { Article } from "@/lib/articles";
 import { getA8AdHtml } from "@/lib/constants/partners/a8Ads";
 import { getStaticArticleBySlug, staticArticles } from "@/lib/constants/articles";
 import { referralLinks } from "@/lib/constants/referralLinks";
-import { absoluteUrl, createPageMetadata } from "@/lib/seo";
+import { absoluteUrl, createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const dynamic = "force-dynamic";
@@ -413,6 +413,13 @@ export default async function ArticlePage({ params }: Props) {
     <main className="min-h-screen bg-gray-100 px-4 py-8 text-gray-900 md:px-6 md:py-10">
       <ArticleViewTracker slug={slug} />
       <JsonLd data={articleJsonLd} />
+      <JsonLd
+        data={createBreadcrumbJsonLd([
+          { label: "ホーム", href: "/" },
+          { label: "役立ち情報", href: "/articles" },
+          { label: article.title, href: `/articles/${article.slug}` },
+        ])}
+      />
       <article className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div className="p-4 md:p-8">
           <div className="mb-5">

@@ -5,7 +5,9 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import AuthAwareCta from "@/components/AuthAwareCta";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
+import SeoFaqSection from "@/components/seo/SeoFaqSection";
 import { trackMetric } from "@/lib/analytics";
+import { getPartnerFaqs } from "@/lib/constants/partnerFaqs";
 import type {
   PartnerComparisonField,
   PartnerFilter,
@@ -320,6 +322,7 @@ export default function PartnerCategoryPage({
   };
 
   const hasServices = services.length > 0;
+  const faqItems = getPartnerFaqs(categoryPath);
 
   useEffect(() => {
     void trackMetric("partner_category_view", {
@@ -761,6 +764,8 @@ export default function PartnerCategoryPage({
         </section> : null}
 
         {children}
+
+        <SeoFaqSection items={faqItems} />
 
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <h2 className="text-xl font-bold text-gray-900">関連記事</h2>

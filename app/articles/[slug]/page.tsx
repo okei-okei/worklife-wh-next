@@ -5,11 +5,15 @@ import { createClient } from "@supabase/supabase-js";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import AuthAwareCta from "@/components/AuthAwareCta";
 import TrackedLink from "@/components/TrackedLink";
+import ArticleReferralBox from "@/components/articles/ArticleReferralBox";
 import RelatedArticles from "@/components/articles/RelatedArticles";
+import A8AdSlot from "@/components/partners/A8AdSlot";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
 import type { Article } from "@/lib/articles";
+import { getA8AdHtml } from "@/lib/constants/partners/a8Ads";
 import { getStaticArticleBySlug, staticArticles } from "@/lib/constants/articles";
+import { referralLinks } from "@/lib/constants/referralLinks";
 import { absoluteUrl, createPageMetadata } from "@/lib/seo";
 import { siteConfig } from "@/lib/siteConfig";
 
@@ -143,7 +147,85 @@ function getComparisonLinks(article: Article, primaryHref: string, primaryLabel:
   return links;
 }
 
+function parseMarkdownTable(block: string) {
+  const lines = block
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (
+    lines.length < 3 ||
+    !lines.every((line) => line.startsWith("|") && line.endsWith("|"))
+  ) {
+    return null;
+  }
+
+  const toCells = (line: string) =>
+    line
+      .slice(1, -1)
+      .split("|")
+      .map((cell) => cell.trim());
+
+  const separatorCells = toCells(lines[1]);
+  if (!separatorCells.every((cell) => /^:?-{3,}:?$/.test(cell))) return null;
+
+  return {
+    headers: toCells(lines[0]),
+    rows: lines.slice(2).map(toCells),
+  };
+}
+
+function renderMarkdownTable(
+  table: NonNullable<ReturnType<typeof parseMarkdownTable>>,
+  index: number,
+) {
+  return (
+    <div key={index} className="space-y-2">
+      <p className="text-xs font-bold text-gray-600">
+        横にスクロールして比較できます
+      </p>
+      <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+        <table className="min-w-[720px] text-xs md:text-sm">
+          <thead>
+            <tr>
+              {table.headers.map((header) => (
+                <th
+                  key={header}
+                  className="bg-gray-50 px-3 py-3 text-left font-semibold text-gray-900"
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {table.rows.map((row, rowIndex) => (
+              <tr key={`${row.join("-")}-${rowIndex}`} className="border-t border-gray-200">
+                {row.map((cell, cellIndex) => (
+                  <td
+                    key={`${cell}-${cellIndex}`}
+                    className={
+                      cellIndex === 0
+                        ? "whitespace-nowrap px-3 py-3 font-bold text-gray-900"
+                        : "px-3 py-3 font-medium leading-6 text-gray-700"
+                    }
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function renderBlock(block: string, index: number) {
+  const table = parseMarkdownTable(block);
+  if (table) return renderMarkdownTable(table, index);
+
   if (block.startsWith("# ")) {
     return (
       <h1 key={index} className="text-2xl font-bold leading-tight md:text-4xl">
@@ -170,7 +252,10 @@ function renderBlock(block: string, index: number) {
 
   if (block.split("\n").every((line) => line.startsWith("* "))) {
     return (
-      <ul key={index} className="list-disc space-y-2 pl-5 font-medium leading-8 text-gray-800">
+      <ul
+        key={index}
+        className="list-disc space-y-2 pl-5 text-sm font-medium leading-7 text-gray-800 md:text-base md:leading-8"
+      >
         {block.split("\n").map((line) => (
           <li key={line}>{line.replace(/^\* /, "")}</li>
         ))}
@@ -179,9 +264,125 @@ function renderBlock(block: string, index: number) {
   }
 
   return (
-    <p key={index} className="whitespace-pre-wrap font-medium leading-8 text-gray-800">
+    <p
+      key={index}
+      className="whitespace-pre-wrap text-sm font-medium leading-7 text-gray-800 md:text-base md:leading-8"
+    >
       {block}
     </p>
+  );
+}
+
+function getArticleReferralKeys(slug: string) {
+  const regular: Array<"wise" | "revolut"> = [];
+  const a8: Array<"trifa.text" | "japanGlobalEsim.text"> = [];
+
+  if (
+    slug === "nz-working-holiday-money-transfer-guide" ||
+    slug === "nz-working-holiday-initial-cost"
+  ) {
+    regular.push("wise");
+  }
+
+  if (
+    slug === "nz-working-holiday-bank-account-guide" ||
+    slug === "nz-arrival-ird-bank-transport-real"
+  ) {
+    regular.push("wise", "revolut");
+  }
+
+  if (
+    slug === "nz-working-holiday-sim-esim-comparison" ||
+    slug === "nz-working-holiday-real-experience" ||
+    slug === "nz-working-holiday-before-departure-checklist"
+  ) {
+    a8.push("trifa.text", "japanGlobalEsim.text");
+  }
+
+  return { regular, a8 };
+}
+
+function getReferralTitle(key: "wise" | "revolut") {
+  if (key === "wise") return "Wiseで海外送金を確認する";
+  return "Revolutを確認する";
+}
+
+function getReferralDescription(key: "wise" | "revolut") {
+  if (key === "wise") {
+    return "日本からニュージーランドへの送金や多通貨管理を検討するときに確認しやすいサービスです。";
+  }
+  return "海外生活中のカード決済や多通貨管理の選択肢として確認できます。";
+}
+
+function ArticleReferralSection({ article }: { article: Article }) {
+  const referrals = getArticleReferralKeys(article.slug);
+  const hasRegularLinks = referrals.regular.length > 0;
+  const hasA8Links = referrals.a8.length > 0;
+
+  if (!hasRegularLinks && !hasA8Links) return null;
+
+  return (
+    <section className="mt-8 rounded-2xl border border-amber-200 bg-white p-4 md:p-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-lg font-bold text-gray-900">関連サービス</h2>
+        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800">
+          広告・紹介リンクを含む場合があります
+        </span>
+      </div>
+      <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
+        記事内容に関連するサービスを確認できます。登録・申込前には必ず公式サイトで最新条件をご確認ください。
+      </p>
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {referrals.regular.map((key) => {
+          const referral = referralLinks[key];
+          return (
+            <ArticleReferralBox
+              key={key}
+              title={getReferralTitle(key)}
+              description={getReferralDescription(key)}
+              href={referral.href}
+              provider={referral.provider}
+              label={referral.label}
+              category={referral.category}
+              disclosure={referral.disclosure}
+              pagePath={`/articles/${article.slug}`}
+              articleSlug={article.slug}
+            />
+          );
+        })}
+        {referrals.a8.map((key) => {
+          const html = getA8AdHtml(key);
+          const isTrifa = key.startsWith("trifa");
+          if (!html) return null;
+          return (
+            <div key={key} className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
+              <p className="mb-2 text-xs font-bold text-amber-800">
+                広告・紹介リンク
+              </p>
+              <p className="mb-3 text-sm font-medium leading-6 text-gray-700">
+                {isTrifa
+                  ? "トリファを公式サイトで確認する"
+                  : "JAPAN&GLOBAL eSIMを確認する"}
+              </p>
+              <A8AdSlot
+                html={html}
+                size="text"
+                variant="button"
+                analytics={{
+                  serviceId: isTrifa ? "trifa" : "japan-global-esim",
+                  serviceName: isTrifa ? "trifa" : "JAPAN&GLOBAL eSIM",
+                  category: "sim-esim",
+                  affiliateNetwork: "A8.net",
+                  programId: isTrifa ? "s00000027266001" : "s00000025659001",
+                  adType: "text",
+                  pagePath: `/articles/${article.slug}`,
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -256,6 +457,8 @@ export default async function ArticlePage({ params }: Props) {
           ) : null}
 
           <div className="mt-8 space-y-5">{blocks.map(renderBlock)}</div>
+
+          <ArticleReferralSection article={article} />
 
           <section className="mt-10 rounded-2xl border border-gray-200 bg-gray-50 p-4">
             <h2 className="text-lg font-bold">関連する比較ページ</h2>
@@ -358,6 +561,10 @@ export default async function ArticlePage({ params }: Props) {
               description="無料登録すると、チェックリスト、保存した求人・物件、生活プランをマイページでまとめて管理できます。"
             />
           </div>
+
+          <p className="mt-6 rounded-xl bg-gray-50 p-3 text-xs font-medium leading-5 text-gray-600">
+            この記事には広告・紹介リンクが含まれる場合があります。リンク先で登録・申込を行うと、WorkLife WH運営者が報酬または紹介特典を受け取る場合があります。
+          </p>
 
           {article.related_checklist_items?.length ? (
             <section className="mt-8 border-t border-gray-200 pt-6">

@@ -4,14 +4,19 @@ import { staticArticles } from "@/lib/constants/articles";
 const baseUrl = "https://worklife-wh-next.vercel.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const publicRoutes = [
+  const staticRoutes = [
     "",
     "/jobs",
     "/properties",
-    "/planner",
-    "/demo-planner",
     "/simulator",
+    "/planner",
     "/partners",
+    "/articles",
+    "/demo-planner",
+    "/company/submit",
+  ];
+
+  const partnerRoutes = [
     "/partners/sim-esim",
     "/partners/insurance",
     "/partners/money-transfer",
@@ -22,12 +27,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/partners/language-school",
     "/partners/study-agency",
     "/partners/flights-transport",
-    "/articles",
-    "/company/submit",
   ];
 
   const articleRoutes = staticArticles
-    .filter((article) => article.status === "approved" || article.status === "published")
+    .filter(
+      (article) =>
+        article.status === "approved" ||
+        article.status === "published" ||
+        !article.status,
+    )
     .map((article) => `/articles/${article.slug}`);
 
   const legalRoutes = [
@@ -35,6 +43,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/legal/terms",
     "/legal/privacy",
     "/legal/cookies",
+    "/legal/cookie-policy",
     "/legal/affiliate-disclosure",
     "/legal/ai-policy",
     "/legal/business-terms",
@@ -48,17 +57,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/legal/privacy-request",
     "/legal/property-listing-terms",
     "/legal/property-posting",
+    "/legal/disclaimer",
     "/terms",
     "/privacy",
     "/company-terms",
   ];
 
-  const routes = [...publicRoutes, ...articleRoutes, ...legalRoutes];
+  const routes = Array.from(
+    new Set([...staticRoutes, ...partnerRoutes, ...articleRoutes, ...legalRoutes]),
+  );
 
   return routes.map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
-    priority: route === "" ? 1 : 0.7,
+    priority:
+      route === ""
+        ? 1
+        : route.startsWith("/partners")
+          ? 0.8
+          : route.startsWith("/articles")
+            ? 0.7
+            : 0.6,
   }));
 }

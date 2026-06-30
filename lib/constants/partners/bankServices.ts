@@ -4,6 +4,7 @@ import type {
   PartnerRecommendation,
   PartnerService,
 } from "./types";
+import { referralLinks } from "@/lib/constants/referralLinks";
 
 export const bankFilters: PartnerFilter[] = [
   { key: "nz_bank", label: "NZ銀行" },
@@ -337,9 +338,10 @@ export const bankServices: PartnerService[] = [
       monthlyFeeNote: "要確認",
     },
     officialUrl: "https://wise.com/",
-    isAffiliate: false,
-    affiliateStatus: "official",
-    affiliateNetwork: "Official",
+    isAffiliate: true,
+    affiliateStatus: "available",
+    affiliateNetwork: "Wise referral",
+    affiliateLink: referralLinks.wise.href,
     lastCheckedAt: "2026-06-27",
     filterTags: [
       "multi_currency",
@@ -384,9 +386,10 @@ export const bankServices: PartnerService[] = [
       monthlyFeeNote: "無料/有料プランあり",
     },
     officialUrl: "https://www.revolut.com/",
-    isAffiliate: false,
-    affiliateStatus: "official",
-    affiliateNetwork: "Official",
+    isAffiliate: true,
+    affiliateStatus: "available",
+    affiliateNetwork: "Revolut referral",
+    affiliateLink: referralLinks.revolut.href,
     lastCheckedAt: "2026-06-27",
     filterTags: [
       "multi_currency",

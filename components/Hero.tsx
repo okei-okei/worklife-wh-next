@@ -10,14 +10,15 @@ export default function Hero() {
         overflow-hidden
         items-center
         justify-center
-        bg-[url('/nz-hero-landscape.svg')]
+        bg-[url('/nz-hero-landscape.png')]
         bg-cover
         bg-center
-        bg-fixed
+        bg-scroll
         px-4
         py-12
         text-white
         md:min-h-[80vh]
+        md:bg-fixed
         md:px-6
       "
     >

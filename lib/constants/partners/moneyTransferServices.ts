@@ -4,6 +4,7 @@ import type {
   PartnerRecommendation,
   PartnerService,
 } from "./types";
+import { referralLinks } from "@/lib/constants/referralLinks";
 
 export const moneyTransferFilters: PartnerFilter[] = [
   { key: "country_nz", label: "ニュージーランド" },
@@ -95,10 +96,10 @@ export const moneyTransferServices: PartnerService[] = [
       identityCheck: "必要",
     },
     officialUrl: "https://wise.com/",
-    isAffiliate: false,
-    affiliateStatus: "official",
-    affiliateNetwork: "official",
-    affiliateLink: undefined,
+    isAffiliate: true,
+    affiliateStatus: "available",
+    affiliateNetwork: "Wise referral",
+    affiliateLink: referralLinks.wise.href,
     lastCheckedAt: "2026-06-26",
     filterTags: [
       "country_nz",
@@ -236,8 +237,10 @@ export const moneyTransferServices: PartnerService[] = [
       identityCheck: "必要",
     },
     officialUrl: "https://www.westernunion.com/",
-    isAffiliate: false,
-    affiliateStatus: "none",
+    isAffiliate: true,
+    affiliateStatus: "available",
+    affiliateNetwork: "Revolut referral",
+    affiliateLink: referralLinks.revolut.href,
     lastCheckedAt: "2026-06-26",
     filterTags: [
       "country_nz",

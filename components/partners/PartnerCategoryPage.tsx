@@ -529,7 +529,11 @@ export default function PartnerCategoryPage({
               <a
                 href={getDestinationUrl(service)}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel={
+                  service.isAffiliate
+                    ? "nofollow sponsored noopener noreferrer"
+                    : "noopener noreferrer"
+                }
                 onClick={() => {
                   void handleClickService(service);
                 }}
@@ -603,7 +607,11 @@ export default function PartnerCategoryPage({
                 <a
                   href={getDestinationUrl(service)}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel={
+                    service.isAffiliate
+                      ? "nofollow sponsored noopener noreferrer"
+                      : "noopener noreferrer"
+                  }
                   onClick={() => {
                     void handleClickService(service);
                   }}
@@ -666,7 +674,11 @@ export default function PartnerCategoryPage({
                         <a
                           href={getDestinationUrl(service)}
                           target="_blank"
-                          rel="noopener noreferrer"
+                          rel={
+                            service.isAffiliate
+                              ? "nofollow sponsored noopener noreferrer"
+                              : "noopener noreferrer"
+                          }
                           onClick={() => {
                             void handleClickService(service);
                           }}
@@ -747,7 +759,11 @@ export default function PartnerCategoryPage({
                       <a
                         href={getDestinationUrl(service)}
                         target="_blank"
-                        rel="noopener noreferrer"
+                        rel={
+                          service.isAffiliate
+                            ? "nofollow sponsored noopener noreferrer"
+                            : "noopener noreferrer"
+                        }
                         onClick={() => {
                           void handleClickService(service);
                         }}

@@ -1,6 +1,7 @@
 "use client";
 
 import { trackEvent } from "@/lib/services/analytics";
+import { trackGAEvent } from "@/lib/services/ga";
 
 export type MetricEventName =
   | "sign_up"
@@ -46,7 +47,48 @@ export type MetricEventName =
   | "public_property_pin_select"
   | "article_submit"
   | "article_partner_transition"
-  | "content_report_submit";
+  | "content_report_submit"
+  | "register_cta_click"
+  | "checklist_cta_click"
+  | "planner_cta_click";
+
+function toGAParams(
+  options: {
+    eventType?: string;
+    targetType?: string;
+    targetId?: string;
+    pagePath?: string;
+    metadata?: Record<string, unknown>;
+    referrer?: string;
+  },
+) {
+  const params: Record<string, string | number | boolean | null | undefined> = {
+    event_type: options.eventType,
+    target_type: options.targetType,
+    target_id: options.targetId,
+    page_path:
+      options.pagePath ||
+      (typeof window !== "undefined" ? window.location.pathname : undefined),
+    referrer: options.referrer,
+  };
+
+  Object.entries(options.metadata || {}).forEach(([key, value]) => {
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean" ||
+      value === null ||
+      value === undefined
+    ) {
+      params[key] = value;
+      return;
+    }
+
+    params[key] = JSON.stringify(value);
+  });
+
+  return params;
+}
 
 export async function trackMetric(
   eventName: MetricEventName,
@@ -59,6 +101,10 @@ export async function trackMetric(
     referrer?: string;
   } = {},
 ) {
+  if (eventName !== "page_view") {
+    trackGAEvent(eventName, toGAParams(options));
+  }
+
   await trackEvent({
     eventName,
     targetType: options.targetType,

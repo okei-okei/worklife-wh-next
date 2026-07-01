@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { trackMetric } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 
 type Props = {
@@ -39,6 +40,21 @@ export default function AuthAwareCta({
         </div>
         <Link
           href={isLoggedIn ? "/mypage" : "/register"}
+          onClick={() => {
+            if (isLoggedIn) return;
+
+            void trackMetric("register_cta_click", {
+              eventType: "click",
+              targetType: "site_cta",
+              targetId: "register",
+              pagePath:
+                typeof window !== "undefined" ? window.location.pathname : undefined,
+              metadata: {
+                destination: "/register",
+                ctaLabel: "無料で生活設計を始める",
+              },
+            });
+          }}
           className="w-full rounded-lg bg-blue-700 px-5 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
         >
           {isLoggedIn

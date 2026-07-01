@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import PageViewTracker from "@/components/PageViewTracker";
 import { absoluteUrl } from "@/lib/seo";
 import { siteConfig } from "@/lib/siteConfig";
@@ -37,6 +38,7 @@ export default function RootLayout({
   return (
     <html lang="ja" className="h-full antialiased">
       <body className="flex min-h-full flex-col">
+        <GoogleAnalytics />
         <PageViewTracker />
         <Header />
         <div className="flex-1 pt-16">{children}</div>

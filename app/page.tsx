@@ -2,10 +2,44 @@ import Hero from "../components/Hero";
 import Features from "../components/Features";
 import Link from "next/link";
 import AuthAwareCta from "@/components/AuthAwareCta";
+import JsonLd from "@/components/seo/JsonLd";
+import { absoluteUrl, createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
+import { siteConfig } from "@/lib/siteConfig";
+
+const homeDescription =
+  "ニュージーランドのワーホリ準備、仕事、住まい、生活費、比較サービスをまとめて管理できるサービスです。";
+
+export const metadata = createPageMetadata({
+  title: "WorkLife WH",
+  description: homeDescription,
+  path: "/",
+});
 
 export default function Home() {
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteConfig.name,
+    url: absoluteUrl("/"),
+    email: siteConfig.supportEmail,
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteConfig.name,
+    url: absoluteUrl("/"),
+    description: homeDescription,
+    inLanguage: "ja",
+  };
+
   return (
     <main className="min-h-screen min-w-0 overflow-x-hidden bg-gray-50 text-gray-900">
+      <JsonLd data={organizationJsonLd} />
+      <JsonLd data={websiteJsonLd} />
+      <JsonLd
+        data={createBreadcrumbJsonLd([{ label: "ホーム", href: "/" }])}
+      />
       <Hero />
 
       <section className="bg-white px-4 py-10 md:px-6 md:py-14">

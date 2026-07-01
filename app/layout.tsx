@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   },
   description:
     "ニュージーランドのワーホリ準備、仕事、住まい、生活費、比較サービスをまとめて管理できるサービスです。",
+  alternates: {
+    canonical: absoluteUrl("/"),
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: siteConfig.name,
     description:
@@ -24,6 +31,12 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     type: "website",
     url: absoluteUrl("/"),
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.name,
+    description:
+      "ニュージーランドのワーホリ準備、仕事、住まい、生活費、比較サービスをまとめて管理できます。",
   },
   verification: {
     google: "ytCGn5QIlmLC9JVUPsbK_TAXizHlt0nH-ucXPsPM32M",

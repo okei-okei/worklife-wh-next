@@ -509,12 +509,22 @@ export default async function ArticlePage({ params }: Props) {
               >
                 チェックリストを見る
               </TrackedLink>
-              <Link
+              <TrackedLink
                 href="/planner"
+                eventName="planner_cta_click"
+                targetType="article"
+                targetId={article.slug}
+                pagePath={`/articles/${article.slug}`}
+                metadata={{
+                  slug: article.slug,
+                  title: article.title,
+                  category: article.category,
+                  targetUrl: "/planner",
+                }}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"
               >
                 ライフプランナーを使う
-              </Link>
+              </TrackedLink>
               <Link
                 href="/partners"
                 className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50"

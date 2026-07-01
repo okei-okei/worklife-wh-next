@@ -90,6 +90,24 @@ function toGAParams(
   return params;
 }
 
+function getGAEventName(eventName: MetricEventName) {
+  const gaEventNameMap: Partial<Record<MetricEventName, string>> = {
+    partner_category_view: "partner_page_view",
+    comparison_page_view: "partner_page_view",
+    partners_viewed: "partner_page_view",
+    register_cta_click: "register_click",
+    checklist_cta_click: "checklist_click",
+    article_related_checklist_click: "checklist_click",
+    checklist_partner_click: "checklist_click",
+    planner_cta_click: "planner_click",
+    planner_calculation: "simulation_run",
+    job_saved: "job_save",
+    property_saved: "property_save",
+  };
+
+  return gaEventNameMap[eventName] || eventName;
+}
+
 export async function trackMetric(
   eventName: MetricEventName,
   options: {
@@ -102,7 +120,10 @@ export async function trackMetric(
   } = {},
 ) {
   if (eventName !== "page_view") {
-    trackGAEvent(eventName, toGAParams(options));
+    trackGAEvent(getGAEventName(eventName), {
+      ...toGAParams(options),
+      source_event_name: eventName,
+    });
   }
 
   await trackEvent({

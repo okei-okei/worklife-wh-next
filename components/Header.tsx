@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { trackMetric } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 
 const navigationItems = [
@@ -53,6 +54,28 @@ export default function Header() {
       ? "whitespace-nowrap rounded-lg bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700"
       : "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-100";
 
+  const trackHeaderLink = (href: string, label: string) => {
+    if (href === "/planner") {
+      void trackMetric("planner_cta_click", {
+        eventType: "click",
+        targetType: "header_link",
+        targetId: "planner",
+        pagePath: pathname,
+        metadata: { label, destination: href },
+      });
+    }
+  };
+
+  const trackRegisterClick = (label: string) => {
+    void trackMetric("register_cta_click", {
+      eventType: "click",
+      targetType: "header_link",
+      targetId: "register",
+      pagePath: pathname,
+      metadata: { label, destination: "/register" },
+    });
+  };
+
   return (
     <header className="fixed left-0 top-0 z-[10000] h-16 w-full border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-3 px-4 md:px-6">
@@ -68,6 +91,7 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => trackHeaderLink(item.href, item.label)}
               className={linkClassName(item.href)}
             >
               {item.label}
@@ -94,6 +118,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/register"
+                onClick={() => trackRegisterClick("新規登録")}
                 className="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white"
               >
                 新規登録
@@ -120,7 +145,10 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setIsMenuOpen(false)}
+                onClick={() => {
+                  trackHeaderLink(item.href, item.label);
+                  setIsMenuOpen(false);
+                }}
                 className={linkClassName(item.href)}
               >
                 {item.label}
@@ -147,7 +175,10 @@ export default function Header() {
                   </Link>
                   <Link
                     href="/register"
-                    onClick={() => setIsMenuOpen(false)}
+                    onClick={() => {
+                      trackRegisterClick("新規登録");
+                      setIsMenuOpen(false);
+                    }}
                     className="w-full whitespace-nowrap rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-bold text-white"
                   >
                     新規登録

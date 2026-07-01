@@ -3,11 +3,15 @@ import Features from "../components/Features";
 import Link from "next/link";
 import AuthAwareCta from "@/components/AuthAwareCta";
 import JsonLd from "@/components/seo/JsonLd";
-import { absoluteUrl, createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
+import {
+  absoluteUrl,
+  createBreadcrumbJsonLd,
+  createPageMetadata,
+} from "@/lib/seo";
 import { siteConfig } from "@/lib/siteConfig";
 
 const homeDescription =
-  "ニュージーランドのワーホリ準備、仕事、住まい、生活費、比較サービスをまとめて管理できるサービスです。";
+  "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。";
 
 export const metadata = createPageMetadata({
   title: "WorkLife WH",

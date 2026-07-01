@@ -2,13 +2,7 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/lib/siteConfig";
 
 export function getBaseUrl() {
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return "https://worklife-wh-next.vercel.app";
+  return siteConfig.url;
 }
 
 export function absoluteUrl(path: string) {

@@ -10,13 +10,13 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(absoluteUrl("/")),
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: "WorkLife WH",
-    template: "%s",
+    default: "WorkLife WH｜ニュージーランドワーホリの仕事・住まい・生活設計",
+    template: "%s | WorkLife WH",
   },
   description:
-    "ニュージーランドのワーホリ準備、仕事、住まい、生活費、比較サービスをまとめて管理できるサービスです。",
+    "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
   alternates: {
     canonical: absoluteUrl("/"),
   },
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: siteConfig.name,
     description:
-      "ニュージーランドのワーホリ準備、仕事、住まい、生活費、比較サービスをまとめて管理できます。",
+      "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
     siteName: siteConfig.name,
     type: "website",
     url: absoluteUrl("/"),
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteConfig.name,
     description:
-      "ニュージーランドのワーホリ準備、仕事、住まい、生活費、比較サービスをまとめて管理できます。",
+      "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
   },
   verification: {
     google: "ytCGn5QIlmLC9JVUPsbK_TAXizHlt0nH-ucXPsPM32M",

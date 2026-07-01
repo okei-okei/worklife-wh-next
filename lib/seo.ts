@@ -33,7 +33,7 @@ export function createPageMetadata({
     title,
     description,
     alternates: {
-      canonical: url,
+      canonical: path === "/" ? "/" : url,
     },
     openGraph: {
       title,

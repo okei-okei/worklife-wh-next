@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description:
     "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
   alternates: {
-    canonical: absoluteUrl("/"),
+    canonical: "/",
   },
   robots: {
     index: true,

@@ -6,11 +6,21 @@ import {
 import { geocodeWithGoogle } from "./providers/geocoder/google";
 
 export async function geocodeAddress(address: string): Promise<GeocodeResult> {
-  const provider = process.env.NEXT_PUBLIC_GEOCODER_PROVIDER ?? "nominatim";
+  const provider =
+    process.env.GEOCODER_PROVIDER ??
+    process.env.NEXT_PUBLIC_GEOCODER_PROVIDER ??
+    "nominatim";
 
   switch (provider) {
-    case "google":
-      return geocodeWithGoogle(address);
+    case "google": {
+      const googleResult = await geocodeWithGoogle(address);
+
+      if (googleResult.latitude && googleResult.longitude) {
+        return googleResult;
+      }
+
+      return geocodeWithNominatim(address);
+    }
 
     case "nominatim":
     default:

@@ -16,6 +16,9 @@ type CountryCode = "NZ" | "AU" | "CA";
 const inputClass =
   "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
 const draftStorageKey = "worklife-wh-listing-submission-draft";
+const maxOriginalImageSize = 12 * 1024 * 1024;
+const maxUploadImageSize = 2.5 * 1024 * 1024;
+const maxImageDimension = 1600;
 
 type ListingDraft = {
   type: SubmissionType;
@@ -50,6 +53,53 @@ type ListingDraft = {
   furnished: boolean;
   utilitiesIncluded: boolean;
 };
+
+function loadImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const imageUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(imageUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(imageUrl);
+      reject(new Error(`${file.name} を画像として読み込めませんでした。`));
+    };
+    image.src = imageUrl;
+  });
+}
+
+async function resizeImageForUpload(file: File) {
+  if (file.size <= maxUploadImageSize) return file;
+  if (typeof document === "undefined") return file;
+
+  const image = await loadImage(file);
+  const scale = Math.min(
+    1,
+    maxImageDimension / Math.max(image.naturalWidth, image.naturalHeight),
+  );
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+
+  if (!context) return file;
+  context.drawImage(image, 0, 0, width, height);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", 0.82);
+  });
+
+  if (!blob || blob.size >= file.size) return file;
+  const fileName = file.name.replace(/\.[^.]+$/, "") || "listing-image";
+  return new File([blob], `${fileName}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
 
 export default function CompanySubmitPage() {
   const [type, setType] = useState<SubmissionType>("job");
@@ -246,11 +296,11 @@ export default function CompanySubmitPage() {
     const invalid = nextFiles.find(
       (file) =>
         !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-        file.size > 5 * 1024 * 1024,
+        file.size > maxOriginalImageSize,
     );
 
     if (invalid) {
-      setErrorMessage("画像はjpg/png/webp、1枚5MB以下にしてください。");
+      setErrorMessage("画像はjpg/png/webp、1枚12MB以下にしてください。送信時に自動圧縮します。");
       return;
     }
 
@@ -282,9 +332,17 @@ export default function CompanySubmitPage() {
     const uploadedUrls: string[] = [];
 
     for (const [index, file] of uploadTargets.entries()) {
+      const uploadFile = await resizeImageForUpload(file);
+
+      if (uploadFile.size > 5 * 1024 * 1024) {
+        throw new Error(
+          `${file.name} の容量が大きすぎます。別の画像を選ぶか、画像を小さくしてから再度お試しください。`,
+        );
+      }
+
       const formData = new FormData();
       formData.append("prefix", `submissions/${submissionId}/${index + 1}`);
-      formData.append("files", file);
+      formData.append("files", uploadFile);
 
       const response = await fetch("/api/listing-images", {
         method: "POST",
@@ -896,8 +954,8 @@ export default function CompanySubmitPage() {
               />
               <span className="mt-1 block text-xs font-medium text-gray-600">
                 {type === "job"
-                  ? "ファイルまたは写真フォルダから選択できます。jpg/png/webp、1枚5MB以下。選択した画像で置き換えます。"
-                  : "ファイルまたは写真フォルダから複数回に分けて選択できます。jpg/png/webp、1枚5MB以下、最大10枚まで。"}
+                  ? "ファイルまたは写真フォルダから選択できます。jpg/png/webp、1枚12MB以下。送信時に自動圧縮します。"
+                  : "ファイルまたは写真フォルダから複数回に分けて選択できます。jpg/png/webp、1枚12MB以下、最大10枚まで。送信時に自動圧縮します。"}
               </span>
             </label>
             {files.length ? (

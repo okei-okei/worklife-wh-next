@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,6 +31,19 @@ function sanitizePrefix(value: string | null) {
     .slice(0, 120);
 }
 
+async function ensureBucket(supabase: SupabaseClient) {
+  const { error: getError } = await supabase.storage.getBucket(bucketName);
+  if (!getError) return null;
+
+  const { error: createError } = await supabase.storage.createBucket(bucketName, {
+    public: true,
+    allowedMimeTypes: Array.from(allowedTypes),
+    fileSizeLimit: maxFileSize,
+  });
+
+  return createError;
+}
+
 export async function POST(request: NextRequest) {
   if (!supabaseUrl || !serviceRoleKey) {
     return jsonError("Storage upload configuration is missing.", 500);
@@ -57,6 +71,11 @@ export async function POST(request: NextRequest) {
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  const bucketError = await ensureBucket(supabase);
+  if (bucketError) {
+    return jsonError(`画像保存先の準備に失敗しました: ${bucketError.message}`, 500);
+  }
+
   const prefix = sanitizePrefix(String(formData.get("prefix") || ""));
   const imageUrls: string[] = [];
 

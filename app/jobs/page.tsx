@@ -158,6 +158,7 @@ export default function JobsPage() {
   const [englishLevel, setEnglishLevel] = useState("");
   const [visaCondition, setVisaCondition] = useState("");
   const [accommodationOnly, setAccommodationOnly] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedJobIds, setExpandedJobIds] = useState<string[]>([]);
@@ -592,6 +593,19 @@ export default function JobsPage() {
     setSelectedMapJobId(null);
   };
 
+  const activeFilterCount =
+    locationFilters.length +
+    [
+      searchQuery,
+      minHourlyRate,
+      minWorkHours,
+      employmentType,
+      japaneseSupport,
+      englishLevel,
+      visaCondition,
+    ].filter(Boolean).length +
+    (accommodationOnly ? 1 : 0);
+
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedJobs = useMemo(() => {
@@ -720,9 +734,9 @@ export default function JobsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <main className="min-h-screen bg-gray-100 px-4 py-4 text-gray-900 md:p-6">
+      <div className="mx-auto max-w-6xl space-y-4 md:space-y-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH 公開求人
@@ -730,7 +744,7 @@ export default function JobsPage() {
             <h1 className="text-2xl font-bold md:text-4xl">
               ワーホリ向け求人
             </h1>
-            <p className="mt-2 max-w-3xl text-base font-medium leading-7 text-gray-800">
+            <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-gray-800 md:text-base md:leading-7">
               ニュージーランドでの仕事探しに使える公開求人を確認できます。気になる求人は保存して、応募文の作成に進めます。
             </p>
           </div>
@@ -738,13 +752,13 @@ export default function JobsPage() {
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Link
               href="/mypage"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 shadow-sm hover:bg-gray-50 sm:w-auto"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 shadow-sm hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
             >
               マイページ
             </Link>
             <Link
               href="/company/submit"
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-bold text-white shadow-sm hover:bg-blue-700 sm:w-auto"
+              className="w-full rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-bold text-white shadow-sm hover:bg-blue-700 sm:w-auto md:px-4 md:py-3"
             >
               掲載申請
             </Link>
@@ -752,38 +766,48 @@ export default function JobsPage() {
         </div>
 
         {message && (
-          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 font-bold text-blue-800">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-bold text-blue-800 md:p-4 md:text-base">
             {message}
           </div>
         )}
 
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <section className="rounded-2xl bg-white p-3 shadow md:p-6">
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between md:mb-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">求人を探す</h2>
-              <p className="mt-1 text-sm font-medium text-gray-600">
+              <h2 className="text-lg font-bold text-gray-900 md:text-xl">求人を探す</h2>
+              <p className="mt-1 text-xs font-medium text-gray-600 md:text-sm">
                 地域、時給、勤務時間、採用形態で絞り込めます。
               </p>
             </div>
-            <p className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+            <p className="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700 md:px-3 md:text-sm">
               {filteredJobs.length}件
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-3 md:gap-4">
             <label className="block">
               <span className="text-sm font-bold text-gray-900">検索</span>
               <input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900 placeholder:text-gray-600"
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 placeholder:text-gray-600 md:py-3 md:text-base"
                 placeholder="求人名、会社名、仕事内容、地域、住所で検索"
               />
             </label>
-
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => setIsFilterOpen((current) => !current)}
+            className="mt-3 flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 md:hidden"
+          >
+            <span>絞り込み</span>
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
+              {activeFilterCount}件適用中
+            </span>
+          </button>
+
+          <div className={`${isFilterOpen ? "grid" : "hidden"} mt-3 grid-cols-1 gap-3 md:mt-4 md:grid lg:grid-cols-3 lg:gap-4`}>
             <NzLocationPicker
               label="地域"
               multiple
@@ -801,7 +825,7 @@ export default function JobsPage() {
                 step="0.01"
                 value={minHourlyRate}
                 onChange={(event) => setMinHourlyRate(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
                 placeholder="例: 25"
               />
             </label>
@@ -814,19 +838,19 @@ export default function JobsPage() {
                 min="0"
                 value={minWorkHours}
                 onChange={(event) => setMinWorkHours(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
                 placeholder="例: 30"
               />
             </label>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className={`${isFilterOpen ? "grid" : "hidden"} mt-3 grid-cols-2 gap-3 md:mt-4 md:grid lg:grid-cols-4 lg:gap-4`}>
             <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
               <span className="text-sm font-bold text-gray-900">採用形態</span>
               <select
                 value={employmentType}
                 onChange={(event) => setEmploymentType(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
               >
                 <option value="">全て</option>
                 <option value="Full-time">Full-time</option>
@@ -842,7 +866,7 @@ export default function JobsPage() {
               <select
                 value={japaneseSupport}
                 onChange={(event) => setJapaneseSupport(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
               >
                 <option value="">全て</option>
                 <option value="yes">日本語対応あり</option>
@@ -854,7 +878,7 @@ export default function JobsPage() {
               <select
                 value={englishLevel}
                 onChange={(event) => setEnglishLevel(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
               >
                 <option value="">全て</option>
                 <option value="初級">初級</option>
@@ -867,7 +891,7 @@ export default function JobsPage() {
               <select
                 value={visaCondition}
                 onChange={(event) => setVisaCondition(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
               >
                 <option value="">全て</option>
                 <option value="ワーホリビザ可">ワーホリビザ可</option>
@@ -875,7 +899,7 @@ export default function JobsPage() {
                 <option value="就労可能なビザ必須">就労可能なビザ必須</option>
               </select>
             </label>
-            <label className="flex min-h-[74px] items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 font-bold text-gray-900">
+            <label className="flex min-h-[58px] items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm font-bold text-gray-900 md:min-h-[74px] md:gap-3 md:text-base">
               <input
                 type="checkbox"
                 checked={accommodationOnly}
@@ -886,11 +910,11 @@ export default function JobsPage() {
             </label>
           </div>
 
-          <div className="mt-4 flex justify-end">
+          <div className={`${isFilterOpen ? "flex" : "hidden"} mt-3 justify-end md:mt-4 md:flex`}>
             <button
               type="button"
               onClick={resetFilters}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
             >
               条件をリセット
             </button>
@@ -1141,32 +1165,32 @@ export default function JobsPage() {
                   />
                 ) : null}
                 <div className="flex flex-1 flex-col p-3 md:p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between md:gap-3">
                   <div className="min-w-0">
-                    <h2 className="break-words text-lg font-bold text-gray-900 md:text-xl">
+                    <h2 className="break-words text-base font-bold text-gray-900 md:text-xl">
                       {job.title}
                     </h2>
-                    <p className="mt-1 font-medium text-gray-800">
+                    <p className="mt-1 text-sm font-medium text-gray-800 md:text-base">
                       {job.company || "掲載企業未設定"}
                       {job.area || job.suburb || job.district || job.city
                         ? ` / ${job.area || job.suburb || job.district || job.city}`
                         : ""}
                     </p>
                     {job.address ? (
-                      <p className="mt-1 break-words text-sm font-medium text-gray-700">
+                      <p className="mt-1 line-clamp-2 break-words text-xs font-medium text-gray-700 md:text-sm">
                         住所: {job.address}
                       </p>
                     ) : null}
                   </div>
 
-                  <div className="w-fit rounded-full bg-green-50 px-3 py-1.5 text-sm font-bold text-green-700">
+                  <div className="w-fit rounded-full bg-green-50 px-2 py-1 text-xs font-bold text-green-700 md:px-3 md:py-1.5 md:text-sm">
                     {job.hourly_rate_max
                       ? `$${job.hourly_rate_min ?? job.hourly_rate ?? 0} - $${job.hourly_rate_max}/時`
                       : formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate)}
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap gap-1.5">
+                <div className="mt-2 flex flex-wrap gap-1.5 md:mt-3">
                   {job.visa_support && (
                     <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
                       ワーホリ歓迎
@@ -1205,7 +1229,7 @@ export default function JobsPage() {
                 </div>
 
                 {expandedJobIds.includes(job.id) ? (
-                  <div className="mt-4 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-800">
+                  <div className="mt-3 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm font-medium leading-6 text-gray-800 md:mt-4 md:p-4 md:leading-7">
                     <div>
                       <p className="font-bold text-gray-900">職務内容</p>
                       <p className="mt-1 whitespace-pre-wrap">
@@ -1224,7 +1248,7 @@ export default function JobsPage() {
                   </div>
                 ) : null}
 
-                <div className="mt-auto flex flex-col gap-2 pt-5 sm:flex-row sm:flex-wrap">
+                <div className="mt-auto flex flex-col gap-2 pt-3 sm:flex-row sm:flex-wrap md:pt-5">
                   <button
                     type="button"
                     onClick={() =>
@@ -1234,7 +1258,7 @@ export default function JobsPage() {
                           : [...current, job.id],
                       )
                     }
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
                   >
                     {expandedJobIds.includes(job.id)
                       ? "詳細を閉じる"
@@ -1243,7 +1267,7 @@ export default function JobsPage() {
                   <button
                     onClick={() => handleSaveJob(job)}
                     disabled={savingJobId === job.id}
-                    className="w-full rounded-lg border border-blue-600 bg-white px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto"
+                    className="w-full rounded-lg border border-blue-600 bg-white px-3 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto md:px-4 md:py-3"
                   >
                     {savingJobId === job.id ? "保存中..." : "保存する"}
                   </button>
@@ -1251,7 +1275,7 @@ export default function JobsPage() {
                   <button
                     onClick={() => handleApplyJob(job)}
                     disabled={savingJobId === job.id}
-                    className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-300 sm:w-auto"
+                    className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-300 sm:w-auto md:px-4 md:py-3"
                   >
                     {savingJobId === job.id ? "準備中..." : "応募する"}
                   </button>
@@ -1261,7 +1285,7 @@ export default function JobsPage() {
                       href={job.apply_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
                     >
                       外部ページを見る
                     </a>

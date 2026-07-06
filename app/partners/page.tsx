@@ -228,15 +228,15 @@ function TagList({ items }: { items: string[] }) {
 
 export default function PartnersPage() {
   return (
-    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
+    <main className="min-h-screen bg-gray-100 px-4 py-4 text-gray-900 md:p-6">
       <JsonLd
         data={createBreadcrumbJsonLd([
           { label: "ホーム", href: "/" },
           { label: "比較・おすすめ", href: "/partners" },
         ])}
       />
-      <div className="mx-auto max-w-6xl space-y-6">
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+      <div className="mx-auto max-w-6xl space-y-4 md:space-y-6">
+        <section className="rounded-2xl bg-white p-3 shadow md:p-6">
           <div className="mb-4">
             <Breadcrumbs
               items={[
@@ -251,55 +251,55 @@ export default function PartnersPage() {
           <h1 className="text-2xl font-bold md:text-4xl">
             生活準備サービスをカテゴリ別に比較
           </h1>
-          <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-gray-800">
+          <p className="mt-3 max-w-3xl text-sm font-medium leading-6 text-gray-800 md:text-base md:leading-7">
             SIM、保険、銀行、送金、生活インフラなどをカテゴリ別に整理しています。気になるカテゴリを選ぶと、サービスカードと比較表で条件を確認できます。
           </p>
         </section>
 
         <AdDisclosureNotice />
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <section className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
           {partnerCategoryCards.map((category) => (
             <article
               key={category.href}
-              className="flex min-h-full flex-col rounded-2xl bg-white p-4 shadow md:p-5"
+              className="flex min-h-full flex-col rounded-2xl bg-white p-3 shadow md:p-5"
             >
-              <div className="flex-1 space-y-4">
+              <div className="flex-1 space-y-3 md:space-y-4">
                 <div>
                   <div className="flex items-center gap-3">
                     <span
                       aria-hidden="true"
-                      className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-xl"
+                      className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-xl md:size-10"
                     >
                       {category.icon}
                     </span>
-                    <h2 className="text-xl font-bold text-gray-900">
+                    <h2 className="text-base font-bold text-gray-900 md:text-xl">
                       {category.title}
                     </h2>
                   </div>
-                  <p className="mt-2 text-sm font-medium leading-6 text-gray-800">
+                  <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-800 md:line-clamp-none">
                     {category.description}
                   </p>
                 </div>
 
                 <div>
-                  <p className="mb-2 text-sm font-bold text-gray-900">
+                  <p className="mb-2 text-xs font-bold text-gray-900 md:text-sm">
                     代表サービス
                   </p>
-                  <TagList items={category.services} />
+                  <TagList items={category.services.slice(0, 3)} />
                 </div>
 
                 <div>
-                  <p className="mb-2 text-sm font-bold text-gray-900">
+                  <p className="mb-2 text-xs font-bold text-gray-900 md:text-sm">
                     比較できる項目
                   </p>
-                  <TagList items={category.comparisonItems} />
+                  <TagList items={category.comparisonItems.slice(0, 4)} />
                 </div>
               </div>
 
               <Link
                 href={category.href}
-                className="mt-5 block w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white hover:bg-blue-800"
+                className="mt-4 block w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white hover:bg-blue-800 md:mt-5 md:px-4 md:py-3 md:text-base"
               >
                 {category.buttonLabel}
               </Link>
@@ -317,7 +317,7 @@ export default function PartnersPage() {
         <div className="flex justify-end">
           <Link
             href="/mypage"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3 md:text-base"
           >
             マイページへ戻る
           </Link>

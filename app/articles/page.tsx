@@ -60,41 +60,41 @@ function getArticleBadges(article: Article) {
 
 function ArticleCard({ article }: { article: Article }) {
   return (
-    <article className="flex min-h-full flex-col rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+    <article className="flex min-h-full flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-sm md:p-5">
       <div className="flex flex-wrap gap-2 text-xs font-bold">
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+        <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] text-blue-700 md:px-3 md:text-xs">
           {article.category}
         </span>
-        <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+        <span className="rounded-full bg-gray-100 px-2 py-1 text-[11px] text-gray-700 md:px-3 md:text-xs">
           {article.country_code || "NZ"}
         </span>
         {getArticleBadges(article).map((badge) => (
           <span
             key={badge.label}
-            className={`rounded-full px-3 py-1 ${badge.className}`}
+            className={`rounded-full px-2 py-1 text-[11px] md:px-3 md:text-xs ${badge.className}`}
           >
             {badge.label}
           </span>
         ))}
         {article.is_sponsored || article.is_affiliate ? (
-          <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-800">
+          <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] text-amber-800 md:px-3 md:text-xs">
             広告・紹介リンク
           </span>
         ) : null}
       </div>
-      <h2 className="mt-3 break-words text-lg font-bold leading-7 md:text-xl">
+      <h2 className="mt-2 break-words text-base font-bold leading-6 md:mt-3 md:text-xl md:leading-7">
         {article.title}
       </h2>
-      <p className="mt-2 line-clamp-3 text-sm font-medium leading-6 text-gray-700">
+      <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-700 md:line-clamp-3">
         {article.excerpt || "記事の内容を確認する"}
       </p>
-      <p className="mt-4 text-xs font-medium text-gray-600">
+      <p className="mt-3 text-xs font-medium text-gray-600 md:mt-4">
         更新 {formatDate(article.updated_at)}
       </p>
-      <div className="mt-auto pt-4">
+      <div className="mt-auto pt-3 md:pt-4">
         <Link
           href={`/articles/${article.slug}`}
-          className="block w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
+          className="block w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto md:px-4 md:py-3"
         >
           読む
         </Link>
@@ -148,8 +148,8 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
   const popularArticles = articles.slice(0, 5);
 
   return (
-    <main className="min-h-screen bg-gray-100 px-4 py-8 text-gray-900 md:px-6 md:py-10">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <main className="min-h-screen bg-gray-100 px-4 py-4 text-gray-900 md:px-6 md:py-10">
+      <div className="mx-auto max-w-6xl space-y-4 md:space-y-6">
         <header className="max-w-3xl">
           <div className="mb-4">
             <Breadcrumbs
@@ -163,27 +163,27 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           <h1 className="mt-2 text-2xl font-bold md:text-4xl">
             海外生活の役立ち情報
           </h1>
-          <p className="mt-3 font-medium leading-7 text-gray-700">
+          <p className="mt-3 text-sm font-medium leading-6 text-gray-700 md:text-base md:leading-7">
             渡航準備、仕事、住まい、お金について、行動前に確認したいポイントを運営記事として整理しています。
           </p>
-          <p className="mt-3 rounded-xl bg-gray-50 p-3 text-sm font-medium leading-6 text-gray-700">
+          <p className="mt-3 rounded-xl bg-gray-50 p-3 text-xs font-medium leading-5 text-gray-700 md:text-sm md:leading-6">
             記事には広告・紹介リンクが含まれる場合があります。料金、プラン、条件は変更される可能性があるため、申込前に必ず公式サイトで最新情報をご確認ください。
           </p>
         </header>
 
-        <section className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+        <section className="rounded-2xl border border-blue-100 bg-white p-3 shadow-sm md:p-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <h2 className="text-lg font-bold text-gray-900">
                 初めての人におすすめ
               </h2>
-              <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+              <p className="mt-1 line-clamp-2 text-sm font-medium leading-6 text-gray-700">
                 実体験ベースで、仕事・家・持ち物の全体像をつかめる記事です。
               </p>
             </div>
             <Link
               href="/mypage/checklist"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
             >
               チェックリストを見る
             </Link>
@@ -198,7 +198,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                 <span className="text-xs font-bold text-blue-700">
                   {index + 1}
                 </span>
-                <h3 className="mt-1 line-clamp-3 text-sm font-bold leading-6 text-gray-900">
+                <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-6 text-gray-900 md:line-clamp-3">
                   {article.title}
                 </h3>
               </Link>
@@ -206,19 +206,49 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           </div>
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+        <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm md:p-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-lg font-bold text-gray-900">カテゴリで探す</h2>
-              <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+              <p className="mt-1 hidden text-sm font-medium leading-6 text-gray-700 md:block">
                 実体験、仕事探し、物件探し、比較などから記事を絞り込めます。
               </p>
             </div>
-            <p className="w-fit rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+            <p className="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700 md:px-3 md:text-sm">
               {filteredArticles.length}件
             </p>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <details className="mt-3 md:hidden">
+            <summary className="cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900">
+              絞り込み {selectedCategory === "all" ? "0" : "1"}件適用中
+            </summary>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Link
+                href="/articles"
+                className={`rounded-lg px-3 py-2 text-center text-sm font-bold ${
+                  selectedCategory === "all"
+                    ? "bg-blue-700 text-white"
+                    : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                }`}
+              >
+                すべて
+              </Link>
+              {categories.map((category) => (
+                <Link
+                  key={category}
+                  href={`/articles?category=${encodeURIComponent(category)}`}
+                  className={`rounded-lg px-3 py-2 text-center text-sm font-bold ${
+                    selectedCategory === category
+                      ? "bg-blue-700 text-white"
+                      : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                  }`}
+                >
+                  {category}
+                </Link>
+              ))}
+            </div>
+          </details>
+          <div className="mt-4 hidden flex-wrap gap-2 md:flex">
             <Link
               href="/articles"
               className={`rounded-lg px-3 py-2 text-sm font-bold md:px-4 md:py-3 ${
@@ -245,7 +275,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           </div>
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm md:p-5">
+        <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm md:p-5">
           <h2 className="text-lg font-bold text-gray-900">人気記事</h2>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {popularArticles.map((article) => (
@@ -257,7 +287,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                 <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">
                   {article.category}
                 </span>
-                <h3 className="mt-2 line-clamp-3 text-sm font-bold leading-6 text-gray-900">
+                <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-6 text-gray-900 md:line-clamp-3">
                   {article.title}
                 </h3>
               </Link>
@@ -266,7 +296,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
         </section>
 
         {filteredArticles.length ? (
-          <section className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <section className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-5 lg:grid-cols-3">
             {filteredArticles.map((article) => (
               <ArticleCard key={article.id} article={article} />
             ))}
@@ -288,7 +318,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
         <div className="flex justify-end">
           <Link
             href="/mypage"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3 md:text-base"
           >
             マイページへ戻る
           </Link>

@@ -83,6 +83,7 @@ function OfficialButton({ service }: { service: PartnerService }) {
 
 export default function InsuranceComparison() {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   useEffect(() => {
     void trackMetric("partner_category_view", {
@@ -120,9 +121,9 @@ export default function InsuranceComparison() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+    <main className="min-h-screen bg-gray-100 px-4 py-4 text-gray-900 md:p-6">
+      <div className="mx-auto max-w-6xl space-y-4 md:space-y-6">
+        <section className="rounded-2xl bg-white p-3 shadow md:p-6">
           <div className="mb-4">
             <Breadcrumbs
               items={[
@@ -145,7 +146,7 @@ export default function InsuranceComparison() {
           このページはランキングではなく、契約前に確認すべき条件を整理する比較ページです。保険料、補償範囲、加入条件は変更される場合があります。申込前に必ず公式サイトで最新情報をご確認ください。
         </section>
 
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+        <section className="rounded-2xl bg-white p-3 shadow md:p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">目的別おすすめ</h2>
@@ -192,17 +193,28 @@ export default function InsuranceComparison() {
         <section className="rounded-2xl bg-white p-4 shadow md:p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">絞り込み</h2>
-              <p className="mt-1 text-sm font-medium text-gray-700">
+              <h2 className="text-lg font-bold text-gray-900 md:text-xl">絞り込み</h2>
+              <p className="mt-1 hidden text-sm font-medium text-gray-700 md:block">
                 条件を複数選ぶと、すべてに当てはまるサービスだけを表示します。
               </p>
             </div>
-            <p className="w-fit rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+            <p className="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700 md:px-3 md:text-sm">
               {filteredServices.length}件
             </p>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setIsMobileFilterOpen((current) => !current)}
+            className="mt-3 flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 md:hidden"
+          >
+            <span>{isMobileFilterOpen ? "絞り込みを閉じる" : "絞り込みを開く"}</span>
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
+              条件{activeFilters.length}件
+            </span>
+          </button>
+
+          <div className={`${isMobileFilterOpen ? "grid" : "hidden"} mt-3 grid-cols-2 gap-2 md:mt-4 md:flex md:flex-wrap`}>
             {insuranceFilters.map((filter) => {
               const isActive = activeFilters.includes(filter.key);
               return (
@@ -210,7 +222,7 @@ export default function InsuranceComparison() {
                   key={filter.key}
                   type="button"
                   onClick={() => toggleFilter(filter.key)}
-                  className={`rounded-lg px-3 py-2 text-sm font-bold md:px-4 md:py-3 ${
+                  className={`rounded-lg px-3 py-2 text-xs font-bold md:px-4 md:py-3 md:text-sm ${
                     isActive
                       ? "bg-blue-700 text-white"
                       : "bg-gray-100 text-gray-900 hover:bg-gray-200"
@@ -224,7 +236,7 @@ export default function InsuranceComparison() {
               <button
                 type="button"
                 onClick={() => setActiveFilters([])}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50 md:px-4 md:py-3"
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-900 hover:bg-gray-50 md:px-4 md:py-3 md:text-sm"
               >
                 条件をリセット
               </button>

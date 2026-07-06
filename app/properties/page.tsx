@@ -212,9 +212,9 @@ function PropertyFact({
   value: string;
 }) {
   return (
-    <div className="rounded-xl bg-gray-50 px-3 py-2">
-      <p className="text-xs font-bold text-gray-600">{label}</p>
-      <p className="mt-1 text-sm font-bold text-gray-900">{value}</p>
+    <div className="rounded-xl bg-gray-50 px-2 py-2 md:px-3">
+      <p className="text-[11px] font-bold text-gray-600 md:text-xs">{label}</p>
+      <p className="mt-1 text-xs font-bold text-gray-900 md:text-sm">{value}</p>
     </div>
   );
 }
@@ -264,6 +264,7 @@ export default function PropertiesPage() {
   const [utilitiesFilter, setUtilitiesFilter] = useState<
     "all" | "included" | "excluded"
   >("all");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedPropertyIds, setExpandedPropertyIds] = useState<string[]>([]);
@@ -791,6 +792,24 @@ export default function PropertiesPage() {
     setSelectedMapPropertyId(null);
   };
 
+  const activeFilterCount =
+    locationFilters.length +
+    [
+      searchQuery,
+      minRentWeekly,
+      maxRentWeekly,
+      minBedrooms,
+      maxBedrooms,
+      minBathrooms,
+      maxBathrooms,
+      minParkingSpaces,
+      maxParkingSpaces,
+      availableFrom,
+    ].filter(Boolean).length +
+    (petsFilter !== "all" ? 1 : 0) +
+    (smokingFilter !== "all" ? 1 : 0) +
+    (utilitiesFilter !== "all" ? 1 : 0);
+
   const totalPages = Math.max(1, Math.ceil(filteredProperties.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedProperties = useMemo(() => {
@@ -936,9 +955,9 @@ export default function PropertiesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <main className="min-h-screen bg-gray-100 px-4 py-4 text-gray-900 md:p-6">
+      <div className="mx-auto max-w-6xl space-y-4 md:space-y-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <p className="mb-2 text-sm font-bold text-blue-700">
               WorkLife WH 公開物件
@@ -946,7 +965,7 @@ export default function PropertiesPage() {
             <h1 className="break-words text-2xl font-bold md:text-4xl">
               ワーホリ向け物件
             </h1>
-            <p className="mt-2 max-w-3xl text-base font-medium leading-7 text-gray-800">
+            <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-gray-800 md:text-base md:leading-7">
               ニュージーランドでの住まい探しに使える公開物件を確認できます。気になる物件は保存して、問い合わせ文の作成に進めます。
             </p>
           </div>
@@ -954,13 +973,13 @@ export default function PropertiesPage() {
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Link
               href="/mypage"
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-sm font-bold text-gray-900 shadow-sm hover:bg-gray-50 sm:w-auto"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 shadow-sm hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
             >
               マイページ
             </Link>
             <Link
               href="/company/submit"
-              className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white shadow-sm hover:bg-blue-800 sm:w-auto"
+              className="w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white shadow-sm hover:bg-blue-800 sm:w-auto md:px-4 md:py-3"
             >
               掲載申請
             </Link>
@@ -968,20 +987,20 @@ export default function PropertiesPage() {
         </div>
 
         {message && (
-          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 font-bold text-blue-800">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-bold text-blue-800 md:p-4 md:text-base">
             {message}
           </div>
         )}
 
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <section className="rounded-2xl bg-white p-3 shadow md:p-6">
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between md:mb-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">物件を探す</h2>
-              <p className="mt-1 text-sm font-medium text-gray-700">
+              <h2 className="text-lg font-bold text-gray-900 md:text-xl">物件を探す</h2>
+              <p className="mt-1 text-xs font-medium text-gray-700 md:text-sm">
                 エリア、家賃、部屋数などで絞り込めます。
               </p>
             </div>
-            <p className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+            <p className="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700 md:px-3 md:text-sm">
               {filteredProperties.length}件
             </p>
           </div>
@@ -992,13 +1011,24 @@ export default function PropertiesPage() {
               <input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-3 font-medium text-gray-900 placeholder:text-gray-600"
+                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 placeholder:text-gray-600 md:py-3 md:text-base"
                 placeholder="物件名、エリア、住所、説明で検索"
               />
             </label>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => setIsFilterOpen((current) => !current)}
+            className="mt-3 flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 md:hidden"
+          >
+            <span>絞り込み</span>
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
+              {activeFilterCount}件適用中
+            </span>
+          </button>
+
+          <div className={`${isFilterOpen ? "grid" : "hidden"} mt-3 grid-cols-1 gap-3 md:mt-4 md:grid lg:grid-cols-3 lg:gap-4`}>
             <NzLocationPicker
               label="地域"
               multiple
@@ -1027,7 +1057,7 @@ export default function PropertiesPage() {
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className={`${isFilterOpen ? "grid" : "hidden"} mt-3 grid-cols-2 gap-3 md:mt-4 md:grid lg:grid-cols-5 lg:gap-4`}>
             <RangeNumberInput
               label="バスルーム数"
               minValue={minBathrooms}
@@ -1054,7 +1084,7 @@ export default function PropertiesPage() {
                 type="date"
                 value={availableFrom}
                 onChange={(event) => setAvailableFrom(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
               />
             </label>
             <label className="block rounded-xl border border-gray-200 bg-gray-50 p-3">
@@ -1072,7 +1102,7 @@ export default function PropertiesPage() {
                       | "unknown",
                   )
                 }
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
               >
                 <option value="all">全て</option>
                 <option value="allowed">ペット可</option>
@@ -1095,7 +1125,7 @@ export default function PropertiesPage() {
                       | "unknown",
                   )
                 }
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
               >
                 <option value="all">全て</option>
                 <option value="allowed">喫煙可</option>
@@ -1114,7 +1144,7 @@ export default function PropertiesPage() {
                     event.target.value as "all" | "included" | "excluded",
                   )
                 }
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900"
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 md:py-3 md:text-base"
               >
                 <option value="all">全て</option>
                 <option value="included">光熱費込み</option>
@@ -1123,14 +1153,14 @@ export default function PropertiesPage() {
             </label>
           </div>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-medium text-gray-700">
+          <div className={`${isFilterOpen ? "flex" : "hidden"} mt-3 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mt-4 md:flex`}>
+            <p className="text-xs font-medium text-gray-700 md:text-sm">
               条件に合う物件だけを表示しています。
             </p>
             <button
               type="button"
               onClick={resetFilters}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
             >
               条件をリセット
             </button>
@@ -1403,23 +1433,23 @@ export default function PropertiesPage() {
                   </div>
                 ) : null}
                 <div className="flex flex-1 flex-col p-3 md:p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between md:gap-3">
                   <div className="min-w-0">
-                    <h2 className="break-words text-lg font-bold text-gray-900 md:text-xl">
+                    <h2 className="break-words text-base font-bold text-gray-900 md:text-xl">
                       {property.title}
                     </h2>
-                    <p className="mt-1 font-medium text-gray-800">
+                    <p className="mt-1 text-sm font-medium text-gray-800 md:text-base">
                       {property.city || "都市未設定"}
                       {property.area ? ` / ${property.area}` : ""}
                     </p>
                   </div>
 
-                  <div className="w-fit rounded-full bg-green-50 px-3 py-1.5 text-sm font-bold text-green-700">
+                  <div className="w-fit rounded-full bg-green-50 px-2 py-1 text-xs font-bold text-green-700 md:px-3 md:py-1.5 md:text-sm">
                     {formatRent(property.rent_weekly)}
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:mt-3">
                   <PropertyFact
                     label="ベッド"
                     value={
@@ -1461,17 +1491,17 @@ export default function PropertiesPage() {
                   />
                 </div>
 
-                <div className="mt-3 grid gap-1.5 text-sm font-medium text-gray-800">
+                <div className="mt-2 grid gap-1.5 text-xs font-medium text-gray-800 md:mt-3 md:text-sm">
                   {property.available_from ? (
                     <p>入居可能日: {property.available_from}</p>
                   ) : null}
                   {property.address ? (
-                    <p className="break-words">住所: {property.address}</p>
+                    <p className="line-clamp-2 break-words">住所: {property.address}</p>
                   ) : null}
                 </div>
 
                 {expandedPropertyIds.includes(property.id) ? (
-                  <div className="mt-4 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm font-medium leading-7 text-gray-800">
+                  <div className="mt-3 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm font-medium leading-6 text-gray-800 md:mt-4 md:p-4 md:leading-7">
                     <div>
                       <p className="font-bold text-gray-900">物件説明</p>
                       <p className="mt-1 whitespace-pre-wrap">
@@ -1490,7 +1520,7 @@ export default function PropertiesPage() {
                   </div>
                 ) : null}
 
-                <div className="mt-auto flex flex-col gap-2 pt-5 sm:flex-row sm:flex-wrap">
+                <div className="mt-auto flex flex-col gap-2 pt-3 sm:flex-row sm:flex-wrap md:pt-5">
                   <button
                     type="button"
                     onClick={() =>
@@ -1500,7 +1530,7 @@ export default function PropertiesPage() {
                           : [...current, property.id],
                       )
                     }
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
                   >
                     {expandedPropertyIds.includes(property.id)
                       ? "詳細を閉じる"
@@ -1509,7 +1539,7 @@ export default function PropertiesPage() {
                   <button
                     onClick={() => handleSaveProperty(property)}
                     disabled={savingPropertyId === property.id}
-                    className="w-full rounded-lg border border-blue-700 bg-white px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto"
+                    className="w-full rounded-lg border border-blue-700 bg-white px-3 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto md:px-4 md:py-3"
                   >
                     {savingPropertyId === property.id ? "保存中..." : "保存する"}
                   </button>
@@ -1517,7 +1547,7 @@ export default function PropertiesPage() {
                   <button
                     onClick={() => handleInquiryProperty(property)}
                     disabled={savingPropertyId === property.id}
-                    className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-800 disabled:bg-gray-300 sm:w-auto"
+                    className="w-full rounded-lg bg-blue-700 px-3 py-2 text-sm font-bold text-white hover:bg-blue-800 disabled:bg-gray-300 sm:w-auto md:px-4 md:py-3"
                   >
                     {savingPropertyId === property.id
                       ? "準備中..."
@@ -1529,7 +1559,7 @@ export default function PropertiesPage() {
                       href={property.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
                     >
                       物件ページを見る
                     </a>

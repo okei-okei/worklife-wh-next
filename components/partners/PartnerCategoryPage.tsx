@@ -264,6 +264,7 @@ export default function PartnerCategoryPage({
   children,
 }: Props) {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const filteredServices = useMemo(() => {
     if (!activeFilters.length) return services;
@@ -335,9 +336,9 @@ export default function PartnerCategoryPage({
   }, [categoryPath, services.length]);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+    <main className="min-h-screen bg-gray-100 px-4 py-4 text-gray-900 md:p-6">
+      <div className="mx-auto max-w-6xl space-y-4 md:space-y-6">
+        <section className="rounded-2xl bg-white p-3 shadow md:p-6">
           <div className="mb-4">
             <Breadcrumbs
               items={[
@@ -351,20 +352,20 @@ export default function PartnerCategoryPage({
             WorkLife WH 比較・おすすめ
           </p>
           <h1 className="text-2xl font-bold md:text-4xl">{title}</h1>
-          <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-gray-800">
+          <p className="mt-3 max-w-3xl text-sm font-medium leading-6 text-gray-800 md:text-base md:leading-7">
             {description}
           </p>
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm font-medium leading-6 text-gray-700">
+        <section className="rounded-2xl border border-gray-200 bg-gray-50 p-3 text-xs font-medium leading-5 text-gray-700 md:text-sm md:leading-6">
           {noticeText ||
             "掲載サービスには広告・紹介リンクが含まれる場合があります。契約前に必ず公式サイトで最新情報をご確認ください。"}
         </section>
 
         {hasServices ? (
-          <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-            <h2 className="text-xl font-bold text-gray-900">目的別おすすめ</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <section className="rounded-2xl bg-white p-3 shadow md:p-6">
+            <h2 className="text-lg font-bold text-gray-900 md:text-xl">目的別おすすめ</h2>
+            <div className="mt-3 grid gap-3 md:mt-4 md:grid-cols-2">
               {recommendations.map((recommendation) => (
                 <button
                   key={recommendation.title}
@@ -385,12 +386,12 @@ export default function PartnerCategoryPage({
                       setActiveFilters([recommendation.filterKey]);
                     }
                   }}
-                  className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-left hover:bg-blue-50"
+                  className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-left hover:bg-blue-50 md:p-4"
                 >
-                  <p className="font-bold text-gray-900">
+                  <p className="text-sm font-bold text-gray-900 md:text-base">
                     {recommendation.title}
                   </p>
-                  <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+                  <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-gray-700 md:text-sm md:leading-6">
                     {recommendation.description}
                   </p>
                 </button>
@@ -398,27 +399,38 @@ export default function PartnerCategoryPage({
             </div>
           </section>
         ) : (
-          <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+          <section className="rounded-2xl bg-white p-3 shadow md:p-6">
             <p className="font-medium leading-7 text-gray-800">
               現在、このカテゴリの掲載情報を準備中です。契約前には必ず公式サイトで最新情報をご確認ください。
             </p>
           </section>
         )}
 
-        {hasServices ? <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+        {hasServices ? <section className="rounded-2xl bg-white p-3 shadow md:p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">絞り込み</h2>
-              <p className="mt-1 text-sm font-medium text-gray-700">
+              <h2 className="text-lg font-bold text-gray-900 md:text-xl">絞り込み</h2>
+              <p className="mt-1 hidden text-sm font-medium text-gray-700 md:block">
                 条件を複数選ぶと、すべてに当てはまるサービスだけを表示します。
               </p>
             </div>
-            <p className="w-fit rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+            <p className="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700 md:px-3 md:text-sm">
               {filteredServices.length}件
             </p>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setIsMobileFilterOpen((current) => !current)}
+            className="mt-3 flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 md:hidden"
+          >
+            <span>{isMobileFilterOpen ? "絞り込みを閉じる" : "絞り込みを開く"}</span>
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] text-blue-700">
+              条件{activeFilters.length}件
+            </span>
+          </button>
+
+          <div className={`${isMobileFilterOpen ? "grid" : "hidden"} mt-3 grid-cols-2 gap-2 md:mt-4 md:flex md:flex-wrap`}>
             {filters.map((filter) => {
               const isActive = activeFilters.includes(filter.key);
               return (
@@ -426,7 +438,7 @@ export default function PartnerCategoryPage({
                   key={filter.key}
                   type="button"
                   onClick={() => toggleFilter(filter.key)}
-                  className={`rounded-lg px-4 py-3 text-sm font-bold ${
+                  className={`rounded-lg px-3 py-2 text-xs font-bold md:px-4 md:py-3 md:text-sm ${
                     isActive
                       ? "bg-blue-700 text-white"
                       : "bg-gray-100 text-gray-900 hover:bg-gray-200"
@@ -440,7 +452,7 @@ export default function PartnerCategoryPage({
               <button
                 type="button"
                 onClick={() => setActiveFilters([])}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50"
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-900 hover:bg-gray-50 md:px-4 md:py-3 md:text-sm"
               >
                 条件をリセット
               </button>
@@ -448,44 +460,44 @@ export default function PartnerCategoryPage({
           </div>
         </section> : null}
 
-        {hasServices ? <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {hasServices ? <section className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
           {filteredServices.map((service) => (
             <article
               key={service.id}
-              className="flex min-h-full flex-col rounded-2xl bg-white p-4 text-gray-900 shadow md:p-5"
+              className="flex min-h-full flex-col rounded-2xl bg-white p-3 text-gray-900 shadow md:p-5"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+                    <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700 md:px-3 md:text-sm">
                       {service.serviceType}
                     </span>
-                    <span className="rounded-full bg-green-50 px-3 py-1 text-sm font-bold text-green-700">
+                    <span className="rounded-full bg-green-50 px-2 py-1 text-[11px] font-bold text-green-700 md:px-3 md:text-sm">
                       {service.countryCode}
                     </span>
                     {service.isAffiliate ? (
-                      <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-bold text-amber-700">
+                      <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700 md:px-3 md:text-sm">
                         広告・紹介リンク
                       </span>
                     ) : null}
                   </div>
-                  <h3 className="mt-3 text-xl font-bold md:text-2xl">
+                  <h3 className="mt-2 text-base font-bold md:mt-3 md:text-2xl">
                     {service.name}
                   </h3>
                 </div>
               </div>
 
-              <p className="mt-3 text-sm font-medium leading-6 text-gray-800">
+              <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-800 md:mt-3 md:line-clamp-none">
                 {service.shortDescription}
               </p>
 
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2 md:mt-4">
                 {comparisonFields.slice(0, 4).map((field) => (
-                  <div key={field.key} className="rounded-xl bg-gray-50 p-3">
-                    <p className="text-sm font-bold text-gray-600">
+                  <div key={field.key} className="rounded-xl bg-gray-50 p-2 md:p-3">
+                    <p className="text-xs font-bold text-gray-600 md:text-sm">
                       {field.label}
                     </p>
-                    <p className="mt-1 break-words text-sm font-bold text-gray-900">
+                    <p className="mt-1 break-words text-xs font-bold text-gray-900 md:text-sm">
                       {formatValue(service.comparison[field.key])}
                     </p>
                   </div>
@@ -493,19 +505,19 @@ export default function PartnerCategoryPage({
               </div>
 
               {service.priceNote ? (
-                <p className="mt-4 text-sm font-medium leading-6 text-gray-800">
+                <p className="mt-3 line-clamp-2 text-sm font-medium leading-6 text-gray-800 md:mt-4 md:line-clamp-none">
                   <span className="font-bold text-gray-900">料金目安:</span>{" "}
                   {service.priceNote}
                 </p>
               ) : null}
 
-              <div className="mt-4">
+              <div className="mt-3 md:mt-4">
                 <p className="text-sm font-bold text-gray-900">おすすめ対象</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {service.recommendedFor.map((item) => (
+                  {service.recommendedFor.slice(0, 3).map((item) => (
                     <span
                       key={item}
-                      className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700"
+                      className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-700 md:px-3 md:text-sm"
                     >
                       {item}
                     </span>
@@ -513,16 +525,16 @@ export default function PartnerCategoryPage({
                 </div>
               </div>
 
-              <div className="mt-4">
+              <div className="mt-3 md:mt-4">
                 <p className="text-sm font-bold text-gray-900">注意点</p>
-                <ul className="mt-2 space-y-1 text-sm font-medium leading-6 text-gray-800">
+                <ul className="mt-2 space-y-1 text-xs font-medium leading-5 text-gray-800 md:text-sm md:leading-6">
                   {service.cautions.slice(0, 2).map((caution) => (
                     <li key={caution}>・{caution}</li>
                   ))}
                 </ul>
               </div>
 
-              <p className="mt-4 rounded-xl bg-gray-50 p-3 text-sm font-medium leading-6 text-gray-700">
+              <p className="mt-3 rounded-xl bg-gray-50 p-2 text-xs font-medium leading-5 text-gray-700 md:mt-4 md:p-3 md:text-sm md:leading-6">
                 料金・条件・対応エリアは変更される場合があります。契約前に必ず公式サイトで最新情報をご確認ください。
               </p>
 
@@ -537,7 +549,7 @@ export default function PartnerCategoryPage({
                 onClick={() => {
                   void handleClickService(service);
                 }}
-                className="mt-auto block w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white hover:bg-blue-800"
+                className="mt-auto block w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white hover:bg-blue-800 md:px-4 md:py-3 md:text-base"
               >
                 公式サイトを見る
               </a>
@@ -545,13 +557,13 @@ export default function PartnerCategoryPage({
           ))}
         </section> : null}
 
-        {hasServices ? <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+        {hasServices ? <section className="rounded-2xl bg-white p-3 shadow md:p-6">
           <div className="mb-4">
-            <h2 className="text-xl font-bold text-gray-900">比較表</h2>
-            <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+            <h2 className="text-lg font-bold text-gray-900 md:text-xl">比較表</h2>
+            <p className="mt-1 text-xs font-medium leading-5 text-gray-700 md:text-sm md:leading-6">
               各サービスの特徴を横並びで比較できます。料金や対応内容は変更される場合があるため、申込前に公式サイトで最新情報を確認してください。
             </p>
-            <p className="mt-2 text-sm font-medium leading-6 text-gray-700 md:hidden">
+            <p className="mt-2 text-xs font-medium leading-5 text-gray-700 md:hidden">
               スマホでは見やすいようにサービスごとの比較カードで表示しています。
             </p>
             <p className="mt-2 hidden text-sm font-medium text-gray-600 md:block">
@@ -559,44 +571,44 @@ export default function PartnerCategoryPage({
             </p>
           </div>
 
-          <div className="space-y-4 md:hidden">
+          <div className="space-y-3 md:hidden">
             {filteredServices.map((service) => (
               <article
                 key={`mobile-${service.id}`}
-                className="rounded-2xl border border-gray-200 bg-white p-4"
+                className="rounded-2xl border border-gray-200 bg-white p-3"
               >
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
+                  <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
                     {service.serviceType}
                   </span>
-                  <span className="rounded-full bg-green-50 px-3 py-1 text-sm font-bold text-green-700">
+                  <span className="rounded-full bg-green-50 px-2 py-1 text-[11px] font-bold text-green-700">
                     {service.countryCode}
                   </span>
                 </div>
-                <h3 className="mt-3 text-xl font-bold text-gray-900">
+                <h3 className="mt-2 text-base font-bold text-gray-900">
                   {service.name}
                 </h3>
-                <div className="mt-4 space-y-2">
-                  {comparisonFields.slice(0, 8).map((field) => (
+                <div className="mt-3 space-y-2">
+                  {comparisonFields.slice(0, 6).map((field) => (
                     <div
                       key={field.key}
-                      className="grid grid-cols-[120px_1fr] gap-3 rounded-xl bg-gray-50 p-3"
+                      className="grid grid-cols-[104px_1fr] gap-2 rounded-xl bg-gray-50 p-2"
                     >
-                      <p className="font-bold text-gray-700">{field.label}</p>
-                      <p className="min-w-0 break-words font-medium leading-6 text-gray-900">
+                      <p className="text-xs font-bold text-gray-700">{field.label}</p>
+                      <p className="min-w-0 break-words text-xs font-medium leading-5 text-gray-900">
                         {formatValue(service.comparison[field.key])}
                       </p>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-4">
-                  <p className="font-bold text-gray-900">おすすめ対象</p>
+                <div className="mt-3">
+                  <p className="text-sm font-bold text-gray-900">おすすめ対象</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {service.recommendedFor.map((item) => (
+                    {service.recommendedFor.slice(0, 3).map((item) => (
                       <span
                         key={item}
-                        className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700"
+                        className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-700"
                       >
                         {item}
                       </span>
@@ -615,7 +627,7 @@ export default function PartnerCategoryPage({
                   onClick={() => {
                     void handleClickService(service);
                   }}
-                  className="mt-5 block w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-bold text-white hover:bg-blue-800"
+                  className="mt-3 block w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white hover:bg-blue-800"
                 >
                   公式サイトを見る
                 </a>

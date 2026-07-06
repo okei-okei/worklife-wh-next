@@ -276,7 +276,24 @@ export default function AdminListingsPage() {
     const accepted = Array.from(files).filter((file) =>
       ["image/jpeg", "image/png", "image/webp"].includes(file.type),
     );
-    setImageFiles(editing.type === "job" ? accepted.slice(0, 1) : accepted.slice(0, 10));
+
+    if (editing.type === "job") {
+      setImageFiles(accepted.slice(0, 1));
+      return;
+    }
+
+    const currentImageCount = form?.imageUrls.length || 0;
+    const availableSlots = Math.max(10 - currentImageCount, 0);
+    setImageFiles((current) => {
+      const exceedsLimit = current.length + accepted.length > availableSlots;
+      const next = [...current, ...accepted].slice(0, availableSlots);
+      if (exceedsLimit) {
+        setErrorMessage("物件画像は既存画像と新規画像を合わせて最大10枚までです。");
+      } else {
+        setErrorMessage("");
+      }
+      return next;
+    });
   };
 
   const uploadImages = async () => {
@@ -301,7 +318,11 @@ export default function AdminListingsPage() {
       throw new Error(data?.error || "画像の保存に失敗しました。");
     }
 
-    return editing.type === "job" ? data.imageUrls.slice(0, 1) : data.imageUrls;
+    if (editing.type === "job") {
+      return data.imageUrls.slice(0, 1);
+    }
+
+    return [...(form?.imageUrls || []), ...data.imageUrls].slice(0, 10);
   };
 
   const saveListing = async () => {
@@ -1053,31 +1074,60 @@ export default function AdminListingsPage() {
                     className={inputClass}
                   />
                   <span className="mt-1 block text-xs font-medium text-gray-600">
-                    ファイルまたは写真フォルダから選択できます。選択した画像で既存画像を置き換えます。
+                    {editing.type === "job"
+                      ? "ファイルまたは写真フォルダから選択できます。選択した画像で既存画像を置き換えます。"
+                      : "ファイルまたは写真フォルダから複数選択できます。既存画像に追加され、最大10枚まで保存できます。"}
                   </span>
                 </label>
 
                 {form.imageUrls.length || imageFiles.length ? (
                   <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {imageFiles.length
-                      ? imageFiles.map((file) => (
-                          <div
-                            key={`${file.name}-${file.size}`}
-                            className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs font-bold text-blue-700"
-                          >
-                            新規: {file.name}
-                          </div>
-                        ))
-                      : form.imageUrls.map((imageUrl) => (
-                          <div key={imageUrl} className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={imageUrl}
-                              alt=""
-                              className="aspect-[4/3] w-full object-cover"
-                            />
-                          </div>
-                        ))}
+                    {form.imageUrls.map((imageUrl) => (
+                      <div
+                        key={imageUrl}
+                        className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imageUrl}
+                          alt=""
+                          className="aspect-[4/3] w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm({
+                              ...form,
+                              imageUrls: form.imageUrls.filter(
+                                (url) => url !== imageUrl,
+                              ),
+                            })
+                          }
+                          className="w-full bg-white px-2 py-2 text-xs font-bold text-red-700 hover:bg-red-50"
+                        >
+                          削除
+                        </button>
+                      </div>
+                    ))}
+                    {imageFiles.map((file, index) => (
+                      <div
+                        key={`${file.name}-${file.size}-${index}`}
+                        className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs font-bold text-blue-700"
+                      >
+                        <p className="truncate">新規: {file.name}</p>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setImageFiles((current) =>
+                              current.filter((_, fileIndex) => fileIndex !== index),
+                            )
+                          }
+                          className="mt-2 w-full rounded-md bg-white px-2 py-1 text-red-700 hover:bg-red-50"
+                        >
+                          取り消す
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 ) : null}
               </div>

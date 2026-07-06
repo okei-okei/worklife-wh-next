@@ -60,17 +60,10 @@ function getAnalytics(service: SimService, adType: string) {
 }
 
 function getDesktopCardAd(service: SimService) {
-  const adKey =
-    service.id === "glocal-esim" && service.wideAdKey
-      ? service.wideAdKey
-      : service.primaryAdKey;
-
   return {
-    adKey,
-    html: getA8AdHtml(adKey),
-    size: service.id === "glocal-esim" && service.wideAdKey
-      ? "banner468x60"
-      : "banner300x250",
+    adKey: service.primaryAdKey,
+    html: getA8AdHtml(service.primaryAdKey),
+    size: "banner300x250",
   } as const;
 }
 
@@ -214,6 +207,7 @@ function MobileComparisonItem({
 
 export default function SimEsimComparison() {
   const [activeFilters, setActiveFilters] = useState<FilterKey[]>([]);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const mobileBannerAds = simServices
     .filter((service) => service.primaryAdKey)
     .map((service) => ({
@@ -268,11 +262,11 @@ export default function SimEsimComparison() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+      <section className="rounded-2xl bg-white p-3 shadow md:p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">目的別おすすめ</h2>
-            <p className="mt-1 text-sm font-medium leading-6 text-gray-700">
+            <h2 className="text-lg font-bold text-gray-900 md:text-xl">目的別おすすめ</h2>
+            <p className="mt-1 text-xs font-medium leading-5 text-gray-700 md:text-sm md:leading-6">
               出発前準備、長期滞在、現地SIMなど、使い方に合わせて候補を絞れます。
             </p>
           </div>
@@ -320,20 +314,29 @@ export default function SimEsimComparison() {
         </div>
       </section>
 
-      <section className="rounded-2xl bg-white p-4 shadow md:p-6">
+      <section className="rounded-2xl bg-white p-3 shadow md:p-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">絞り込み</h2>
-            <p className="mt-1 text-sm font-medium text-gray-700">
+            <h2 className="text-lg font-bold text-gray-900 md:text-xl">絞り込み</h2>
+            <p className="mt-1 text-xs font-medium text-gray-700 md:text-sm">
               条件を複数選ぶと、すべてに当てはまるサービスだけを表示します。
             </p>
           </div>
-          <p className="w-fit rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-700">
-            {filteredServices.length}件
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="w-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 md:text-sm">
+              {filteredServices.length}件 / 条件{activeFilters.length}件
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsMobileFilterOpen((current) => !current)}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-900 md:hidden"
+            >
+              {isMobileFilterOpen ? "閉じる" : "絞り込みを開く"}
+            </button>
+          </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className={`${isMobileFilterOpen ? "grid" : "hidden"} mt-3 grid-cols-2 gap-2 md:flex md:flex-wrap`}>
           {filters.map((filter) => {
             const isActive = activeFilters.includes(filter.key);
 
@@ -342,7 +345,7 @@ export default function SimEsimComparison() {
                 key={filter.key}
                 type="button"
                 onClick={() => toggleFilter(filter.key)}
-                className={`rounded-lg px-4 py-3 text-sm font-bold ${
+                className={`rounded-lg px-2 py-2 text-xs font-bold md:px-4 md:py-3 md:text-sm ${
                   isActive
                     ? "bg-blue-700 text-white"
                     : "bg-gray-100 text-gray-900 hover:bg-gray-200"
@@ -356,7 +359,7 @@ export default function SimEsimComparison() {
             <button
               type="button"
               onClick={() => setActiveFilters([])}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-bold text-gray-900 hover:bg-gray-50 md:px-4 md:py-3 md:text-sm"
             >
               条件をリセット
             </button>
@@ -465,7 +468,7 @@ export default function SimEsimComparison() {
             </div>
 
             {service.primaryAdKey ? (
-              <div className="mt-4 hidden md:block">
+              <div className="mt-4">
                 <A8AdSlot
                   html={getDesktopCardAd(service).html ?? ""}
                   size={getDesktopCardAd(service).size}
@@ -594,6 +597,15 @@ export default function SimEsimComparison() {
               </div>
 
               <div className="mt-3">
+                {service.primaryAdKey ? (
+                  <div className="mb-3">
+                    <A8AdSlot
+                      html={getA8AdHtml(service.primaryAdKey) ?? ""}
+                      size="banner300x250"
+                      analytics={getAnalytics(service, "banner300x250")}
+                    />
+                  </div>
+                ) : null}
                 <AffiliateAction service={service} />
               </div>
             </article>
@@ -759,7 +771,7 @@ export default function SimEsimComparison() {
         </div>
       </section>
 
-      {mobileBannerAds.length > 0 ? (
+      {false && mobileBannerAds.length > 0 ? (
         <section className="rounded-2xl bg-white p-4 shadow md:hidden">
           <h2 className="text-base font-bold text-gray-900">広告バナー</h2>
           <p className="mt-1 text-xs font-medium leading-5 text-gray-700">

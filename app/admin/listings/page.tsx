@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
@@ -107,6 +107,7 @@ type EditForm = {
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+const adminPageSize = 20;
 const maxOriginalImageSize = 12 * 1024 * 1024;
 const maxUploadImageSize = 2.5 * 1024 * 1024;
 const maxImageDimension = 1600;
@@ -250,6 +251,9 @@ export default function AdminListingsPage() {
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [properties, setProperties] = useState<AdminProperty[]>([]);
   const [selectedType, setSelectedType] = useState<ListingType>("job");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [editing, setEditing] = useState<{
     type: ListingType;
     id: string;
@@ -549,6 +553,41 @@ export default function AdminListingsPage() {
   };
 
   const items = selectedType === "job" ? jobs : properties;
+  const filteredItems = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return items.filter((item) => {
+      if (statusFilter === "active" && item.is_active === false) return false;
+      if (statusFilter === "inactive" && item.is_active !== false) return false;
+
+      if (!normalizedQuery) return true;
+
+      const isJob = selectedType === "job";
+      const job = item as AdminJob;
+      const property = item as AdminProperty;
+      const searchableText = [
+        item.title,
+        item.region,
+        item.district,
+        item.city,
+        item.area,
+        isJob ? job.company : property.owner_name,
+        isJob ? job.employment_type : property.rent_weekly,
+        isJob ? null : property.bedrooms,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(normalizedQuery);
+    });
+  }, [items, searchQuery, selectedType, statusFilter]);
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / adminPageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedItems = useMemo(() => {
+    const start = (safeCurrentPage - 1) * adminPageSize;
+    return filteredItems.slice(start, start + adminPageSize);
+  }, [safeCurrentPage, filteredItems]);
 
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
@@ -604,6 +643,7 @@ export default function AdminListingsPage() {
                   type="button"
                   onClick={() => {
                     setSelectedType(key as ListingType);
+                    setCurrentPage(1);
                     cancelEdit();
                   }}
                   className={`rounded-lg px-4 py-2 text-sm font-bold ${
@@ -625,13 +665,49 @@ export default function AdminListingsPage() {
             </button>
           </div>
 
+          <div className="mt-4 grid gap-3 md:grid-cols-[1fr_220px]">
+            <label>
+              <span className="text-sm font-bold text-gray-900">検索</span>
+              <input
+                value={searchQuery}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                  setCurrentPage(1);
+                }}
+                className={inputClass}
+                placeholder={
+                  selectedType === "job"
+                    ? "タイトル、会社名、地域、採用形態"
+                    : "タイトル、地域、家賃、ベッドルーム数"
+                }
+              />
+            </label>
+            <label>
+              <span className="text-sm font-bold text-gray-900">公開状態</span>
+              <select
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value as "all" | "active" | "inactive");
+                  setCurrentPage(1);
+                }}
+                className={inputClass}
+              >
+                <option value="all">全て</option>
+                <option value="active">公開中</option>
+                <option value="inactive">非公開</option>
+              </select>
+            </label>
+          </div>
+
           {isLoading ? (
             <p className="mt-6 font-bold text-gray-700">読み込み中...</p>
           ) : items.length === 0 ? (
             <p className="mt-6 font-bold text-gray-700">掲載はまだありません。</p>
+          ) : filteredItems.length === 0 ? (
+            <p className="mt-6 font-bold text-gray-700">条件に合う掲載はありません。</p>
           ) : (
             <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              {items.map((item) => {
+              {paginatedItems.map((item) => {
                 const isJob = selectedType === "job";
                 const job = item as AdminJob;
                 const property = item as AdminProperty;
@@ -714,15 +790,60 @@ export default function AdminListingsPage() {
                   </article>
                 );
               })}
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 lg:col-span-2">
+                <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                  <p className="text-sm font-bold text-gray-700">
+                    {filteredItems.length}件中 {(safeCurrentPage - 1) * adminPageSize + 1}
+                    〜{Math.min(safeCurrentPage * adminPageSize, filteredItems.length)}件を表示
+                  </p>
+                  <div className="flex w-full items-center justify-between gap-2 sm:w-auto">
+                    <button
+                      type="button"
+                      disabled={safeCurrentPage <= 1}
+                      onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-900 disabled:opacity-40"
+                    >
+                      前へ
+                    </button>
+                    <span className="text-sm font-bold text-gray-700">
+                      {safeCurrentPage} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={safeCurrentPage >= totalPages}
+                      onClick={() =>
+                        setCurrentPage((page) => Math.min(totalPages, page + 1))
+                      }
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-900 disabled:opacity-40"
+                    >
+                      次へ
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </section>
 
         {editing && form ? (
-          <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-            <h2 className="text-xl font-bold">
-              {editing.type === "job" ? "求人を編集" : "物件を編集"}
-            </h2>
+          <div className="fixed inset-0 z-[1000] bg-black/40">
+            <section className="ml-auto flex h-full w-full max-w-3xl flex-col bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-gray-200 p-4">
+                <div>
+                  <p className="text-xs font-bold text-blue-700">編集中</p>
+                  <h2 className="text-xl font-bold">
+                    {editing.type === "job" ? "求人を編集" : "物件を編集"}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900"
+                >
+                  閉じる
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 md:p-6">
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <label>
                 <span className="text-sm font-bold">タイトル</span>
@@ -1243,7 +1364,9 @@ export default function AdminListingsPage() {
                 {isSaving ? "保存中..." : "保存する"}
               </button>
             </div>
+              </div>
           </section>
+          </div>
         ) : null}
       </div>
     </main>

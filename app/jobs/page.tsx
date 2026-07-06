@@ -22,6 +22,9 @@ const PublicListingsMap = dynamic(
   },
 );
 
+const pageSize = 20;
+const maxMapPoints = 100;
+
 type PublicJob = {
   id: string;
   title: string;
@@ -156,6 +159,7 @@ export default function JobsPage() {
   const [visaCondition, setVisaCondition] = useState("");
   const [accommodationOnly, setAccommodationOnly] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [currentPage, setCurrentPage] = useState(1);
   const [expandedJobIds, setExpandedJobIds] = useState<string[]>([]);
   const [selectedMapJobId, setSelectedMapJobId] = useState<string | null>(null);
   const [geocodedJobCoordinates, setGeocodedJobCoordinates] =
@@ -584,7 +588,16 @@ export default function JobsPage() {
     setEnglishLevel("");
     setVisaCondition("");
     setAccommodationOnly(false);
+    setCurrentPage(1);
+    setSelectedMapJobId(null);
   };
+
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedJobs = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize;
+    return filteredJobs.slice(start, start + pageSize);
+  }, [safeCurrentPage, filteredJobs]);
 
   useEffect(() => {
     if (viewMode !== "map") return;
@@ -645,6 +658,7 @@ export default function JobsPage() {
   const mapJobs = useMemo(
     () =>
       filteredJobs
+        .slice(0, maxMapPoints)
         .map((job) => {
           const coordinates = resolveJobCoordinates(job, geocodedJobCoordinates);
           if (!coordinates) return null;
@@ -668,7 +682,7 @@ export default function JobsPage() {
     [filteredJobs, geocodedJobCoordinates],
   );
 
-  const jobsWithoutCoordinates = filteredJobs.length - mapJobs.length;
+  const jobsWithoutCoordinates = Math.min(filteredJobs.length, maxMapPoints) - mapJobs.length;
 
   const selectedMapJob = useMemo(
     () => filteredJobs.find((job) => job.id === selectedMapJobId) || null,
@@ -888,10 +902,13 @@ export default function JobsPage() {
         </div>
 
         {isLoading ? (
-          <div className="rounded-2xl bg-white p-6 shadow">
-            <p className="font-medium text-gray-800">
-              求人情報を読み込み中です...
-            </p>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-56 animate-pulse rounded-2xl bg-white shadow"
+              />
+            ))}
           </div>
         ) : jobs.length === 0 ? (
           <div className="rounded-2xl bg-white p-6 shadow">
@@ -920,7 +937,13 @@ export default function JobsPage() {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
-                        地図に表示中: {mapJobs.length}件
+                        一覧表示中: {paginatedJobs.length}件
+                      </span>
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+                        地図表示中: {mapJobs.length}件
+                      </span>
+                      <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+                        条件に一致: {filteredJobs.length}件
                       </span>
                       {jobsWithoutCoordinates > 0 ? (
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
@@ -943,6 +966,8 @@ export default function JobsPage() {
                   </p>
                   <p className="text-sm">
                     位置情報がないため地図に表示されない項目: {jobsWithoutCoordinates}件
+                    <br />
+                    地図表示は条件に合う座標付き求人を最大100件まで表示します。
                   </p>
                 </div>
               )}
@@ -1096,7 +1121,7 @@ export default function JobsPage() {
           </div>
         ) : (
           <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {filteredJobs.map((job) => (
+            {paginatedJobs.map((job) => (
               <article
                 id={`job-${job.id}`}
                 key={job.id}
@@ -1245,6 +1270,35 @@ export default function JobsPage() {
                 </div>
               </article>
             ))}
+            <div className="rounded-2xl bg-white p-3 shadow md:col-span-2 xl:col-span-3">
+              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                <p className="text-sm font-bold text-gray-700">
+                  {filteredJobs.length}件中 {(safeCurrentPage - 1) * pageSize + 1}
+                  〜{Math.min(safeCurrentPage * pageSize, filteredJobs.length)}件を表示
+                </p>
+                <div className="flex w-full items-center justify-between gap-2 sm:w-auto">
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage <= 1}
+                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-900 disabled:opacity-40"
+                  >
+                    前へ
+                  </button>
+                  <span className="text-sm font-bold text-gray-700">
+                    {safeCurrentPage} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage >= totalPages}
+                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-900 disabled:opacity-40"
+                  >
+                    次へ
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

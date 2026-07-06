@@ -22,6 +22,9 @@ const PublicListingsMap = dynamic(
   },
 );
 
+const pageSize = 20;
+const maxMapPoints = 100;
+
 type PublicProperty = {
   id: string;
   title: string;
@@ -262,6 +265,7 @@ export default function PropertiesPage() {
     "all" | "included" | "excluded"
   >("all");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [currentPage, setCurrentPage] = useState(1);
   const [expandedPropertyIds, setExpandedPropertyIds] = useState<string[]>([]);
   const [selectedMapPropertyId, setSelectedMapPropertyId] = useState<
     string | null
@@ -783,7 +787,16 @@ export default function PropertiesPage() {
     setPetsFilter("all");
     setSmokingFilter("all");
     setUtilitiesFilter("all");
+    setCurrentPage(1);
+    setSelectedMapPropertyId(null);
   };
+
+  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedProperties = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize;
+    return filteredProperties.slice(start, start + pageSize);
+  }, [safeCurrentPage, filteredProperties]);
 
   useEffect(() => {
     if (viewMode !== "map") return;
@@ -846,6 +859,7 @@ export default function PropertiesPage() {
   const mapProperties = useMemo(
     () =>
       filteredProperties
+        .slice(0, maxMapPoints)
         .map((property) => {
           const coordinates = resolvePropertyCoordinates(
             property,
@@ -881,7 +895,7 @@ export default function PropertiesPage() {
   );
 
   const propertiesWithoutCoordinates =
-    filteredProperties.length - mapProperties.length;
+    Math.min(filteredProperties.length, maxMapPoints) - mapProperties.length;
 
   const selectedMapProperty = useMemo(
     () =>
@@ -1128,10 +1142,13 @@ export default function PropertiesPage() {
         </div>
 
         {isLoading ? (
-          <div className="rounded-2xl bg-white p-6 shadow">
-            <p className="font-medium text-gray-800">
-              物件情報を読み込み中です...
-            </p>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-56 animate-pulse rounded-2xl bg-white shadow"
+              />
+            ))}
           </div>
         ) : properties.length === 0 ? (
           <div className="rounded-2xl bg-white p-6 shadow">
@@ -1160,7 +1177,13 @@ export default function PropertiesPage() {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
-                        地図に表示中: {mapProperties.length}件
+                        一覧表示中: {paginatedProperties.length}件
+                      </span>
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+                        地図表示中: {mapProperties.length}件
+                      </span>
+                      <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+                        条件に一致: {filteredProperties.length}件
                       </span>
                       {propertiesWithoutCoordinates > 0 ? (
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
@@ -1183,6 +1206,8 @@ export default function PropertiesPage() {
                   </p>
                   <p className="text-sm">
                     位置情報がないため地図に表示されない項目: {propertiesWithoutCoordinates}件
+                    <br />
+                    地図表示は条件に合う座標付き物件を最大100件まで表示します。
                   </p>
                 </div>
               )}
@@ -1349,7 +1374,7 @@ export default function PropertiesPage() {
           </div>
         ) : (
           <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {filteredProperties.map((property) => (
+            {paginatedProperties.map((property) => (
               <article
                 id={`property-${property.id}`}
                 key={property.id}
@@ -1513,6 +1538,35 @@ export default function PropertiesPage() {
                 </div>
               </article>
             ))}
+            <div className="rounded-2xl bg-white p-3 shadow md:col-span-2 xl:col-span-3">
+              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                <p className="text-sm font-bold text-gray-700">
+                  {filteredProperties.length}件中 {(safeCurrentPage - 1) * pageSize + 1}
+                  〜{Math.min(safeCurrentPage * pageSize, filteredProperties.length)}件を表示
+                </p>
+                <div className="flex w-full items-center justify-between gap-2 sm:w-auto">
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage <= 1}
+                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-900 disabled:opacity-40"
+                  >
+                    前へ
+                  </button>
+                  <span className="text-sm font-bold text-gray-700">
+                    {safeCurrentPage} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage >= totalPages}
+                    onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-900 disabled:opacity-40"
+                  >
+                    次へ
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

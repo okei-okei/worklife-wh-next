@@ -243,15 +243,6 @@ export default function CompanySubmitPage() {
     const nextFiles = Array.from(selectedFiles || []);
     const maxFiles = type === "job" ? 1 : 10;
 
-    if (nextFiles.length > maxFiles) {
-      setErrorMessage(
-        type === "job"
-          ? "求人画像は1枚までです。"
-          : "物件画像は10枚までです。",
-      );
-      return;
-    }
-
     const invalid = nextFiles.find(
       (file) =>
         !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
@@ -263,30 +254,56 @@ export default function CompanySubmitPage() {
       return;
     }
 
+    if (type === "job") {
+      if (nextFiles.length > maxFiles) {
+        setErrorMessage("求人画像は1枚までです。");
+        return;
+      }
+
+      setErrorMessage("");
+      setFiles(nextFiles.slice(0, 1));
+      return;
+    }
+
+    if (files.length + nextFiles.length > maxFiles) {
+      setErrorMessage("物件画像は最大10枚までです。");
+      setFiles((current) => [...current, ...nextFiles].slice(0, maxFiles));
+      return;
+    }
+
     setErrorMessage("");
-    setFiles(nextFiles);
+    setFiles((current) => [...current, ...nextFiles].slice(0, maxFiles));
   };
 
   const uploadImages = async (submissionId: string) => {
     if (!files.length) return [];
 
-    const formData = new FormData();
-    formData.append("prefix", `submissions/${submissionId}`);
-    files.forEach((file) => formData.append("files", file));
+    const uploadTargets = type === "job" ? files.slice(0, 1) : files.slice(0, 10);
+    const uploadedUrls: string[] = [];
 
-    const response = await fetch("/api/listing-images", {
-      method: "POST",
-      body: formData,
-    });
-    const data = (await response.json().catch(() => null)) as
-      | { imageUrls?: string[]; error?: string }
-      | null;
+    for (const [index, file] of uploadTargets.entries()) {
+      const formData = new FormData();
+      formData.append("prefix", `submissions/${submissionId}/${index + 1}`);
+      formData.append("files", file);
 
-    if (!response.ok || !data?.imageUrls) {
-      throw new Error(data?.error || "画像の保存に失敗しました。");
+      const response = await fetch("/api/listing-images", {
+        method: "POST",
+        body: formData,
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { imageUrls?: string[]; error?: string }
+        | null;
+
+      if (!response.ok || !data?.imageUrls?.length) {
+        throw new Error(
+          data?.error || `${file.name} の画像保存に失敗しました。`,
+        );
+      }
+
+      uploadedUrls.push(...data.imageUrls);
     }
 
-    return type === "job" ? data.imageUrls.slice(0, 1) : data.imageUrls;
+    return type === "job" ? uploadedUrls.slice(0, 1) : uploadedUrls;
   };
 
   const submitMinimalDirectly = async () => {
@@ -871,11 +888,16 @@ export default function CompanySubmitPage() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 multiple={type === "property"}
-                onChange={(event) => handleFiles(event.target.files)}
+                onChange={(event) => {
+                  handleFiles(event.target.files);
+                  event.currentTarget.value = "";
+                }}
                 className={inputClass}
               />
               <span className="mt-1 block text-xs font-medium text-gray-600">
-                ファイルまたは写真フォルダから選択できます。jpg/png/webp、1枚5MB以下。
+                {type === "job"
+                  ? "ファイルまたは写真フォルダから選択できます。jpg/png/webp、1枚5MB以下。選択した画像で置き換えます。"
+                  : "ファイルまたは写真フォルダから複数回に分けて選択できます。jpg/png/webp、1枚5MB以下、最大10枚まで。"}
               </span>
             </label>
             {files.length ? (
@@ -883,14 +905,25 @@ export default function CompanySubmitPage() {
                 <p className="text-sm font-bold text-blue-800">
                   選択中の画像: {files.length}枚
                 </p>
-                <div className="mt-2 flex gap-2 overflow-x-auto">
-                  {files.map((file) => (
-                    <span
-                      key={`${file.name}-${file.size}`}
-                      className="max-w-[180px] flex-none truncate rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-700"
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {files.map((file, index) => (
+                    <div
+                      key={`${file.name}-${file.size}-${index}`}
+                      className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-xs font-bold text-blue-700"
                     >
-                      {file.name}
-                    </span>
+                      <span className="min-w-0 truncate">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFiles((current) =>
+                            current.filter((_, fileIndex) => fileIndex !== index),
+                          )
+                        }
+                        className="flex-none rounded-md bg-red-50 px-2 py-1 text-red-700 hover:bg-red-100"
+                      >
+                        取り消す
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>

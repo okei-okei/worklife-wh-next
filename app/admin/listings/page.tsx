@@ -107,6 +107,56 @@ type EditForm = {
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+const maxOriginalImageSize = 12 * 1024 * 1024;
+const maxUploadImageSize = 2.5 * 1024 * 1024;
+const maxImageDimension = 1600;
+
+function loadImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const imageUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(imageUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(imageUrl);
+      reject(new Error(`${file.name} を画像として読み込めませんでした。`));
+    };
+    image.src = imageUrl;
+  });
+}
+
+async function resizeImageForUpload(file: File) {
+  if (file.size <= maxUploadImageSize) return file;
+  if (typeof document === "undefined") return file;
+
+  const image = await loadImage(file);
+  const scale = Math.min(
+    1,
+    maxImageDimension / Math.max(image.naturalWidth, image.naturalHeight),
+  );
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+
+  if (!context) return file;
+  context.drawImage(image, 0, 0, width, height);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", 0.82);
+  });
+
+  if (!blob || blob.size >= file.size) return file;
+  const fileName = file.name.replace(/\.[^.]+$/, "") || "listing-image";
+  return new File([blob], `${fileName}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
 
 function jobToForm(job: AdminJob): EditForm {
   return {
@@ -273,20 +323,34 @@ export default function AdminListingsPage() {
 
   const handleImageFiles = (files: FileList | null) => {
     if (!files || !editing) return;
-    const accepted = Array.from(files).filter((file) =>
-      ["image/jpeg", "image/png", "image/webp"].includes(file.type),
+    const selectedFiles = Array.from(files);
+    const invalid = selectedFiles.find(
+      (file) =>
+        !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+        file.size > maxOriginalImageSize,
     );
 
+    if (invalid) {
+      setErrorMessage("画像はjpg/png/webp、1枚12MB以下にしてください。送信時に自動圧縮します。");
+      return;
+    }
+
     if (editing.type === "job") {
-      setImageFiles(accepted.slice(0, 1));
+      if (selectedFiles.length > 1) {
+        setErrorMessage("求人画像は1枚までです。");
+        return;
+      }
+
+      setErrorMessage("");
+      setImageFiles(selectedFiles.slice(0, 1));
       return;
     }
 
     const currentImageCount = form?.imageUrls.length || 0;
     const availableSlots = Math.max(10 - currentImageCount, 0);
     setImageFiles((current) => {
-      const exceedsLimit = current.length + accepted.length > availableSlots;
-      const next = [...current, ...accepted].slice(0, availableSlots);
+      const exceedsLimit = current.length + selectedFiles.length > availableSlots;
+      const next = [...current, ...selectedFiles].slice(0, availableSlots);
       if (exceedsLimit) {
         setErrorMessage("物件画像は既存画像と新規画像を合わせて最大10枚までです。");
       } else {
@@ -301,28 +365,44 @@ export default function AdminListingsPage() {
       return form?.imageUrls || [];
     }
 
-    const formData = new FormData();
-    formData.append("prefix", `admin-listings/${editing.type}/${editing.id}`);
-    imageFiles.forEach((file) => formData.append("files", file));
+    const uploadTargets =
+      editing.type === "job" ? imageFiles.slice(0, 1) : imageFiles.slice(0, 10);
+    const uploadedUrls: string[] = [];
 
-    const response = await fetch("/api/listing-images", {
-      method: "POST",
-      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-      body: formData,
-    });
-    const data = (await response.json().catch(() => null)) as
-      | { imageUrls?: string[]; error?: string }
-      | null;
+    for (const [index, file] of uploadTargets.entries()) {
+      const uploadFile = await resizeImageForUpload(file);
 
-    if (!response.ok || !data?.imageUrls) {
-      throw new Error(data?.error || "画像の保存に失敗しました。");
+      if (uploadFile.size > 5 * 1024 * 1024) {
+        throw new Error(
+          `${file.name} の容量が大きすぎます。別の画像を選ぶか、画像を小さくしてから再度お試しください。`,
+        );
+      }
+
+      const formData = new FormData();
+      formData.append("prefix", `admin-listings/${editing.type}/${editing.id}/${index + 1}`);
+      formData.append("files", uploadFile);
+
+      const response = await fetch("/api/listing-images", {
+        method: "POST",
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+        body: formData,
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { imageUrls?: string[]; error?: string }
+        | null;
+
+      if (!response.ok || !data?.imageUrls?.length) {
+        throw new Error(data?.error || `${file.name} の画像保存に失敗しました。`);
+      }
+
+      uploadedUrls.push(...data.imageUrls);
     }
 
     if (editing.type === "job") {
-      return data.imageUrls.slice(0, 1);
+      return uploadedUrls.slice(0, 1);
     }
 
-    return [...(form?.imageUrls || []), ...data.imageUrls].slice(0, 10);
+    return [...(form?.imageUrls || []), ...uploadedUrls].slice(0, 10);
   };
 
   const saveListing = async () => {
@@ -1070,13 +1150,16 @@ export default function AdminListingsPage() {
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     multiple={editing.type === "property"}
-                    onChange={(event) => handleImageFiles(event.target.files)}
+                    onChange={(event) => {
+                      handleImageFiles(event.target.files);
+                      event.currentTarget.value = "";
+                    }}
                     className={inputClass}
                   />
                   <span className="mt-1 block text-xs font-medium text-gray-600">
                     {editing.type === "job"
-                      ? "ファイルまたは写真フォルダから選択できます。選択した画像で既存画像を置き換えます。"
-                      : "ファイルまたは写真フォルダから複数選択できます。既存画像に追加され、最大10枚まで保存できます。"}
+                      ? "ファイルまたは写真フォルダから選択できます。1枚12MB以下。送信時に自動圧縮し、選択した画像で既存画像を置き換えます。"
+                      : "ファイルまたは写真フォルダから複数回に分けて選択できます。1枚12MB以下。送信時に自動圧縮し、既存画像に追加されます。最大10枚まで保存できます。"}
                   </span>
                 </label>
 

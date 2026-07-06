@@ -275,7 +275,7 @@ function renderBlock(block: string, index: number) {
 
 function getArticleReferralKeys(slug: string) {
   const regular: Array<"wise" | "revolut"> = [];
-  const a8: Array<"trifa.text" | "japanGlobalEsim.text"> = [];
+  const a8: Array<"trifa.text" | "japanGlobalEsim.text" | "glocalEsim.text"> = [];
 
   if (
     slug === "nz-working-holiday-money-transfer-guide" ||
@@ -296,10 +296,42 @@ function getArticleReferralKeys(slug: string) {
     slug === "nz-working-holiday-real-experience" ||
     slug === "nz-working-holiday-before-departure-checklist"
   ) {
-    a8.push("trifa.text", "japanGlobalEsim.text");
+    a8.push("trifa.text", "japanGlobalEsim.text", "glocalEsim.text");
   }
 
   return { regular, a8 };
+}
+
+function getA8ArticleMeta(
+  key: "trifa.text" | "japanGlobalEsim.text" | "glocalEsim.text",
+) {
+  if (key.startsWith("trifa")) {
+    return {
+      label: "トリファを公式サイトで確認する",
+      serviceId: "trifa",
+      serviceName: "trifa",
+      provider: "trifa",
+      programId: "s00000027266001",
+    };
+  }
+
+  if (key.startsWith("glocalEsim")) {
+    return {
+      label: "Glocal eSIMを公式サイトで確認する",
+      serviceId: "glocal-esim",
+      serviceName: "Glocal eSIM",
+      provider: "glocal_esim",
+      programId: "s00000023372004",
+    };
+  }
+
+  return {
+    label: "JAPAN&GLOBAL eSIMを確認する",
+    serviceId: "japan-global-esim",
+    serviceName: "JAPAN&GLOBAL eSIM",
+    provider: "japan-global-esim",
+    programId: "s00000025659001",
+  };
 }
 
 function getReferralTitle(key: "wise" | "revolut") {
@@ -352,28 +384,29 @@ function ArticleReferralSection({ article }: { article: Article }) {
         })}
         {referrals.a8.map((key) => {
           const html = getA8AdHtml(key);
-          const isTrifa = key.startsWith("trifa");
+          const meta = getA8ArticleMeta(key);
           if (!html) return null;
           return (
             <div key={key} className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
-              <p className="mb-2 text-xs font-bold text-amber-800">
-                広告・紹介リンク
+              <p className="mb-2 flex w-fit items-center gap-2 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+                <span>PR</span>
+                <span>広告・紹介リンク</span>
               </p>
               <p className="mb-3 text-sm font-medium leading-6 text-gray-700">
-                {isTrifa
-                  ? "トリファを公式サイトで確認する"
-                  : "JAPAN&GLOBAL eSIMを確認する"}
+                {meta.label}
               </p>
               <A8AdSlot
                 html={html}
                 size="text"
                 variant="button"
                 analytics={{
-                  serviceId: isTrifa ? "trifa" : "japan-global-esim",
-                  serviceName: isTrifa ? "trifa" : "JAPAN&GLOBAL eSIM",
-                  category: "sim-esim",
+                  serviceId: meta.serviceId,
+                  serviceName: meta.serviceName,
+                  category: meta.serviceId === "glocal-esim" ? "sim" : "sim-esim",
+                  provider: meta.provider,
+                  network: "A8",
                   affiliateNetwork: "A8.net",
-                  programId: isTrifa ? "s00000027266001" : "s00000025659001",
+                  programId: meta.programId,
                   adType: "text",
                   pagePath: `/articles/${article.slug}`,
                 }}

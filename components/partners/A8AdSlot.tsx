@@ -5,12 +5,14 @@ import { trackMetric } from "@/lib/analytics";
 type A8AdSlotProps = {
   html: string;
   className?: string;
-  size?: "text" | "banner300x250" | "banner728x120" | "banner120x60";
+  size?: "text" | "banner300x250" | "banner468x60" | "banner728x120" | "banner120x60";
   variant?: "card" | "button";
   analytics?: {
     serviceId: string;
     serviceName: string;
     category: string;
+    provider?: string;
+    network?: string;
     affiliateNetwork?: string;
     programId?: string;
     adType: string;
@@ -41,6 +43,8 @@ export default function A8AdSlot({
             serviceId: analytics.serviceId,
             serviceName: analytics.serviceName,
             category: analytics.category,
+            provider: analytics.provider || analytics.serviceId,
+            network: analytics.network || analytics.affiliateNetwork || null,
             affiliateNetwork: analytics.affiliateNetwork || null,
             programId: analytics.programId || null,
             adType: analytics.adType,

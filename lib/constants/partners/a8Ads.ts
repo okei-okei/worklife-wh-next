@@ -17,6 +17,25 @@ export const a8Ads = {
 <img border="0" width="728" height="120" alt="" src="https://www22.a8.net/svt/bgt?aid=260624899352&wid=001&eno=01&mid=s00000025659001014000&mc=1"></a>
 <img border="0" width="1" height="1" src="https://www17.a8.net/0.gif?a8mat=4B63GJ+5TKLPU+5HZI+61C2P" alt="">`,
   },
+  glocalEsim: {
+    text: `<a href="https://px.a8.net/svt/ejp?a8mat=4B63GK+AM8B5E+50C8+NTJWY" rel="nofollow">海外旅行にいくなら【Glocal eSIM】</a>
+
+<img border="0" width="1" height="1" src="https://www14.a8.net/0.gif?a8mat=4B63GK+AM8B5E+50C8+NTJWY" alt="">`,
+    banner300x250: `<a href="https://px.a8.net/svt/ejp?a8mat=4B63GK+AM8B5E+50C8+NY1Y9" rel="nofollow">
+
+<img border="0" width="300" height="250" alt="" src="https://www25.a8.net/svt/bgt?aid=260624900642&wid=001&eno=01&mid=s00000023372004022000&mc=1">
+
+</a>
+
+<img border="0" width="1" height="1" src="https://www19.a8.net/0.gif?a8mat=4B63GK+AM8B5E+50C8+NY1Y9" alt="">`,
+    banner468x60: `<a href="https://px.a8.net/svt/ejp?a8mat=4B63GK+AM8B5E+50C8+NUES1" rel="nofollow">
+
+<img border="0" width="468" height="60" alt="" src="https://www26.a8.net/svt/bgt?aid=260624900642&wid=001&eno=01&mid=s00000023372004005000&mc=1">
+
+</a>
+
+<img border="0" width="1" height="1" src="https://www17.a8.net/0.gif?a8mat=4B63GK+AM8B5E+50C8+NUES1" alt="">`,
+  },
 };
 
 export type A8AdKey =
@@ -25,7 +44,10 @@ export type A8AdKey =
   | "trifa.banner120x60"
   | "japanGlobalEsim.text"
   | "japanGlobalEsim.banner300x250"
-  | "japanGlobalEsim.banner728x120";
+  | "japanGlobalEsim.banner728x120"
+  | "glocalEsim.text"
+  | "glocalEsim.banner300x250"
+  | "glocalEsim.banner468x60";
 
 export function getA8AdHtml(key?: A8AdKey) {
   if (!key) return null;

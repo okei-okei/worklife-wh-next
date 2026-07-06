@@ -43,7 +43,10 @@ export async function GET(request: NextRequest) {
     const eventCategory = (event: EventRow) => {
       const fromMeta = eventMeta(event, "category") || eventMeta(event, "partnerCategory");
       const raw = fromMeta || event.target_id || event.page_path || "unknown";
-      const normalized = String(raw)
+      const rawText = String(raw);
+      if (rawText === "sim") return "SIM/eSIM";
+
+      const normalized = rawText
         .replace("/partners/", "")
         .replace("sim-esim", "SIM/eSIM")
         .replace("insurance", "海外保険")

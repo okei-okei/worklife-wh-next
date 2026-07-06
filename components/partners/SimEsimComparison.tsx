@@ -49,12 +49,29 @@ function getAnalytics(service: SimService, adType: string) {
   return {
     serviceId: service.id,
     serviceName: service.name,
-    category: "sim-esim",
+    category: service.id === "glocal-esim" ? "sim" : "sim-esim",
+    provider: service.id === "glocal-esim" ? "glocal_esim" : service.id,
+    network: service.affiliateNetwork === "A8.net" ? "A8" : service.affiliateNetwork,
     affiliateNetwork: service.affiliateNetwork,
     programId: service.programId,
     adType,
     pagePath: "/partners/sim-esim",
   };
+}
+
+function getDesktopCardAd(service: SimService) {
+  const adKey =
+    service.id === "glocal-esim" && service.wideAdKey
+      ? service.wideAdKey
+      : service.primaryAdKey;
+
+  return {
+    adKey,
+    html: getA8AdHtml(adKey),
+    size: service.id === "glocal-esim" && service.wideAdKey
+      ? "banner468x60"
+      : "banner300x250",
+  } as const;
 }
 
 function trackOfficialClick(service: SimService) {
@@ -112,6 +129,7 @@ function AffiliateAction({ service }: { service: SimService }) {
     return (
       <div className="space-y-2">
         <p className="text-xs font-bold text-amber-700">広告・紹介リンク</p>
+        <p className="text-sm font-bold text-gray-900">公式サイトを見る</p>
         <A8AdSlot
           html={textAdHtml}
           size="text"
@@ -205,10 +223,16 @@ export default function SimEsimComparison() {
     .filter((ad): ad is { service: SimService; html: string } =>
       Boolean(ad.html),
     );
-  const japanGlobalWideAd = getA8AdHtml(
-    simServices.find((service) => service.id === "japan-global-esim")
-      ?.wideAdKey,
-  );
+  const wideBannerAds = simServices
+    .filter((service) => service.wideAdKey)
+    .map((service) => ({
+      service,
+      html: getA8AdHtml(service.wideAdKey),
+      size: service.id === "glocal-esim" ? "banner468x60" : "banner728x120",
+    }))
+    .filter((ad): ad is { service: SimService; html: string; size: "banner468x60" | "banner728x120" } =>
+      Boolean(ad.html),
+    );
 
   const filteredServices =
     activeFilters.length === 0
@@ -261,7 +285,7 @@ export default function SimEsimComparison() {
             {
               title: "出発前に準備したい",
               body: "eSIMを日本出発前に購入し、到着直後から通信を使いたい方向けです。",
-              tags: ["trifa", "JAPAN&GLOBAL eSIM", "Airalo"],
+              tags: ["trifa", "JAPAN&GLOBAL eSIM", "Glocal eSIM"],
             },
             {
               title: "長期滞在・現地生活",
@@ -271,7 +295,7 @@ export default function SimEsimComparison() {
             {
               title: "価格やプランを比較したい",
               body: "複数サービスの容量、期間、料金目安を見比べたい方向けです。",
-              tags: ["Nomad", "MobiMatter", "Skinny"],
+              tags: ["Nomad", "MobiMatter", "Glocal eSIM"],
             },
           ].map((item) => (
             <div key={item.title} className="rounded-xl bg-gray-50 p-3">
@@ -443,9 +467,9 @@ export default function SimEsimComparison() {
             {service.primaryAdKey ? (
               <div className="mt-4 hidden md:block">
                 <A8AdSlot
-                  html={getA8AdHtml(service.primaryAdKey) ?? ""}
-                  size="banner300x250"
-                  analytics={getAnalytics(service, "banner300x250")}
+                  html={getDesktopCardAd(service).html ?? ""}
+                  size={getDesktopCardAd(service).size}
+                  analytics={getAnalytics(service, getDesktopCardAd(service).size)}
                 />
               </div>
             ) : null}
@@ -755,17 +779,18 @@ export default function SimEsimComparison() {
         </section>
       ) : null}
 
-      {japanGlobalWideAd ? (
+      {wideBannerAds.length ? (
         <section className="hidden rounded-2xl bg-white p-4 shadow md:block md:p-6">
-          <A8AdSlot
-            html={japanGlobalWideAd}
-            size="banner728x120"
-            analytics={getAnalytics(
-              simServices.find((service) => service.id === "japan-global-esim") ||
-                simServices[0],
-              "banner728x120",
-            )}
-          />
+          <div className="flex flex-col items-center gap-4">
+            {wideBannerAds.map((ad) => (
+              <A8AdSlot
+                key={ad.service.id}
+                html={ad.html}
+                size={ad.size}
+                analytics={getAnalytics(ad.service, ad.size)}
+              />
+            ))}
+          </div>
         </section>
       ) : null}
     </div>

@@ -21,7 +21,9 @@ export type SimService = {
   affiliateStatus?: "available" | "pending" | "none";
   affiliateNetwork?: string;
   programId?: string;
-  availableAdTypes?: Array<"text" | "banner300x250" | "banner120x60" | "banner728x120">;
+  availableAdTypes?: Array<
+    "text" | "banner300x250" | "banner120x60" | "banner468x60" | "banner728x120"
+  >;
   primaryAdKey?: A8AdKey;
   textAdKey?: A8AdKey;
   wideAdKey?: A8AdKey;
@@ -219,12 +221,18 @@ export const simServices: SimService[] = [
     durationNote: "短期から中期利用向けの期間設定を確認できます。",
     recommendedFor: ["日本出発前の準備向け", "短期滞在向け"],
     cautions: [
-      "提携申請中のため、現在は公式サイトへのリンクのみ掲載しています。",
+      "料金、通信容量、周遊プランの対象国は購入前に公式サイトで確認してください。",
       "通信条件、キャンセル条件、対象端末は公式サイトで確認してください。",
     ],
     officialUrl: "https://glocalnet.jp/lp/esim/",
-    isAffiliate: false,
-    affiliateStatus: "pending",
+    isAffiliate: true,
+    affiliateStatus: "available",
+    affiliateNetwork: "A8.net",
+    programId: "s00000023372004",
+    availableAdTypes: ["text", "banner300x250", "banner468x60"],
+    primaryAdKey: "glocalEsim.banner300x250",
+    textAdKey: "glocalEsim.text",
+    wideAdKey: "glocalEsim.banner468x60",
     lastCheckedAt: "2026-06-24",
     audienceTags: ["short_term", "pre_departure", "esim"],
   },

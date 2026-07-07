@@ -1,6 +1,7 @@
 import Link from "next/link";
 import AdDisclosureNotice from "@/components/AdDisclosureNotice";
 import AuthAwareCta from "@/components/AuthAwareCta";
+import PartnerCategorySelector from "@/components/partners/PartnerCategorySelector";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import JsonLd from "@/components/seo/JsonLd";
 import { createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
@@ -20,6 +21,7 @@ type PartnerCategoryCard = {
   buttonLabel: string;
   services: string[];
   comparisonItems: string[];
+  categoryTags: string[];
 };
 
 const partnerCategoryCards: PartnerCategoryCard[] = [
@@ -31,6 +33,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
     href: "/partners/sim-esim",
     buttonLabel: "SIM/eSIMを比較する",
     services: ["Airalo", "Holafly", "Spark", "One NZ", "2degrees"],
+    categoryTags: ["communication", "before_departure", "affiliate"],
     comparisonItems: [
       "データ容量",
       "通話/SMS",
@@ -52,6 +55,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
       "Genki",
       "OrbitProtect",
     ],
+    categoryTags: ["before_departure"],
     comparisonItems: [
       "医療補償",
       "携行品補償",
@@ -68,6 +72,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
     href: "/partners/bank",
     buttonLabel: "銀行口座を比較する",
     services: ["ANZ", "ASB", "BNZ", "Westpac", "Kiwibank", "Wise"],
+    categoryTags: ["money"],
     comparisonItems: [
       "オンライン開設",
       "給与受取",
@@ -83,6 +88,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
     href: "/partners/money-transfer",
     buttonLabel: "海外送金を比較する",
     services: ["Wise", "OFX", "Remitly", "Western Union", "XE"],
+    categoryTags: ["money", "before_departure", "affiliate"],
     comparisonItems: [
       "手数料",
       "為替レート",
@@ -104,6 +110,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
       "Electric Kiwi",
       "Flick",
     ],
+    categoryTags: ["infrastructure", "housing"],
     comparisonItems: [
       "基本料金",
       "電力量料金",
@@ -119,6 +126,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
     href: "/partners/internet",
     buttonLabel: "インターネットを比較する",
     services: ["Spark", "One NZ", "2degrees", "Skinny", "Slingshot"],
+    categoryTags: ["infrastructure", "housing", "communication"],
     comparisonItems: [
       "光回線",
       "ワイヤレス",
@@ -141,6 +149,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
       "Trade Me",
       "Facebook Marketplace",
     ],
+    categoryTags: ["housing", "infrastructure"],
     comparisonItems: [
       "新品",
       "中古",
@@ -157,6 +166,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
     href: "/partners/language-school",
     buttonLabel: "語学学校を比較する",
     services: ["Languages International", "NZLC", "Kaplan", "EC English", "LSI"],
+    categoryTags: ["learning", "before_departure"],
     comparisonItems: [
       "学費目安",
       "コース",
@@ -178,6 +188,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
       "留学ジャーナル",
       "ラストリゾート",
     ],
+    categoryTags: ["learning", "before_departure", "work"],
     comparisonItems: [
       "無料相談",
       "語学学校紹介",
@@ -201,6 +212,7 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
       "Booking.com",
       "InterCity",
     ],
+    categoryTags: ["transport", "before_departure"],
     comparisonItems: [
       "価格",
       "荷物",
@@ -210,21 +222,6 @@ const partnerCategoryCards: PartnerCategoryCard[] = [
     ],
   },
 ];
-
-function TagList({ items }: { items: string[] }) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {items.map((item) => (
-        <span
-          key={item}
-          className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700"
-        >
-          {item}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 export default function PartnersPage() {
   return (
@@ -258,54 +255,7 @@ export default function PartnersPage() {
 
         <AdDisclosureNotice />
 
-        <section className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
-          {partnerCategoryCards.map((category) => (
-            <article
-              key={category.href}
-              className="flex min-h-full flex-col rounded-2xl bg-white p-3 shadow md:p-5"
-            >
-              <div className="flex-1 space-y-3 md:space-y-4">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      aria-hidden="true"
-                      className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-xl md:size-10"
-                    >
-                      {category.icon}
-                    </span>
-                    <h2 className="text-base font-bold text-gray-900 md:text-xl">
-                      {category.title}
-                    </h2>
-                  </div>
-                  <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-800 md:line-clamp-none">
-                    {category.description}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-xs font-bold text-gray-900 md:text-sm">
-                    代表サービス
-                  </p>
-                  <TagList items={category.services.slice(0, 3)} />
-                </div>
-
-                <div>
-                  <p className="mb-2 text-xs font-bold text-gray-900 md:text-sm">
-                    比較できる項目
-                  </p>
-                  <TagList items={category.comparisonItems.slice(0, 4)} />
-                </div>
-              </div>
-
-              <Link
-                href={category.href}
-                className="mt-4 block w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white hover:bg-blue-800 md:mt-5 md:px-4 md:py-3 md:text-base"
-              >
-                {category.buttonLabel}
-              </Link>
-            </article>
-          ))}
-        </section>
+        <PartnerCategorySelector cards={partnerCategoryCards} />
 
         <AdDisclosureNotice detail />
 

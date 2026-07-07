@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import CategoryChips, { type CategoryChip } from "@/components/ui/CategoryChips";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
 
@@ -16,6 +17,18 @@ type PhaseKey =
   | "応募・問い合わせ準備";
 
 type Urgency = "high" | "medium" | "low";
+type ChecklistCategoryId =
+  | "all"
+  | "before_departure"
+  | "arrival"
+  | "housing"
+  | "work"
+  | "money"
+  | "communication"
+  | "housing_after"
+  | "daily_goods"
+  | "learning"
+  | "caution";
 
 type ChecklistItemDefinition = {
   key: string;
@@ -54,6 +67,58 @@ const urgencyStyles: Record<Urgency, string> = {
   medium: "bg-amber-50 text-amber-700",
   low: "bg-gray-100 text-gray-700",
 };
+
+const checklistCategoryLabels: Record<ChecklistCategoryId, string> = {
+  all: "すべて",
+  before_departure: "渡航前",
+  arrival: "到着後",
+  housing: "家探し",
+  work: "仕事探し",
+  money: "お金",
+  communication: "通信",
+  housing_after: "住居決定後",
+  daily_goods: "生活用品",
+  learning: "英語・学習",
+  caution: "注意点",
+};
+
+function itemMatchesCategory(
+  item: ChecklistItemDefinition,
+  category: ChecklistCategoryId,
+) {
+  if (category === "all") return true;
+  if (category === "before_departure") return item.phase === "渡航前";
+  if (category === "arrival") return item.phase === "到着後すぐ";
+  if (category === "housing") return item.phase === "物件探し";
+  if (category === "work") return item.phase === "仕事探し";
+  if (category === "learning") return item.phase === "英語・学習";
+  if (category === "money") {
+    return (
+      ["bank", "money-transfer"].includes(item.partnerCategory || "") ||
+      /費用|銀行|送金|IRD/.test(item.label)
+    );
+  }
+  if (category === "communication") {
+    return ["sim-esim", "internet"].includes(item.partnerCategory || "");
+  }
+  if (category === "housing_after") {
+    return (
+      item.phase === "生活インフラ" ||
+      ["electricity", "internet", "furniture"].includes(item.partnerCategory || "")
+    );
+  }
+  if (category === "daily_goods") {
+    return item.partnerCategory === "furniture";
+  }
+  if (category === "caution") {
+    return (
+      item.primaryHref.startsWith("/guides") ||
+      /確認|注意|契約|パスポート|ビザ|デポジット/.test(item.label)
+    );
+  }
+
+  return false;
+}
 
 const CHECKLIST_ITEMS: ChecklistItemDefinition[] = [
   {
@@ -510,6 +575,8 @@ export default function ChecklistPage() {
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<ChecklistCategoryId>("all");
 
   const loadChecklist = useCallback(async (userId: string) => {
     setIsLoading(true);
@@ -571,22 +638,44 @@ export default function ChecklistPage() {
 
   const itemsByPhase = useMemo(() => {
     return PHASES.map((phase) => {
-      const items = CHECKLIST_ITEMS.filter((item) => item.phase === phase).sort(
-        (a, b) => {
+      const items = CHECKLIST_ITEMS.filter(
+        (item) =>
+          item.phase === phase && itemMatchesCategory(item, selectedCategory),
+      ).sort((a, b) => {
           const aChecked = checkedItems[a.key] ? 1 : 0;
           const bChecked = checkedItems[b.key] ? 1 : 0;
 
           if (aChecked !== bChecked) return aChecked - bChecked;
 
           return urgencyRank[a.urgency] - urgencyRank[b.urgency];
-        },
-      );
+        });
 
       const completed = items.filter((item) => checkedItems[item.key]).length;
 
       return { phase, items, completed };
-    });
-  }, [checkedItems]);
+    }).filter(({ items }) => items.length > 0);
+  }, [checkedItems, selectedCategory]);
+
+  const visibleItems = useMemo(
+    () => itemsByPhase.flatMap(({ items }) => items),
+    [itemsByPhase],
+  );
+
+  const visibleCompletedCount = useMemo(
+    () => visibleItems.filter((item) => checkedItems[item.key]).length,
+    [checkedItems, visibleItems],
+  );
+
+  const checklistCategories = useMemo<CategoryChip[]>(() => {
+    const ids = Object.keys(checklistCategoryLabels) as ChecklistCategoryId[];
+
+    return ids.map((id) => ({
+      id,
+      label: checklistCategoryLabels[id],
+      count: CHECKLIST_ITEMS.filter((item) => itemMatchesCategory(item, id))
+        .length,
+    }));
+  }, []);
 
   const handleToggle = async (item: ChecklistItemDefinition) => {
     if (!currentUserId) {
@@ -640,22 +729,22 @@ export default function ChecklistPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <main className="min-h-screen bg-gray-100 px-4 py-4 text-gray-900 md:p-6">
+      <div className="mx-auto max-w-6xl space-y-4 md:space-y-6">
         <section>
           <p className="mb-2 text-sm font-bold text-blue-700">WorkLife WH</p>
           <h1 className="text-2xl font-bold md:text-4xl">
             渡航・生活チェックリスト
           </h1>
-          <p className="mt-2 max-w-3xl text-base font-medium leading-7 text-gray-800">
+          <p className="mt-2 line-clamp-2 max-w-3xl text-sm font-medium leading-6 text-gray-800 md:line-clamp-none md:text-base md:leading-7">
             渡航前、到着後、仕事探し、物件探し、生活インフラ、応募準備まで、次に必要な行動を確認できます。
           </p>
         </section>
 
-        <section className="rounded-2xl bg-white p-4 shadow md:p-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-bold">全体進捗</h2>
-            <div className="text-sm font-bold text-blue-700">
+        <section className="rounded-2xl bg-white p-3 shadow md:p-6">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 md:mb-4">
+            <h2 className="text-lg font-bold md:text-xl">全体進捗</h2>
+            <div className="text-xs font-bold text-blue-700 md:text-sm">
               {completedCount} / {CHECKLIST_ITEMS.length} 完了
             </div>
           </div>
@@ -668,12 +757,37 @@ export default function ChecklistPage() {
           </div>
         </section>
 
-        <div className="space-y-6">
+        <section className="rounded-2xl bg-white p-3 shadow md:p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">カテゴリー</h2>
+              <p className="mt-1 hidden text-sm font-medium text-gray-700 md:block">
+                今やる準備だけに絞って確認できます。
+              </p>
+            </div>
+            <p className="shrink-0 rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700 md:px-3 md:text-sm">
+              完了 {visibleCompletedCount} / {visibleItems.length}
+            </p>
+          </div>
+          <CategoryChips
+            categories={checklistCategories}
+            selectedId={selectedCategory}
+            onSelect={(id) => setSelectedCategory(id as ChecklistCategoryId)}
+            ariaLabel="チェックリストカテゴリー"
+          />
+          <p className="mt-3 text-xs font-bold text-gray-700 md:text-sm">
+            表示中:{" "}
+            {checklistCategories.find((category) => category.id === selectedCategory)
+              ?.label || "すべて"}
+          </p>
+        </section>
+
+        <div className="space-y-4 md:space-y-6">
           {itemsByPhase.map(({ phase, items, completed }) => (
-            <section key={phase} className="rounded-2xl bg-white p-4 shadow md:p-6">
-              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-xl font-bold text-gray-900">{phase}</h2>
-                <span className="text-sm font-bold text-blue-700">
+            <section key={phase} className="rounded-2xl bg-white p-3 shadow md:p-6">
+              <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between md:mb-4">
+                <h2 className="text-lg font-bold text-gray-900 md:text-xl">{phase}</h2>
+                <span className="text-xs font-bold text-blue-700 md:text-sm">
                   {completed} / {items.length} 完了
                 </span>
               </div>
@@ -686,28 +800,28 @@ export default function ChecklistPage() {
                   return (
                     <article
                       key={item.key}
-                      className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 hover:bg-gray-50 lg:flex-row lg:items-center lg:justify-between"
+                      className="flex flex-col gap-3 rounded-xl border border-gray-200 p-3 hover:bg-gray-50 lg:flex-row lg:items-center lg:justify-between"
                     >
                       <div className="min-w-0 flex-1">
-                        <label className="flex cursor-pointer items-start gap-3">
+                        <label className="flex cursor-pointer items-start gap-2 md:gap-3">
                           <input
                             type="checkbox"
                             checked={checked}
                             disabled={isLoading || isSaving}
                             onChange={() => handleToggle(item)}
-                            className="mt-1 h-5 w-5 shrink-0"
+                            className="mt-1 h-4 w-4 shrink-0 md:h-5 md:w-5"
                           />
                           <span>
                             <span
                               className={
                                 checked
-                                  ? "block font-bold text-gray-500 line-through"
-                                  : "block font-bold text-gray-900"
+                                  ? "block text-sm font-bold text-gray-700 line-through md:text-base"
+                                  : "block text-sm font-bold text-gray-900 md:text-base"
                               }
                             >
                               {item.label}
                             </span>
-                            <span className="mt-1 block text-sm font-medium leading-6 text-gray-700">
+                            <span className="mt-1 line-clamp-2 block text-xs font-medium leading-5 text-gray-700 md:text-sm md:leading-6">
                               {item.description}
                             </span>
                           </span>
@@ -716,7 +830,7 @@ export default function ChecklistPage() {
 
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center lg:justify-end">
                         <span
-                          className={`w-full rounded-full px-3 py-2 text-center text-xs font-bold sm:w-auto ${urgencyStyles[item.urgency]}`}
+                          className={`w-full rounded-full px-2 py-1.5 text-center text-[11px] font-bold sm:w-auto md:px-3 md:py-2 md:text-xs ${urgencyStyles[item.urgency]}`}
                         >
                           {item.urgency === "high"
                             ? "重要"
@@ -741,11 +855,11 @@ export default function ChecklistPage() {
                               },
                             });
                           }}
-                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-xs font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:text-sm"
                         >
                           {item.primaryLabel}
                         </Link>
-                        <span className="text-center text-xs font-bold text-gray-600 sm:text-left">
+                        <span className="text-center text-[11px] font-bold text-gray-600 sm:text-left md:text-xs">
                           {isSaving ? "保存中..." : checked ? "完了" : "未完了"}
                         </span>
                       </div>
@@ -760,7 +874,7 @@ export default function ChecklistPage() {
         <div className="flex justify-end">
           <Link
             href="/mypage"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3 md:text-base"
           >
             マイページホームへ戻る
           </Link>

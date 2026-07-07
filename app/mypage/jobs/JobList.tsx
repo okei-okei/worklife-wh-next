@@ -25,9 +25,9 @@ function buildJobApplicationHref(job: Job) {
 
 function JobFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-gray-50 px-3 py-2">
-      <p className="text-xs font-bold text-gray-600">{label}</p>
-      <p className="mt-1 break-words text-sm font-bold text-gray-900">
+    <div className="rounded-xl bg-gray-50 px-2 py-2 md:px-3">
+      <p className="text-[11px] font-bold text-gray-600 md:text-xs">{label}</p>
+      <p className="mt-1 break-words text-xs font-bold text-gray-900 md:text-sm">
         {value}
       </p>
     </div>
@@ -105,12 +105,12 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
           ) : null}
 
           <div className="p-3 md:p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between md:gap-3">
               <div className="min-w-0">
-                <h2 className="break-words text-lg font-bold md:text-xl">
+                <h2 className="break-words text-base font-bold md:text-xl">
                   {job.title}
                 </h2>
-                <p className="mt-1 font-medium text-gray-800">
+                <p className="mt-1 text-sm font-medium text-gray-800 md:text-base">
                   {job.company || "会社名未設定"}
                   {job.location || job.address
                     ? ` / ${job.location || job.address}`
@@ -126,7 +126,7 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               </span>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-1.5">
+            <div className="mt-2 flex flex-wrap gap-1.5 md:mt-3">
               {job.visa_conditions ? (
                 <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
                   {job.visa_conditions}
@@ -154,7 +154,7 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               ) : null}
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-2 gap-2 md:mt-3">
               <JobFact label="時給" value={formatHourlyRate(job)} />
               <JobFact
                 label="週時間"
@@ -180,9 +180,9 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               />
             </div>
 
-            <div className="mt-3 grid gap-1.5 text-sm font-medium text-gray-800">
+            <div className="mt-2 grid gap-1.5 text-xs font-medium text-gray-800 md:mt-3 md:text-sm">
               {job.start_date ? <p>開始日: {job.start_date}</p> : null}
-              {job.address ? <p className="break-words">住所: {job.address}</p> : null}
+              {job.address ? <p className="line-clamp-2 break-words">住所: {job.address}</p> : null}
               {job.url ? (
                 <a
                   href={job.url}
@@ -195,11 +195,11 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               ) : null}
             </div>
 
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center md:mt-5">
               <select
                 value={job.status || "気になる"}
                 onChange={(event) => handleStatusChange(job, event.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm font-bold text-gray-900 sm:w-auto"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 sm:w-auto md:py-3"
               >
                 {jobStatusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -210,7 +210,7 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
 
               <Link
                 href={buildJobApplicationHref(job)}
-                className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
+                className="w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto md:px-4 md:py-3"
               >
                 応募する
               </Link>
@@ -218,7 +218,7 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               <button
                 type="button"
                 onClick={() => onEdit(job)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
               >
                 編集
               </button>
@@ -226,7 +226,7 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               <button
                 type="button"
                 onClick={() => handleDelete(job.id)}
-                className="w-full rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700 hover:bg-red-100 sm:w-auto"
+                className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 hover:bg-red-100 sm:w-auto md:px-4 md:py-3"
               >
                 削除
               </button>

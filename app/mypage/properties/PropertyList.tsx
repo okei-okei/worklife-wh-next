@@ -25,9 +25,9 @@ function buildInquiryHref(property: Property) {
 
 function PropertyFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-gray-50 px-3 py-2">
-      <p className="text-xs font-bold text-gray-600">{label}</p>
-      <p className="mt-1 break-words text-sm font-bold text-gray-900">
+    <div className="rounded-xl bg-gray-50 px-2 py-2 md:px-3">
+      <p className="text-[11px] font-bold text-gray-600 md:text-xs">{label}</p>
+      <p className="mt-1 break-words text-xs font-bold text-gray-900 md:text-sm">
         {value}
       </p>
     </div>
@@ -124,12 +124,12 @@ export default function PropertyList({
           ) : null}
 
           <div className="p-3 md:p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between md:gap-3">
               <div className="min-w-0">
-                <h2 className="break-words text-lg font-bold md:text-xl">
+                <h2 className="break-words text-base font-bold md:text-xl">
                   {p.title}
                 </h2>
-                <p className="mt-1 font-medium text-gray-800">
+                <p className="mt-1 text-sm font-medium text-gray-800 md:text-base">
                   {p.location || "エリア未設定"}
                 </p>
               </div>
@@ -142,7 +142,7 @@ export default function PropertyList({
               </span>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:mt-3">
               <PropertyFact
                 label="家賃"
                 value={p.rent_weekly ? `$${p.rent_weekly}/週` : "未設定"}
@@ -179,9 +179,9 @@ export default function PropertyList({
               />
             </div>
 
-            <div className="mt-3 grid gap-1.5 text-sm font-medium text-gray-800">
+            <div className="mt-2 grid gap-1.5 text-xs font-medium text-gray-800 md:mt-3 md:text-sm">
               {p.address ? (
-                <p className="break-words">住所: {p.address}</p>
+                <p className="line-clamp-2 break-words">住所: {p.address}</p>
               ) : null}
               {p.url ? (
                 <a
@@ -195,11 +195,11 @@ export default function PropertyList({
               ) : null}
             </div>
 
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center md:mt-5">
               <select
                 value={p.status || "気になる"}
                 onChange={(event) => handleStatusChange(p, event.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm font-bold text-gray-900 sm:w-auto"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 sm:w-auto md:py-3"
               >
                 {propertyStatusOptions.map((status) => (
                   <option key={status} value={status}>
@@ -210,7 +210,7 @@ export default function PropertyList({
 
               <Link
                 href={buildInquiryHref(p)}
-                className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
+                className="w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto md:px-4 md:py-3"
               >
                 問い合わせる
               </Link>
@@ -218,7 +218,7 @@ export default function PropertyList({
               <button
                 type="button"
                 onClick={() => onEdit(p)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
               >
                 編集
               </button>
@@ -226,7 +226,7 @@ export default function PropertyList({
               <button
                 type="button"
                 onClick={() => handleDelete(p.id)}
-                className="w-full rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700 hover:bg-red-100 sm:w-auto"
+                className="w-full rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 hover:bg-red-100 sm:w-auto md:px-4 md:py-3"
               >
                 削除
               </button>

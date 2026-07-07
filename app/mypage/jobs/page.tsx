@@ -51,8 +51,8 @@ export default function JobsPage() {
   }, [fetchJobs]);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-gray-100 p-4 text-gray-900 md:p-6">
-      <div className="mx-auto max-w-5xl min-w-0 space-y-6">
+    <main className="min-h-screen overflow-x-hidden bg-gray-100 px-4 py-4 text-gray-900 md:p-6">
+      <div className="mx-auto max-w-5xl min-w-0 space-y-4 md:space-y-6">
         <div>
           <h1 className="min-w-0 whitespace-normal break-words text-2xl font-bold md:text-4xl">
             保存した求人
@@ -83,7 +83,7 @@ export default function JobsPage() {
         <div className="flex justify-end">
           <Link
             href="/mypage"
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3 md:text-base"
           >
             ← マイページホームへ戻る
           </Link>

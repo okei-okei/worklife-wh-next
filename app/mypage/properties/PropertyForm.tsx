@@ -168,20 +168,20 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
   return (
     <form
       onSubmit={handleSave}
-      className="space-y-5 rounded-2xl bg-white p-4 text-gray-900 shadow md:p-6"
+      className="space-y-4 rounded-2xl bg-white p-3 text-gray-900 shadow md:p-6"
     >
       <div>
-        <h2 className="text-xl font-bold text-gray-900">物件を保存する</h2>
+        <h2 className="text-lg font-bold text-gray-900 md:text-xl">物件を保存する</h2>
         <p className="mt-1 text-sm font-medium text-gray-700">
           外部サイトで見つけた物件を、公開物件カードと近い項目で保存できます。
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-2">
         <label className="block">
           <span className="text-sm font-bold text-gray-900">物件名</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
             placeholder="例: City flat near station"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -192,7 +192,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">物件URL</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
             placeholder="https://..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -205,7 +205,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         type="button"
         onClick={handleFetchFromUrl}
         disabled={isFetchingLink}
-        className="w-full rounded-lg border border-blue-600 px-4 py-3 font-bold text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2"
+        className="w-full rounded-lg border border-blue-600 px-3 py-2 text-sm font-bold md:px-4 md:py-3 md:text-base text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2"
       >
         {isFetchingLink ? "取得中..." : "URLから物件内容を取得"}
       </button>
@@ -218,11 +218,11 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         showCurrentLocation={false}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-2">
         <label className="block">
           <span className="text-sm font-bold text-gray-900">住所</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
             placeholder="地図・通勤計算に使う住所"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
@@ -232,7 +232,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">週家賃</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
             placeholder="300"
             type="number"
             min="0"
@@ -243,11 +243,11 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         </label>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-4">
         <label className="block">
           <span className="text-sm font-bold text-gray-900">ベッド</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
             type="number"
             min="0"
             step="0.5"
@@ -259,7 +259,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">バス</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
             type="number"
             min="0"
             step="0.5"
@@ -271,7 +271,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">駐車場</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
             type="number"
             min="0"
             step="1"
@@ -283,7 +283,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">入居可能日</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
             type="date"
             value={availableFrom}
             onChange={(e) => setAvailableFrom(e.target.value)}
@@ -291,11 +291,11 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         </label>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-3">
         <label className="block">
           <span className="text-sm font-bold text-gray-900">光熱費込み</span>
           <select
-            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
             value={utilitiesIncluded}
             onChange={(e) => setUtilitiesIncluded(e.target.value)}
           >
@@ -308,7 +308,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">ペット可</span>
           <select
-            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
             value={petsAllowed}
             onChange={(e) => setPetsAllowed(e.target.value)}
           >
@@ -321,7 +321,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">喫煙</span>
           <select
-            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
             value={smokingAllowed}
             onChange={(e) => setSmokingAllowed(e.target.value)}
           >

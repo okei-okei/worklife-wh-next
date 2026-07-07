@@ -139,20 +139,20 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
   return (
     <form
       onSubmit={handleSave}
-      className="space-y-5 rounded-2xl bg-white p-4 text-gray-900 shadow md:p-6"
+      className="space-y-4 rounded-2xl bg-white p-3 text-gray-900 shadow md:p-6"
     >
       <div>
-        <h2 className="text-xl font-bold text-gray-900">求人を保存する</h2>
+        <h2 className="text-lg font-bold text-gray-900 md:text-xl">求人を保存する</h2>
         <p className="mt-1 text-sm font-medium text-gray-700">
           外部サイトで見つけた求人を、公開求人カードと近い項目で保存できます。
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-2">
         <label className="block">
           <span className="text-sm font-bold text-gray-900">求人タイトル</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
             placeholder="例: Cafe Staff"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -163,7 +163,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">会社名</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
             placeholder="例: WorkLife Cafe"
             value={company}
             onChange={(e) => setCompany(e.target.value)}
@@ -174,7 +174,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
       <label className="block">
         <span className="text-sm font-bold text-gray-900">求人URL</span>
         <input
-          className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+          className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
           placeholder="https://..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
@@ -186,7 +186,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
         type="button"
         onClick={handleFetchFromUrl}
         disabled={isFetchingLink}
-        className="w-full rounded-lg border border-blue-600 px-4 py-3 font-bold text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2"
+        className="w-full rounded-lg border border-blue-600 px-3 py-2 text-sm font-bold md:px-4 md:py-3 md:text-base text-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2"
       >
         {isFetchingLink ? "取得中..." : "URLから求人内容を取得"}
       </button>
@@ -199,11 +199,11 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
         showCurrentLocation={false}
       />
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-4">
         <label className="block">
           <span className="text-sm font-bold text-gray-900">時給</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
             placeholder="23.50"
             type="number"
             min="0"
@@ -216,7 +216,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">週勤務時間</span>
           <input
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
             placeholder="30"
             type="number"
             min="0"
@@ -229,7 +229,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">採用形態</span>
           <select
-            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
             value={employmentType}
             onChange={(e) => setEmploymentType(e.target.value)}
           >
@@ -246,7 +246,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
         <label className="block">
           <span className="text-sm font-bold text-gray-900">住み込み</span>
           <select
-            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
+            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
             value={accommodationAvailable}
             onChange={(e) => setAccommodationAvailable(e.target.value)}
           >
@@ -260,7 +260,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
       <label className="block">
         <span className="text-sm font-bold text-gray-900">住所</span>
         <input
-          className="mt-2 w-full rounded-lg border border-gray-300 p-3 text-base font-medium text-gray-900 placeholder:text-gray-600"
+          className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900 placeholder:text-gray-600"
           placeholder="地図・通勤計算に使う住所"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
@@ -270,7 +270,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
       <label className="block">
         <span className="text-sm font-bold text-gray-900">ステータス</span>
         <select
-          className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-base font-medium text-gray-900"
+          className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm md:p-3 md:text-base font-medium text-gray-900"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >

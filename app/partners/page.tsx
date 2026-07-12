@@ -7,7 +7,7 @@ import JsonLd from "@/components/seo/JsonLd";
 import { createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランドワーホリ向け比較・おすすめサービス | WorkLife WH",
+  title: "比較・おすすめサービス｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "SIM/eSIM、海外保険、銀行口座、海外送金、電気、インターネット、家具、語学学校などをカテゴリ別に比較できます。",
   path: "/partners",

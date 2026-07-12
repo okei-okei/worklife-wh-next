@@ -11,7 +11,7 @@ import { getPartnerFaqs } from "@/lib/constants/partnerFaqs";
 import { createBreadcrumbJsonLd, createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランドワーホリ向けSIM/eSIM比較 | WorkLife WH",
+  title: "SIM/eSIM比較・おすすめ｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "ニュージーランド渡航前後に使えるSIM/eSIM、現地SIM、通信サービスを比較できます。",
   path: "/partners/sim-esim",

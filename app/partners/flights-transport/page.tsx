@@ -11,7 +11,7 @@ import {
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランドワーホリ向け航空券・移動手段比較 | WorkLife WH",
+  title: "航空券・移動比較・おすすめ｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "日本からNZへの航空券、到着後の空港移動、NZ国内移動、市内交通を比較できます。",
   path: "/partners/flights-transport",

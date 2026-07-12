@@ -10,7 +10,7 @@ import {
 } from "@/lib/constants/partners/studyAgencyServices";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランドワーホリ向け留学エージェント比較 | WorkLife WH",
+  title: "留学エージェント比較・おすすめ｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "無料相談、語学学校紹介、ワーホリサポートを行う留学エージェントを比較できます。",
   path: "/partners/study-agency",

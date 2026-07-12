@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: "%s | WorkLife WH",
   },
   description:
-    "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
+    "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、海外保険、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
   alternates: {
     canonical: "/",
   },
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: siteConfig.name,
     description:
-      "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
+      "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、海外保険、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
     siteName: siteConfig.name,
     type: "website",
     url: absoluteUrl("/"),
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteConfig.name,
     description:
-      "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
+      "ニュージーランドのワーホリ準備、仕事探し、家探し、SIM/eSIM、銀行口座、海外送金、海外保険、生活費、チェックリスト、ライフプランナーをまとめて管理できるサービスです。",
   },
   verification: {
     google: "ytCGn5QIlmLC9JVUPsbK_TAXizHlt0nH-ucXPsPM32M",

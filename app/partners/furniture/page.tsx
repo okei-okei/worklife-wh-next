@@ -10,7 +10,7 @@ import {
 } from "@/lib/constants/partners/furnitureServices";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランド生活向け家具・生活用品比較 | WorkLife WH",
+  title: "家具・生活用品比較・おすすめ｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "到着直後や入居後に必要な家具、寝具、生活用品の購入先を比較できます。",
   path: "/partners/furniture",

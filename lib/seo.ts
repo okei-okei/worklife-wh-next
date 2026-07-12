@@ -17,6 +17,7 @@ export function createPageMetadata({
   type = "website",
   publishedTime,
   modifiedTime,
+  keywords,
 }: {
   title: string;
   description: string;
@@ -25,15 +26,23 @@ export function createPageMetadata({
   type?: "website" | "article";
   publishedTime?: string | null;
   modifiedTime?: string | null;
+  keywords?: string[];
 }): Metadata {
   const url = absoluteUrl(path);
   const images = image ? [{ url: image.startsWith("http") ? image : absoluteUrl(image) }] : [];
 
   return {
-    title,
+    title: {
+      absolute: title,
+    },
     description,
+    keywords,
     alternates: {
-      canonical: path === "/" ? "/" : url,
+      canonical: url,
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
     openGraph: {
       title,

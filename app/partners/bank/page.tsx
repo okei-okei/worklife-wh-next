@@ -10,7 +10,7 @@ import {
 } from "@/lib/constants/partners/bankServices";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランドワーホリ向け銀行口座比較 | WorkLife WH",
+  title: "銀行口座比較・おすすめ｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "NZ到着後の給与受取、家賃支払い、生活費管理に使う銀行口座を比較できます。",
   path: "/partners/bank",

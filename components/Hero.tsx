@@ -26,16 +26,18 @@ export default function Hero() {
       <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-50 to-transparent" />
 
       <div className="relative z-10 min-w-0 max-w-4xl text-center">
-        <h1 className="mb-4 whitespace-normal break-words text-3xl font-bold leading-tight sm:text-4xl md:mb-6 md:text-7xl">
+        <h1 className="mb-3 whitespace-normal break-words text-lg font-bold leading-tight text-white drop-shadow sm:text-xl md:mb-5 md:text-3xl">
+          ニュージーランドワーホリ総合情報サイト
+        </h1>
+
+        <p className="mb-4 whitespace-normal break-words text-3xl font-bold leading-tight sm:text-4xl md:mb-6 md:text-7xl">
           海外生活を、
           <br />
           もっとリアルに。
-        </h1>
+        </p>
 
-        <p className="mb-5 whitespace-normal break-words text-base font-semibold leading-7 text-white drop-shadow md:mb-10 md:text-2xl md:leading-9">
-          家探し × 仕事探し × 生活設計を
-          <br />
-          ひとつのサービスで。
+        <p className="mx-auto mb-5 max-w-3xl whitespace-normal break-words text-sm font-semibold leading-7 text-white drop-shadow md:mb-10 md:text-xl md:leading-9">
+          ニュージーランドワーホリの仕事探し、家探し、SIM・eSIM、銀行口座、海外送金、海外保険、生活設計、ライフプランナーまで、一つのサービスでサポートします。
         </p>
 
         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-center sm:gap-3">

@@ -11,7 +11,7 @@ import {
 } from "@/lib/constants/partners/moneyTransferServices";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランドワーホリ向け海外送金サービス比較 | WorkLife WH",
+  title: "海外送金比較・おすすめ｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "日本からニュージーランドへの送金方法を、手数料、為替レート、着金速度で比較できます。",
   path: "/partners/money-transfer",

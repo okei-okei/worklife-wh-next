@@ -10,7 +10,7 @@ import {
 } from "@/lib/constants/partners/languageSchoolServices";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランドワーホリ向け語学学校比較 | WorkLife WH",
+  title: "語学学校比較・おすすめ｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "英語学習、IELTS対策、仕事探し準備に使えるニュージーランドの語学学校を比較できます。",
   path: "/partners/language-school",

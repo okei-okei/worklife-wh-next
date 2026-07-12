@@ -12,7 +12,7 @@ import {
 } from "@/lib/constants/partners/internetServices";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランド生活向けインターネット比較 | WorkLife WH",
+  title: "インターネット比較・おすすめ｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "フラット生活や長期滞在で使いやすいインターネット回線を、料金や契約条件で比較できます。",
   path: "/partners/internet",

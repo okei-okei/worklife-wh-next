@@ -84,14 +84,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!article) {
     return createPageMetadata({
-      title: "記事が見つかりません | WorkLife WH",
+      title: "記事が見つかりません｜ニュージーランドワーホリ情報｜WorkLife WH",
       description: "指定された記事は見つかりませんでした。",
       path: `/articles/${slug}`,
     });
   }
 
   return createPageMetadata({
-    title: `${article.title} | WorkLife WH`,
+    title: `${article.title}｜ニュージーランドワーホリ情報｜WorkLife WH`,
     description: article.excerpt || "WorkLife WHの役立ち情報記事です。",
     path: `/articles/${article.slug}`,
     image: article.cover_image_url,
@@ -228,9 +228,9 @@ function renderBlock(block: string, index: number) {
 
   if (block.startsWith("# ")) {
     return (
-      <h1 key={index} className="text-2xl font-bold leading-tight md:text-4xl">
+      <h2 key={index} className="text-xl font-bold leading-8 md:text-2xl">
         {block.replace(/^# /, "")}
-      </h1>
+      </h2>
     );
   }
 
@@ -568,6 +568,19 @@ export default async function ArticlePage({ params }: Props) {
           </section>
 
           <RelatedArticles articles={relatedArticles} title="次に読む記事" />
+
+          <section className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-4 md:p-5">
+            <h2 className="text-lg font-bold text-gray-900">この記事について</h2>
+            <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
+              この記事は、実際にニュージーランドでワーキングホリデーを経験した運営者の体験と、公的機関や公式情報を参考に作成しています。
+            </p>
+            <Link
+              href="/legal"
+              className="mt-3 inline-flex text-sm font-bold text-blue-700 hover:text-blue-800"
+            >
+              運営者情報・法務一覧を見る
+            </Link>
+          </section>
 
           <section className="mt-8 rounded-2xl border border-blue-100 bg-blue-50 p-4 md:p-5">
             <h2 className="text-lg font-bold text-gray-900">

@@ -12,7 +12,7 @@ import {
 } from "@/lib/constants/partners/electricityServices";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランド生活向け電気会社比較 | WorkLife WH",
+  title: "電気サービス比較・おすすめ｜ニュージーランドワーホリ｜WorkLife WH",
   description:
     "ニュージーランドで住居が決まった後に必要な電気会社を、料金や契約条件で比較できます。",
   path: "/partners/electricity",

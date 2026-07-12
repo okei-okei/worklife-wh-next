@@ -9,9 +9,9 @@ import { createPageMetadata } from "@/lib/seo";
 export const dynamic = "force-dynamic";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランドワーホリの役立ち情報 | WorkLife WH",
+  title: "ニュージーランドワーホリ専門メディア｜役立ち情報｜WorkLife WH",
   description:
-    "ニュージーランドのワーホリ準備、仕事探し、家探し、お金、生活インフラに関する記事を整理しています。",
+    "ニュージーランドワーホリの仕事探し、家探し、生活費、SIM、銀行、海外送金、海外保険に関する実体験ベースの記事を整理しています。",
   path: "/articles",
 });
 
@@ -159,9 +159,9 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
               ]}
             />
           </div>
-          <p className="text-sm font-bold text-blue-700">WorkLife WH コラム</p>
+          <p className="text-sm font-bold text-blue-700">WorkLife WH 専門メディア</p>
           <h1 className="mt-2 text-2xl font-bold md:text-4xl">
-            海外生活の役立ち情報
+            ニュージーランドワーホリの役立ち情報
           </h1>
           <p className="mt-3 text-sm font-medium leading-6 text-gray-700 md:text-base md:leading-7">
             渡航準備、仕事、住まい、お金について、行動前に確認したいポイントを運営記事として整理しています。

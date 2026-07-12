@@ -6,6 +6,7 @@ const baseUrl = "https://worklife-wh-next.vercel.app";
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes = [
     "",
+    "/about",
     "/jobs",
     "/properties",
     "/simulator",

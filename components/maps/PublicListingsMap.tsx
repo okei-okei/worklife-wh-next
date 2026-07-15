@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
+import LeafletStyles from "@/components/maps/LeafletStyles";
 
 export type MapListingType = "job" | "property";
 
@@ -83,6 +84,7 @@ export default function PublicListingsMap({
 
   return (
     <div className="h-[360px] w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white md:h-[520px]">
+      <LeafletStyles />
       <MapContainer
         center={center}
         zoom={12}

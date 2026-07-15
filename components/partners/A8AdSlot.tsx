@@ -29,6 +29,16 @@ export default function A8AdSlot({
 }: A8AdSlotProps) {
   const isWide = size === "banner728x120";
   const isButton = variant === "button";
+  const reservedSizeClass =
+    size === "banner300x250"
+      ? "min-h-[250px] w-[300px]"
+      : size === "banner468x60"
+        ? "min-h-[60px] w-[468px]"
+        : size === "banner728x120"
+          ? "min-h-[120px] w-[728px]"
+          : size === "banner120x60"
+            ? "min-h-[60px] w-[120px]"
+            : "";
 
   return (
     <div
@@ -63,7 +73,7 @@ export default function A8AdSlot({
         </p>
       ) : null}
       <div
-        className={`a8-ad-slot mx-auto max-w-full overflow-hidden ${
+        className={`a8-ad-slot mx-auto max-w-full overflow-hidden ${reservedSizeClass} ${
           isButton ? "a8-ad-slot--button" : ""
         } ${
           isWide ? "hidden md:block" : ""

@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { useRef } from "react";
 import { usePathname } from "next/navigation";
-import { trackMetric } from "@/lib/analytics";
 import { trackGAEvent } from "@/lib/services/ga";
+import { trackPageView } from "@/lib/services/pageView";
 
 export default function PageViewTracker() {
   const pathname = usePathname();
@@ -12,7 +12,7 @@ export default function PageViewTracker() {
 
   useEffect(() => {
     if (!pathname || pathname.startsWith("/admin")) return;
-    trackMetric("page_view", { eventType: "page_view", pagePath: pathname });
+    trackPageView(pathname);
 
     if (previousPathname.current === null) {
       previousPathname.current = pathname;

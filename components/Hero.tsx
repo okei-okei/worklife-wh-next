@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Hero() {
   return (
@@ -10,18 +11,22 @@ export default function Hero() {
         overflow-hidden
         items-center
         justify-center
-        bg-[url('/nz-hero-landscape.png')]
-        bg-cover
-        bg-center
-        bg-scroll
         px-4
         py-10
         text-white
         md:min-h-[80vh]
-        md:bg-fixed
         md:px-6
       "
     >
+      <Image
+        src="/nz-hero-landscape-1200.jpg"
+        alt="ニュージーランドの山と湖の景色"
+        fill
+        priority
+        fetchPriority="high"
+        sizes="100vw"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950/35 via-blue-950/30 to-slate-950/55" />
       <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-50 to-transparent" />
 

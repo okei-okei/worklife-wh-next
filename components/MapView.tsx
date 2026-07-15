@@ -11,6 +11,7 @@ import {
 
 import L from "leaflet";
 import { useEffect } from "react";
+import LeafletStyles from "@/components/maps/LeafletStyles";
 
 function createStandardMarkerIcon(color: "blue" | "red" | "green") {
   return new L.Icon({
@@ -157,6 +158,7 @@ export default function MapView({
 
   return (
     <div className="h-[350px] w-full min-w-0 overflow-hidden rounded-xl md:h-[500px]">
+      <LeafletStyles />
       <MapContainer
         key={`${jobs.length}-${properties.length}-${highlightedJobId}-${highlightedPropertyId}`}
         center={center as [number, number]}

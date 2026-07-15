@@ -7,7 +7,6 @@ import { absoluteUrl } from "@/lib/seo";
 import { siteConfig } from "@/lib/siteConfig";
 
 import "./globals.css";
-import "leaflet/dist/leaflet.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),

@@ -5,11 +5,7 @@ type GAEventParam = string | number | boolean | null | undefined;
 declare global {
   interface Window {
     dataLayer?: unknown[];
-    gtag?: (
-      command: "config" | "event" | "js",
-      targetIdOrEventName: string | Date,
-      config?: Record<string, GAEventParam>,
-    ) => void;
+    gtag?: (...args: unknown[]) => void;
   }
 }
 

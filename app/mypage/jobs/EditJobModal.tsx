@@ -20,6 +20,17 @@ function isMissingColumnError(error: { message?: string } | null) {
   );
 }
 
+function buildNzGeocodeQuery(address: string, location?: string | null) {
+  const parts = [address.trim(), location?.trim()]
+    .filter(Boolean)
+    .filter((part, index, all) => all.indexOf(part) === index);
+
+  const query = parts.join(", ");
+  if (/\b(new zealand|nz)\b/i.test(query)) return query;
+
+  return `${query}, New Zealand`;
+}
+
 export default function EditJobModal({
   job,
   userId,
@@ -74,14 +85,19 @@ export default function EditJobModal({
     let latitude = job.latitude;
     let longitude = job.longitude;
 
-    const locationText = [address, location, "New Zealand"]
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .filter((part, index, all) => all.indexOf(part) === index)
-      .join(", ");
+    const trimmedAddress = address.trim();
+    const trimmedLocation = location.trim();
+    const trimmedTitle = title.trim();
 
-    if (locationText) {
-      const geo = await geocodeAddress(locationText);
+    if (!trimmedTitle || !trimmedAddress) {
+      alert("求人タイトルと住所を入力してください");
+      return;
+    }
+
+    if (trimmedAddress || trimmedLocation) {
+      const geo = await geocodeAddress(
+        buildNzGeocodeQuery(trimmedAddress, trimmedLocation),
+      );
 
       if (geo.latitude && geo.longitude) {
         latitude = geo.latitude;
@@ -90,10 +106,10 @@ export default function EditJobModal({
     }
 
     const fullPayload = {
-      title,
+      title: trimmedTitle,
       company: company || null,
       url,
-      location: location || null,
+      location: trimmedLocation || null,
       employment_type: employmentType || null,
       hourly_rate: hourlyRate ? Number(hourlyRate) : null,
       work_hours: workHours ? Number(workHours) : null,
@@ -102,21 +118,21 @@ export default function EditJobModal({
           ? null
           : accommodationAvailable === "true",
       status,
-      address,
+      address: trimmedAddress,
       latitude,
       longitude,
       updated_at: new Date().toISOString(),
     };
 
     const basicPayload = {
-      title,
+      title: trimmedTitle,
       company: company || null,
       url,
-      location: location || null,
+      location: trimmedLocation || null,
       hourly_rate: hourlyRate ? Number(hourlyRate) : null,
       work_hours: workHours ? Number(workHours) : null,
       status,
-      address,
+      address: trimmedAddress,
       latitude,
       longitude,
     };

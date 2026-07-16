@@ -15,7 +15,10 @@ export type Job = {
   area?: string | null;
   country_code?: string | null;
   hourly_rate: number | null;
+  hourly_rate_min?: number | null;
+  hourly_rate_max?: number | null;
   work_hours: number | null;
+  weekly_hours?: number | null;
   latitude: number | null;
   longitude: number | null;
   updated_at?: string | null;

@@ -20,6 +20,17 @@ function isMissingColumnError(error: { message?: string } | null) {
   );
 }
 
+function buildNzGeocodeQuery(address: string, location?: string | null) {
+  const parts = [address.trim(), location?.trim()]
+    .filter(Boolean)
+    .filter((part, index, all) => all.indexOf(part) === index);
+
+  const query = parts.join(", ");
+  if (/\b(new zealand|nz)\b/i.test(query)) return query;
+
+  return `${query}, New Zealand`;
+}
+
 export default function EditPropertyModal({
   property,
   userId,
@@ -83,19 +94,34 @@ export default function EditPropertyModal({
 
     let latitude = property.latitude;
     let longitude = property.longitude;
+    const trimmedTitle = title.trim();
+    const trimmedAddress = address.trim();
+    const trimmedLocation = location.trim();
 
-    // 🔥 住所変更時は自動ジオコード
-    if (address && address !== property.address) {
-      const geo = await geocodeAddress(address);
-      latitude = geo.latitude;
-      longitude = geo.longitude;
+    if (!trimmedTitle || !trimmedAddress) {
+      alert("物件タイトルと住所を入力してください");
+      return;
+    }
+
+    if (
+      trimmedAddress !== (property.address || "").trim() ||
+      trimmedLocation !== (property.location || "").trim()
+    ) {
+      const geo = await geocodeAddress(
+        buildNzGeocodeQuery(trimmedAddress, trimmedLocation),
+      );
+
+      if (geo.latitude && geo.longitude) {
+        latitude = geo.latitude;
+        longitude = geo.longitude;
+      }
     }
 
     const fullPayload = {
-      title,
+      title: trimmedTitle,
       url,
-      location,
-      address,
+      location: trimmedLocation || null,
+      address: trimmedAddress,
       rent_weekly: rent ? Number(rent) : null,
       bedrooms: bedrooms ? Number(bedrooms) : null,
       bathrooms: bathrooms ? Number(bathrooms) : null,
@@ -113,10 +139,10 @@ export default function EditPropertyModal({
     };
 
     const compatiblePayload = {
-      title,
+      title: trimmedTitle,
       url,
-      location,
-      address,
+      location: trimmedLocation || null,
+      address: trimmedAddress,
       rent_weekly: rent ? Number(rent) : null,
       bedrooms: bedrooms ? Number(bedrooms) : null,
       bathrooms: bathrooms ? Number(bathrooms) : null,
@@ -130,10 +156,10 @@ export default function EditPropertyModal({
     };
 
     const basicPayload = {
-      title,
+      title: trimmedTitle,
       url,
-      location,
-      address,
+      location: trimmedLocation || null,
+      address: trimmedAddress,
       rent_weekly: rent ? Number(rent) : null,
       latitude,
       longitude,

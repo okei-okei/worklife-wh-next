@@ -85,7 +85,18 @@ export function calculatePlannerResults({
   const scored: ScoreResult[] = [];
 
   for (const job of jobs) {
+    const hourlyRate = job.hourly_rate ?? job.hourly_rate_min;
+    const workHours = job.work_hours ?? job.weekly_hours;
+
     for (const property of properties) {
+      if (hourlyRate == null || workHours == null) {
+        continue;
+      }
+
+      if (property.rent_weekly == null) {
+        continue;
+      }
+
       const routeKey = createPlannerRouteKey(job.id, property.id);
       const routeInfo = routeInfoByKey[routeKey];
       const fallbackDistance = calculateDistanceKm(
@@ -109,11 +120,10 @@ export function calculatePlannerResults({
       const distance = routeInfo?.distanceKm ?? fallbackDistance;
       const travelMin = routeInfo?.durationMin ?? fallbackTravelMin;
 
-      const monthlyGrossIncome =
-        (job.hourly_rate || 0) * (job.work_hours || 0) * 4.33;
+      const monthlyGrossIncome = hourlyRate * workHours * 4.33;
       const paye = monthlyGrossIncome * 0.15;
       const monthlyNetIncome = monthlyGrossIncome - paye;
-      const monthlyRent = (property.rent_weekly || 0) * 4.33;
+      const monthlyRent = property.rent_weekly * 4.33;
       const monthlySavings =
         monthlyNetIncome - monthlyRent - monthlyLivingCost;
       const commutePenalty = (travelMin || 0) * 2;
@@ -123,7 +133,7 @@ export function calculatePlannerResults({
         continue;
       }
 
-      if (hasHourlyLimit && (job.hourly_rate ?? 0) < hourlyLimit) {
+      if (hasHourlyLimit && hourlyRate < hourlyLimit) {
         continue;
       }
 

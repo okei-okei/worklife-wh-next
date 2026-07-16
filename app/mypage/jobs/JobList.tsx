@@ -39,7 +39,8 @@ function formatHourlyRate(job: Job) {
   const max = job.hourly_rate_max;
 
   if (min == null && max == null) return "未設定";
-  if (max != null) return `$${min ?? 0} - $${max}/時`;
+  if (max != null && min != null) return `$${min} - $${max}/時`;
+  if (max != null) return `$${max}/時`;
   return `$${min}/時`;
 }
 
@@ -90,6 +91,12 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
   return (
     <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
       {jobs.map((job) => (
+        (() => {
+          const hasMissingPlannerInfo =
+            (job.hourly_rate == null && job.hourly_rate_min == null) ||
+            (job.work_hours ?? job.weekly_hours) == null;
+
+          return (
         <article
           key={job.id}
           className="overflow-hidden rounded-2xl bg-white text-gray-900 shadow"
@@ -195,6 +202,19 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
               ) : null}
             </div>
 
+            {hasMissingPlannerInfo ? (
+              <div className="mt-3 flex flex-col gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 sm:flex-row sm:items-center sm:justify-between">
+                <span>収支計算に必要な情報が未入力です</span>
+                <button
+                  type="button"
+                  onClick={() => onEdit(job)}
+                  className="w-fit rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-gray-900 ring-1 ring-amber-200 hover:bg-amber-50"
+                >
+                  編集して追加
+                </button>
+              </div>
+            ) : null}
+
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center md:mt-5">
               <select
                 value={job.status || "気になる"}
@@ -233,6 +253,8 @@ export default function JobList({ jobs, userId, onRefresh, onEdit }: Props) {
             </div>
           </div>
         </article>
+          );
+        })()
       ))}
 
       {jobs.length === 0 && (

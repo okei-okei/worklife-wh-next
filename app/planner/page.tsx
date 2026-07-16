@@ -265,6 +265,14 @@ export default function PlannerPage() {
 
   const topResult = results[0];
   const stayMonths = Math.max(Number(plannedStayMonths || 0), 0);
+  const missingJobPlannerInfoCount = jobs.filter(
+    (job) =>
+      (job.hourly_rate ?? job.hourly_rate_min) == null ||
+      (job.work_hours ?? job.weekly_hours) == null,
+  ).length;
+  const missingPropertyPlannerInfoCount = properties.filter(
+    (property) => property.rent_weekly == null,
+  ).length;
 
   const filterSummary = activeFilterCount
     ? `${activeFilterCount}件の条件を適用中`
@@ -467,13 +475,35 @@ export default function PlannerPage() {
           }
         />
 
+        {missingJobPlannerInfoCount || missingPropertyPlannerInfoCount ? (
+          <div className="mb-4 rounded-2xl border border-amber-100 bg-amber-50 p-3 text-sm font-bold text-amber-900 md:p-4">
+            <p>未入力の候補は地図には表示できますが、収支計算には含めていません。</p>
+            <div className="mt-2 grid gap-1 text-xs font-semibold text-amber-800 sm:grid-cols-2">
+              {missingJobPlannerInfoCount ? (
+                <p>
+                  求人: 時給・勤務時間を追加すると収支を計算できます（
+                  {missingJobPlannerInfoCount}件）
+                </p>
+              ) : null}
+              {missingPropertyPlannerInfoCount ? (
+                <p>
+                  物件: 週家賃を追加すると収支を計算できます（
+                  {missingPropertyPlannerInfoCount}件）
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
         <ReturnBalanceSimulator
           key={`${selectedResult?.job.id || "none"}-${selectedResult?.property.id || "none"}-${plannedStayMonths}-${initialCost}`}
           compact
           showInputs={false}
           initialStayMonths={stayMonths || 6}
-          initialWeeklyIncome={(selectedResult?.monthlyNetIncome || 0) / 4.33}
-          initialWeeklyRent={selectedResult?.property.rent_weekly || 0}
+          initialWeeklyIncome={
+            selectedResult ? selectedResult.monthlyNetIncome / 4.33 : 0
+          }
+          initialWeeklyRent={selectedResult?.property.rent_weekly ?? 0}
           initialWeeklyFood={Number(monthlyFoodCost || 0) / 4.33}
           initialWeeklyTransport={Number(monthlyTransportCost || 0) / 4.33}
           initialWeeklyOther={(Number(monthlyPhoneCost || 0) + Number(monthlyOtherCost || 0)) / 4.33}

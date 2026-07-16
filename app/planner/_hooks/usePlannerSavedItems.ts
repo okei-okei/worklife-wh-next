@@ -18,7 +18,7 @@ function hasCoordinates(item: Job | Property) {
 function buildAddressQuery(item: Job | Property) {
   if (!item.address?.trim()) return "";
 
-  return [
+  const query = [
     item.address,
     item.country_code === "NZ" ? "New Zealand" : item.country_code,
   ]
@@ -26,6 +26,10 @@ function buildAddressQuery(item: Job | Property) {
     .filter(Boolean)
     .filter((part, index, all) => all.indexOf(part) === index)
     .join(", ");
+
+  if (/\b(new zealand|nz)\b/i.test(query)) return query;
+
+  return `${query}, New Zealand`;
 }
 
 async function geocodeAddress(query: string): Promise<Coordinates> {

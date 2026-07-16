@@ -100,6 +100,10 @@ export default function PropertyList({
   return (
     <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
       {properties.map((p) => (
+        (() => {
+          const hasMissingPlannerInfo = p.rent_weekly == null;
+
+          return (
         <article
           key={p.id}
           className="overflow-hidden rounded-2xl bg-white text-gray-900 shadow"
@@ -195,6 +199,19 @@ export default function PropertyList({
               ) : null}
             </div>
 
+            {hasMissingPlannerInfo ? (
+              <div className="mt-3 flex flex-col gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 sm:flex-row sm:items-center sm:justify-between">
+                <span>家賃が未入力です</span>
+                <button
+                  type="button"
+                  onClick={() => onEdit(p)}
+                  className="w-fit rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-gray-900 ring-1 ring-amber-200 hover:bg-amber-50"
+                >
+                  編集して追加
+                </button>
+              </div>
+            ) : null}
+
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center md:mt-5">
               <select
                 value={p.status || "気になる"}
@@ -233,6 +250,8 @@ export default function PropertyList({
             </div>
           </div>
         </article>
+          );
+        })()
       ))}
 
       {properties.length === 0 && (

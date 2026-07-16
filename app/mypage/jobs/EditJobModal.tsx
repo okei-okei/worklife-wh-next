@@ -31,6 +31,20 @@ function buildNzGeocodeQuery(address: string, location?: string | null) {
   return `${query}, New Zealand`;
 }
 
+function RequiredMark() {
+  return (
+    <>
+      <span
+        className="ml-1 text-xs font-semibold text-red-600"
+        aria-hidden="true"
+      >
+        *
+      </span>
+      <span className="sr-only">必須</span>
+    </>
+  );
+}
+
 export default function EditJobModal({
   job,
   userId,
@@ -88,6 +102,8 @@ export default function EditJobModal({
     const trimmedAddress = address.trim();
     const trimmedLocation = location.trim();
     const trimmedTitle = title.trim();
+    const trimmedCompany = company.trim();
+    const trimmedUrl = url.trim();
 
     if (!trimmedTitle || !trimmedAddress) {
       alert("求人タイトルと住所を入力してください");
@@ -107,8 +123,8 @@ export default function EditJobModal({
 
     const fullPayload = {
       title: trimmedTitle,
-      company: company || null,
-      url,
+      company: trimmedCompany || null,
+      url: trimmedUrl || null,
       location: trimmedLocation || null,
       employment_type: employmentType || null,
       hourly_rate: hourlyRate ? Number(hourlyRate) : null,
@@ -126,8 +142,8 @@ export default function EditJobModal({
 
     const basicPayload = {
       title: trimmedTitle,
-      company: company || null,
-      url,
+      company: trimmedCompany || null,
+      url: trimmedUrl || null,
       location: trimmedLocation || null,
       hourly_rate: hourlyRate ? Number(hourlyRate) : null,
       work_hours: workHours ? Number(workHours) : null,
@@ -179,16 +195,21 @@ export default function EditJobModal({
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-4 text-gray-900 shadow-xl md:p-6">
         <h2 className="text-xl font-bold">求人編集</h2>
         <p className="mt-1 text-sm font-medium text-gray-700">
-          公開求人カードに近い項目で保存内容を整理できます。
+          <span className="font-bold text-red-600">*</span>{" "}
+          は必須項目です。その他の項目は未入力でも更新できます。
         </p>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-bold text-gray-900">求人タイトル</span>
+            <span className="text-sm font-bold text-gray-900">
+              求人タイトル
+              <RequiredMark />
+            </span>
             <input
               className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              required
             />
           </label>
 
@@ -278,11 +299,15 @@ export default function EditJobModal({
         </div>
 
         <label className="mt-4 block">
-          <span className="text-sm font-bold text-gray-900">住所</span>
+          <span className="text-sm font-bold text-gray-900">
+            住所
+            <RequiredMark />
+          </span>
           <input
             className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
+            required
           />
         </label>
 

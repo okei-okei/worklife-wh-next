@@ -31,6 +31,20 @@ function buildNzGeocodeQuery(address: string, location?: string | null) {
   return `${query}, New Zealand`;
 }
 
+function RequiredMark() {
+  return (
+    <>
+      <span
+        className="ml-1 text-xs font-semibold text-red-600"
+        aria-hidden="true"
+      >
+        *
+      </span>
+      <span className="sr-only">必須</span>
+    </>
+  );
+}
+
 export default function EditPropertyModal({
   property,
   userId,
@@ -97,6 +111,7 @@ export default function EditPropertyModal({
     const trimmedTitle = title.trim();
     const trimmedAddress = address.trim();
     const trimmedLocation = location.trim();
+    const trimmedUrl = url.trim();
 
     if (!trimmedTitle || !trimmedAddress) {
       alert("物件タイトルと住所を入力してください");
@@ -119,7 +134,7 @@ export default function EditPropertyModal({
 
     const fullPayload = {
       title: trimmedTitle,
-      url,
+      url: trimmedUrl || null,
       location: trimmedLocation || null,
       address: trimmedAddress,
       rent_weekly: rent ? Number(rent) : null,
@@ -140,7 +155,7 @@ export default function EditPropertyModal({
 
     const compatiblePayload = {
       title: trimmedTitle,
-      url,
+      url: trimmedUrl || null,
       location: trimmedLocation || null,
       address: trimmedAddress,
       rent_weekly: rent ? Number(rent) : null,
@@ -157,7 +172,7 @@ export default function EditPropertyModal({
 
     const basicPayload = {
       title: trimmedTitle,
-      url,
+      url: trimmedUrl || null,
       location: trimmedLocation || null,
       address: trimmedAddress,
       rent_weekly: rent ? Number(rent) : null,
@@ -200,17 +215,22 @@ export default function EditPropertyModal({
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-4 text-gray-900 shadow-xl md:p-6">
         <h2 className="text-xl font-bold">物件編集</h2>
         <p className="mt-1 text-sm font-medium text-gray-700">
-          公開物件カードに近い項目で保存内容を整理できます。
+          <span className="font-bold text-red-600">*</span>{" "}
+          は必須項目です。その他の項目は未入力でも更新できます。
         </p>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-bold text-gray-900">物件名</span>
+            <span className="text-sm font-bold text-gray-900">
+              物件名
+              <RequiredMark />
+            </span>
             <input
               className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="タイトル"
+              required
             />
           </label>
 
@@ -237,12 +257,16 @@ export default function EditPropertyModal({
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-bold text-gray-900">住所</span>
+            <span className="text-sm font-bold text-gray-900">
+              住所
+              <RequiredMark />
+            </span>
             <input
               className="mt-2 w-full rounded-lg border border-gray-300 p-3 font-medium text-gray-900"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="住所"
+              required
             />
           </label>
 

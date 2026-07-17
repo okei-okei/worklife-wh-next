@@ -5,6 +5,11 @@ export type Job = {
   url?: string | null;
   company?: string | null;
   location?: string | null;
+  location_master_id?: string | null;
+  region_normalized?: string | null;
+  territorial_authority_normalized?: string | null;
+  major_name_normalized?: string | null;
+  suburb_locality_normalized?: string | null;
   employment_type?: string | null;
   hourly_rate: number | null;
   hourly_rate_min?: number | null;

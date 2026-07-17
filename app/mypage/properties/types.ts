@@ -4,6 +4,11 @@ export type Property = {
   title: string;
   url?: string | null;
   location: string | null;
+  location_master_id?: string | null;
+  region_normalized?: string | null;
+  territorial_authority_normalized?: string | null;
+  major_name_normalized?: string | null;
+  suburb_locality_normalized?: string | null;
   address: string | null;
   rent_weekly: number | null;
   bedrooms?: number | null;

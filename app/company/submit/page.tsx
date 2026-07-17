@@ -112,6 +112,16 @@ export default function CompanySubmitPage() {
   const [region, setRegion] = useState("");
   const [district, setDistrict] = useState("");
   const [area, setArea] = useState("");
+  const [locationMasterId, setLocationMasterId] = useState<string | null>(null);
+  const [regionNormalized, setRegionNormalized] = useState<string | null>(null);
+  const [territorialAuthorityNormalized, setTerritorialAuthorityNormalized] =
+    useState<string | null>(null);
+  const [majorNameNormalized, setMajorNameNormalized] = useState<string | null>(
+    null,
+  );
+  const [suburbLocalityNormalized, setSuburbLocalityNormalized] = useState<
+    string | null
+  >(null);
   const [address, setAddress] = useState("");
   const [employmentType, setEmploymentType] = useState("");
   const [hourlyRateMin, setHourlyRateMin] = useState("");
@@ -418,6 +428,11 @@ export default function CompanySubmitPage() {
         district: district || null,
         suburb: area || null,
         area: area || null,
+        location_master_id: locationMasterId,
+        region_normalized: regionNormalized,
+        territorial_authority_normalized: territorialAuthorityNormalized,
+        major_name_normalized: majorNameNormalized,
+        suburb_locality_normalized: suburbLocalityNormalized,
         address: address || null,
       };
 
@@ -491,6 +506,11 @@ export default function CompanySubmitPage() {
           district: district || null,
           suburb: area || null,
           area: area || null,
+          location_master_id: locationMasterId,
+          region_normalized: regionNormalized,
+          territorial_authority_normalized: territorialAuthorityNormalized,
+          major_name_normalized: majorNameNormalized,
+          suburb_locality_normalized: suburbLocalityNormalized,
           address: address || null,
           structured_data: structuredData,
           image_urls: imageUrls,
@@ -689,6 +709,17 @@ export default function CompanySubmitPage() {
                     setRegion(selection.region);
                     setDistrict(selection.district);
                     setArea(selection.area);
+                    setLocationMasterId(selection.id || null);
+                    setRegionNormalized(selection.region || null);
+                    setTerritorialAuthorityNormalized(
+                      selection.territorialAuthority ||
+                        selection.district ||
+                        null,
+                    );
+                    setMajorNameNormalized(selection.majorName || null);
+                    setSuburbLocalityNormalized(
+                      selection.suburbLocality || selection.area || null,
+                    );
                   }}
                 />
               ) : (

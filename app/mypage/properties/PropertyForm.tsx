@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import NzLocationPicker from "@/components/NzLocationPicker";
+import type { NzLocation } from "@/lib/constants/nzLocations";
 import { geocodeAddress } from "@/lib/geocoder";
+import { getNormalizedLocationPayload } from "@/lib/locationDisplay";
 import { supabase } from "@/lib/supabase";
 
 type SaveState = "idle" | "geocoding" | "saving";
@@ -39,6 +41,9 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [location, setLocation] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<NzLocation | null>(
+    null,
+  );
   const [address, setAddress] = useState("");
   const [rent, setRent] = useState("");
   const [bedrooms, setBedrooms] = useState("");
@@ -198,9 +203,14 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
       status: "気になる",
       latitude,
       longitude,
+      ...getNormalizedLocationPayload(selectedLocation),
     };
 
-    const attempts = [fullPayload, compatiblePayload, basicPayload];
+    const attempts: Array<Record<string, unknown>> = [
+      fullPayload,
+      compatiblePayload,
+      basicPayload,
+    ];
     let lastError: { message?: string } | null = null;
 
     for (const payload of attempts) {
@@ -224,6 +234,7 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
     setTitle("");
     setUrl("");
     setLocation("");
+    setSelectedLocation(null);
     setAddress("");
     setRent("");
     setBedrooms("");
@@ -320,10 +331,30 @@ export default function PropertyForm({ onSaved }: { onSaved: () => void }) {
       </button>
 
       <NzLocationPicker
-        label="地域"
+        label="地域（検索・絞り込み用）"
         value={location}
         onChange={setLocation}
-        onSelectionChange={(selection) => setLocation(selection.label)}
+        onSelectionChange={(selection) => {
+          setLocation(selection.label);
+          setSelectedLocation({
+            id: selection.id || "",
+            linzId: selection.linzId ?? null,
+            countryCode: selection.countryCode,
+            region: selection.region,
+            district: selection.district,
+            area: selection.area,
+            territorialAuthority:
+              selection.territorialAuthority || selection.district,
+            majorName: selection.majorName || null,
+            suburbLocality: selection.suburbLocality || selection.area,
+            additionalNames: [],
+            latitude: null,
+            longitude: null,
+            label: selection.label,
+            searchText: selection.searchText || selection.label.toLowerCase(),
+            isActive: true,
+          });
+        }}
         showCurrentLocation={false}
       />
 

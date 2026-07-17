@@ -1,127 +1,141 @@
 export type NzLocation = {
+  id: string;
+  linzId: string | null;
   countryCode: "NZ";
   region: string;
   district: string;
   area: string;
+  territorialAuthority: string | null;
+  majorName: string | null;
+  suburbLocality: string;
+  additionalNames: string[];
+  latitude: number | null;
+  longitude: number | null;
   label: string;
   searchText: string;
+  isActive: boolean;
 };
 
-const rawLocations = [
-  ["Northland", "Far North District"],
-  ["Northland", "Whangarei District"],
-  ["Northland", "Kaipara District"],
-  ["Auckland", "Auckland"],
-  ["Waikato", "Hamilton City"],
-  ["Waikato", "Waikato District"],
-  ["Waikato", "Waipa District"],
-  ["Waikato", "Thames-Coromandel District"],
-  ["Waikato", "Hauraki District"],
-  ["Waikato", "Matamata-Piako District"],
-  ["Waikato", "South Waikato District"],
-  ["Waikato", "Taupo District"],
-  ["Bay of Plenty", "Tauranga City"],
-  ["Bay of Plenty", "Western Bay of Plenty District"],
-  ["Bay of Plenty", "Rotorua Lakes District"],
-  ["Bay of Plenty", "Whakatane District"],
-  ["Bay of Plenty", "Kawerau District"],
-  ["Bay of Plenty", "Opotiki District"],
-  ["Gisborne", "Gisborne District"],
-  ["Hawke's Bay", "Napier City"],
-  ["Hawke's Bay", "Hastings District"],
-  ["Hawke's Bay", "Central Hawke's Bay District"],
-  ["Hawke's Bay", "Wairoa District"],
-  ["Taranaki", "New Plymouth District"],
-  ["Taranaki", "Stratford District"],
-  ["Taranaki", "South Taranaki District"],
-  ["Manawatu-Whanganui", "Palmerston North City"],
-  ["Manawatu-Whanganui", "Whanganui District"],
-  ["Manawatu-Whanganui", "Manawatu District"],
-  ["Manawatu-Whanganui", "Horowhenua District"],
-  ["Manawatu-Whanganui", "Rangitikei District"],
-  ["Manawatu-Whanganui", "Ruapehu District"],
-  ["Manawatu-Whanganui", "Tararua District"],
-  ["Wellington", "Wellington City"],
-  ["Wellington", "Lower Hutt City"],
-  ["Wellington", "Upper Hutt City"],
-  ["Wellington", "Porirua City"],
-  ["Wellington", "Kapiti Coast District"],
-  ["Wellington", "Masterton District"],
-  ["Wellington", "South Wairarapa District"],
-  ["Tasman", "Tasman District"],
-  ["Nelson", "Nelson City"],
-  ["Marlborough", "Marlborough District"],
-  ["West Coast", "Buller District"],
-  ["West Coast", "Grey District"],
-  ["West Coast", "Westland District"],
-  ["Canterbury", "Christchurch City"],
-  ["Canterbury", "Selwyn District"],
-  ["Canterbury", "Waimakariri District"],
-  ["Canterbury", "Ashburton District"],
-  ["Canterbury", "Timaru District"],
-  ["Canterbury", "Mackenzie District"],
-  ["Canterbury", "Waimate District"],
-  ["Canterbury", "Hurunui District"],
-  ["Canterbury", "Kaikoura District"],
-  ["Otago", "Dunedin City"],
-  ["Otago", "Queenstown-Lakes District"],
-  ["Otago", "Central Otago District"],
-  ["Otago", "Waitaki District"],
-  ["Otago", "Clutha District"],
-  ["Southland", "Invercargill City"],
-  ["Southland", "Southland District"],
-  ["Southland", "Gore District"],
-  ["Chatham Islands", "Chatham Islands Territory"],
-] as const;
-
-const areasByDistrict: Record<string, string[]> = {
-  Auckland: [
-    "Auckland CBD",
-    "North Shore",
-    "West Auckland",
-    "East Auckland",
-    "South Auckland",
-  ],
-  "Hamilton City": ["Hamilton Central", "Frankton", "Claudelands", "Rototuna"],
-  "Tauranga City": ["Tauranga Central", "Mount Maunganui", "Papamoa"],
-  "Rotorua Lakes District": ["Rotorua Central", "Fenton Park", "Ngongotaha"],
-  "Wellington City": ["Wellington Central", "Te Aro", "Newtown", "Kilbirnie"],
-  "Lower Hutt City": ["Lower Hutt Central", "Petone", "Wainuiomata"],
-  "Christchurch City": [
-    "Christchurch Central",
-    "Riccarton",
-    "Addington",
-    "Hornby",
-  ],
-  "Dunedin City": ["Dunedin Central", "North Dunedin", "South Dunedin"],
-  "Queenstown-Lakes District": ["Queenstown", "Frankton", "Wanaka"],
+type SeedLocation = {
+  region: string;
+  territorialAuthority: string;
+  majorName?: string;
+  suburbLocality?: string;
+  additionalNames?: string[];
+  latitude?: number;
+  longitude?: number;
 };
 
-export const nzLocations: NzLocation[] = rawLocations.flatMap(
-  ([region, district]) => {
-    const areas = areasByDistrict[district] || [""];
+const seedLocations: SeedLocation[] = [
+  { region: "Northland", territorialAuthority: "Far North District", suburbLocality: "Kaitaia" },
+  { region: "Northland", territorialAuthority: "Whangarei District", suburbLocality: "Whangarei" },
+  { region: "Northland", territorialAuthority: "Kaipara District", suburbLocality: "Dargaville" },
+  { region: "Auckland", territorialAuthority: "Auckland", suburbLocality: "Auckland CBD", additionalNames: ["Central Auckland"] },
+  { region: "Auckland", territorialAuthority: "Auckland", suburbLocality: "Albany" },
+  { region: "Auckland", territorialAuthority: "Auckland", suburbLocality: "Takapuna" },
+  { region: "Auckland", territorialAuthority: "Auckland", suburbLocality: "Newmarket" },
+  { region: "Auckland", territorialAuthority: "Auckland", suburbLocality: "Mount Eden" },
+  { region: "Auckland", territorialAuthority: "Auckland", suburbLocality: "Henderson", majorName: "West Auckland" },
+  { region: "Auckland", territorialAuthority: "Auckland", suburbLocality: "Manukau", majorName: "South Auckland" },
+  { region: "Auckland", territorialAuthority: "Auckland", suburbLocality: "Papakura" },
+  { region: "Waikato", territorialAuthority: "Hamilton City", suburbLocality: "Hamilton Central" },
+  { region: "Waikato", territorialAuthority: "Hamilton City", suburbLocality: "Frankton" },
+  { region: "Waikato", territorialAuthority: "Hamilton City", suburbLocality: "Claudelands" },
+  { region: "Waikato", territorialAuthority: "Hamilton City", suburbLocality: "Rototuna" },
+  { region: "Waikato", territorialAuthority: "Waikato District", suburbLocality: "Huntly" },
+  { region: "Waikato", territorialAuthority: "Waipa District", suburbLocality: "Cambridge" },
+  { region: "Waikato", territorialAuthority: "Thames-Coromandel District", suburbLocality: "Whitianga" },
+  { region: "Waikato", territorialAuthority: "Taupo District", suburbLocality: "Taupo" },
+  { region: "Bay of Plenty", territorialAuthority: "Tauranga City", suburbLocality: "Tauranga Central" },
+  { region: "Bay of Plenty", territorialAuthority: "Tauranga City", suburbLocality: "Mount Maunganui" },
+  { region: "Bay of Plenty", territorialAuthority: "Tauranga City", suburbLocality: "Papamoa" },
+  { region: "Bay of Plenty", territorialAuthority: "Rotorua Lakes District", suburbLocality: "Rotorua Central" },
+  { region: "Bay of Plenty", territorialAuthority: "Whakatane District", suburbLocality: "Whakatane" },
+  { region: "Gisborne", territorialAuthority: "Gisborne District", suburbLocality: "Gisborne" },
+  { region: "Hawke's Bay", territorialAuthority: "Napier City", suburbLocality: "Napier" },
+  { region: "Hawke's Bay", territorialAuthority: "Hastings District", suburbLocality: "Hastings" },
+  { region: "Taranaki", territorialAuthority: "New Plymouth District", suburbLocality: "New Plymouth" },
+  { region: "Manawatu-Whanganui", territorialAuthority: "Palmerston North City", suburbLocality: "Palmerston North" },
+  { region: "Manawatu-Whanganui", territorialAuthority: "Whanganui District", suburbLocality: "Whanganui" },
+  { region: "Wellington", territorialAuthority: "Wellington City", suburbLocality: "Wellington Central" },
+  { region: "Wellington", territorialAuthority: "Wellington City", suburbLocality: "Te Aro" },
+  { region: "Wellington", territorialAuthority: "Wellington City", suburbLocality: "Newtown" },
+  { region: "Wellington", territorialAuthority: "Wellington City", suburbLocality: "Kilbirnie" },
+  { region: "Wellington", territorialAuthority: "Lower Hutt City", suburbLocality: "Petone" },
+  { region: "Wellington", territorialAuthority: "Upper Hutt City", suburbLocality: "Upper Hutt" },
+  { region: "Wellington", territorialAuthority: "Porirua City", suburbLocality: "Porirua" },
+  { region: "Tasman", territorialAuthority: "Tasman District", suburbLocality: "Richmond" },
+  { region: "Nelson", territorialAuthority: "Nelson City", suburbLocality: "Nelson" },
+  { region: "Marlborough", territorialAuthority: "Marlborough District", suburbLocality: "Blenheim" },
+  { region: "West Coast", territorialAuthority: "Buller District", suburbLocality: "Westport" },
+  { region: "West Coast", territorialAuthority: "Grey District", suburbLocality: "Greymouth" },
+  { region: "West Coast", territorialAuthority: "Westland District", suburbLocality: "Hokitika" },
+  { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Christchurch Central" },
+  { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Riccarton" },
+  { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Addington" },
+  { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Hornby", additionalNames: ["Hornby Christchurch", "Christchurch Hornby"] },
+  { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Papanui" },
+  { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Sydenham" },
+  { region: "Canterbury", territorialAuthority: "Selwyn District", suburbLocality: "Rolleston" },
+  { region: "Canterbury", territorialAuthority: "Waimakariri District", suburbLocality: "Rangiora" },
+  { region: "Canterbury", territorialAuthority: "Ashburton District", suburbLocality: "Ashburton" },
+  { region: "Canterbury", territorialAuthority: "Timaru District", suburbLocality: "Timaru" },
+  { region: "Otago", territorialAuthority: "Dunedin City", suburbLocality: "Dunedin Central" },
+  { region: "Otago", territorialAuthority: "Dunedin City", suburbLocality: "North Dunedin" },
+  { region: "Otago", territorialAuthority: "Queenstown-Lakes District", suburbLocality: "Queenstown" },
+  { region: "Otago", territorialAuthority: "Queenstown-Lakes District", suburbLocality: "Frankton" },
+  { region: "Otago", territorialAuthority: "Queenstown-Lakes District", suburbLocality: "Wanaka" },
+  { region: "Otago", territorialAuthority: "Central Otago District", suburbLocality: "Cromwell" },
+  { region: "Southland", territorialAuthority: "Invercargill City", suburbLocality: "Invercargill" },
+  { region: "Southland", territorialAuthority: "Southland District", suburbLocality: "Te Anau" },
+  { region: "Southland", territorialAuthority: "Gore District", suburbLocality: "Gore" },
+  { region: "Chatham Islands", territorialAuthority: "Chatham Islands Territory", suburbLocality: "Waitangi" },
+];
 
-    return areas.map((area) => ({
-      countryCode: "NZ" as const,
-      region,
-      district,
-      area,
-      label: area
-        ? `${region} / ${district} / ${area}`
-        : `${region} / ${district}`,
-      searchText: `${region} ${district} ${area}`.toLowerCase(),
-    }));
-  },
-);
+export const nzLocations: NzLocation[] = seedLocations.map((item, index) => {
+  const suburbLocality = item.suburbLocality || item.territorialAuthority;
+  const majorName = item.majorName || null;
+  const additionalNames = item.additionalNames || [];
+  const searchText = [
+    item.region,
+    item.territorialAuthority,
+    majorName,
+    suburbLocality,
+    ...additionalNames,
+    "New Zealand",
+    "NZ",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 
-export function filterNzLocations(query: string) {
+  return {
+    id: `nz-seed-${index + 1}`,
+    linzId: null,
+    countryCode: "NZ",
+    region: item.region,
+    district: item.territorialAuthority,
+    area: suburbLocality,
+    territorialAuthority: item.territorialAuthority,
+    majorName,
+    suburbLocality,
+    additionalNames,
+    latitude: item.latitude ?? null,
+    longitude: item.longitude ?? null,
+    label: `${item.region} / ${item.territorialAuthority} / ${suburbLocality}`,
+    searchText,
+    isActive: true,
+  };
+});
+
+export function filterNzLocations(query: string, limit = 30) {
   const normalizedQuery = query.trim().toLowerCase();
 
   if (!normalizedQuery) {
-    return nzLocations;
+    return nzLocations.slice(0, limit);
   }
 
-  return nzLocations.filter((location) =>
-    location.searchText.includes(normalizedQuery),
-  );
+  return nzLocations
+    .filter((location) => location.searchText.includes(normalizedQuery))
+    .slice(0, limit);
 }

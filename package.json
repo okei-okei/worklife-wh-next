@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "locations:sync": "node --experimental-strip-types scripts/sync-nz-locations.ts",
+    "locations:backfill:dry-run": "node --experimental-strip-types scripts/backfill-location-master.ts --dry-run"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",

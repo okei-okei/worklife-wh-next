@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { nzLocations } from "@/lib/constants/nzLocations";
+import {
+  filterNzLocations,
+  nzLocations,
+  type NzLocation,
+} from "@/lib/constants/nzLocations";
 
 type Props = {
   label?: string;
@@ -15,11 +19,17 @@ type Props = {
     longitude: number | null;
   }) => void;
   onSelectionChange?: (selection: {
+    id?: string;
+    linzId?: string | null;
     countryCode: "NZ";
     region: string;
     district: string;
+    territorialAuthority?: string | null;
+    majorName?: string | null;
     area: string;
+    suburbLocality?: string;
     label: string;
+    searchText?: string;
   }) => void;
   allLabel?: string;
   showCurrentLocation?: boolean;
@@ -40,6 +50,7 @@ export default function NzLocationPicker({
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [geoMessage, setGeoMessage] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
@@ -75,6 +86,10 @@ export default function NzLocationPicker({
     );
   }, [selectedDistrict, selectedRegion]);
 
+  const searchResults = useMemo(() => {
+    return filterNzLocations(searchQuery, 30);
+  }, [searchQuery]);
+
   const selectedValues = multiple ? values : value ? [value] : [];
 
   const setAll = () => {
@@ -98,21 +113,44 @@ export default function NzLocationPicker({
     onCoordinatesChange?.({ latitude: null, longitude: null });
   };
 
+  const emitSelection = (location: NzLocation, labelValue = location.label) => {
+    selectLocation(labelValue);
+    onSelectionChange?.({
+      id: location.id,
+      linzId: location.linzId,
+      countryCode: location.countryCode,
+      region: location.region,
+      district: location.district,
+      territorialAuthority: location.territorialAuthority,
+      majorName: location.majorName,
+      area: location.area,
+      suburbLocality: location.suburbLocality,
+      label: labelValue,
+      searchText: location.searchText,
+    });
+  };
+
   const commitSelection = (area = "") => {
     if (!selectedRegion || !selectedDistrict) return;
+
+    const location =
+      nzLocations.find(
+        (item) =>
+          item.region === selectedRegion &&
+          item.district === selectedDistrict &&
+          (area ? item.area === area : true),
+      ) || null;
 
     const labelValue = area
       ? `${selectedRegion} / ${selectedDistrict} / ${area}`
       : `${selectedRegion} / ${selectedDistrict}`;
 
+    if (location) {
+      emitSelection(location, labelValue);
+      return;
+    }
+
     selectLocation(labelValue);
-    onSelectionChange?.({
-      countryCode: "NZ",
-      region: selectedRegion,
-      district: selectedDistrict,
-      area,
-      label: labelValue,
-    });
   };
 
   const handleUseCurrentLocation = () => {
@@ -148,6 +186,48 @@ export default function NzLocationPicker({
   return (
     <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
       <p className="text-sm font-bold text-gray-900">{label}</p>
+      <p className="text-xs font-medium text-gray-600">
+        地域検索・絞り込み用です。住所や地図上の正確な位置とは別に扱います。
+      </p>
+      <label className="block">
+        <span className="text-xs font-bold text-gray-700">
+          Area / Suburb / Locality検索
+        </span>
+        <input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 placeholder:text-gray-500"
+          placeholder="例: Hornby, Hornby Christchurch"
+        />
+      </label>
+      {searchQuery.trim() ? (
+        <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2">
+          {searchResults.length ? (
+            <div className="grid gap-1">
+              {searchResults.map((location) => (
+                <button
+                  key={location.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedRegion(location.region);
+                    setSelectedDistrict(location.district);
+                    setSelectedArea(location.area);
+                    setSearchQuery("");
+                    emitSelection(location);
+                  }}
+                  className="rounded-lg px-2 py-1.5 text-left text-xs font-bold text-gray-900 hover:bg-blue-50"
+                >
+                  {location.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="px-2 py-1.5 text-xs font-bold text-gray-600">
+              候補が見つかりません
+            </p>
+          )}
+        </div>
+      ) : null}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <label className="block">
           <span className="text-xs font-bold text-gray-700">Region</span>
@@ -210,7 +290,9 @@ export default function NzLocationPicker({
         </label>
 
         <label className="block">
-          <span className="text-xs font-bold text-gray-700">Area / Suburb</span>
+          <span className="text-xs font-bold text-gray-700">
+            Area / Suburb / Locality
+          </span>
           <select
             value={selectedArea}
             onChange={(event) => {

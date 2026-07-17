@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { Job } from "./types";
 import { geocodeAddress } from "@/lib/geocoder";
 import NzLocationPicker from "@/components/NzLocationPicker";
+import type { NzLocation } from "@/lib/constants/nzLocations";
+import { getNormalizedLocationPayload } from "@/lib/locationDisplay";
 
 type Props = {
   job: Job | null;
@@ -61,6 +63,9 @@ export default function EditJobModal({
   const [accommodationAvailable, setAccommodationAvailable] = useState("");
   const [status, setStatus] = useState("");
   const [address, setAddress] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<NzLocation | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!job) return;
@@ -80,6 +85,7 @@ export default function EditJobModal({
       );
       setStatus(job.status || "気になる");
       setAddress(job.address || "");
+      setSelectedLocation(null);
     }, 0);
 
     return () => window.clearTimeout(timer);
@@ -121,6 +127,10 @@ export default function EditJobModal({
       }
     }
 
+    const normalizedLocationPayload = selectedLocation
+      ? getNormalizedLocationPayload(selectedLocation)
+      : {};
+
     const fullPayload = {
       title: trimmedTitle,
       company: trimmedCompany || null,
@@ -138,6 +148,7 @@ export default function EditJobModal({
       latitude,
       longitude,
       updated_at: new Date().toISOString(),
+      ...normalizedLocationPayload,
     };
 
     const basicPayload = {
@@ -234,10 +245,31 @@ export default function EditJobModal({
 
         <div className="mt-4">
           <NzLocationPicker
-            label="地域"
+            label="地域（検索・絞り込み用）"
             value={location}
             onChange={setLocation}
-            onSelectionChange={(selection) => setLocation(selection.label)}
+            onSelectionChange={(selection) => {
+              setLocation(selection.label);
+              setSelectedLocation({
+                id: selection.id || "",
+                linzId: selection.linzId ?? null,
+                countryCode: selection.countryCode,
+                region: selection.region,
+                district: selection.district,
+                area: selection.area,
+                territorialAuthority:
+                  selection.territorialAuthority || selection.district,
+                majorName: selection.majorName || null,
+                suburbLocality: selection.suburbLocality || selection.area,
+                additionalNames: [],
+                latitude: null,
+                longitude: null,
+                label: selection.label,
+                searchText:
+                  selection.searchText || selection.label.toLowerCase(),
+                isActive: true,
+              });
+            }}
             showCurrentLocation={false}
           />
         </div>

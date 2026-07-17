@@ -9,6 +9,7 @@ import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
 import { resolveNzAddressApproximateCoordinates } from "@/lib/locationCoordinates";
+import { getLocationDisplayName } from "@/lib/locationDisplay";
 
 const PublicListingsMap = dynamic(
   () => import("@/components/maps/PublicListingsMap"),
@@ -51,6 +52,11 @@ type PublicProperty = {
   region?: string | null;
   district?: string | null;
   suburb?: string | null;
+  location_master_id?: string | null;
+  region_normalized?: string | null;
+  territorial_authority_normalized?: string | null;
+  major_name_normalized?: string | null;
+  suburb_locality_normalized?: string | null;
   image_urls?: string[] | null;
 };
 
@@ -286,7 +292,7 @@ export default function PropertiesPage() {
       const extendedResult = await supabase
         .from("public_properties")
         .select(
-          "id, title, city, area, address, rent_weekly, description, inquiry_method, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, smoking_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, image_urls",
+          "id, title, city, area, address, rent_weekly, description, inquiry_method, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, smoking_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, location_master_id, region_normalized, territorial_authority_normalized, major_name_normalized, suburb_locality_normalized, image_urls",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -358,7 +364,13 @@ export default function PropertiesPage() {
       title: property.title,
       url: saveUrl,
       inquiry_url: property.url,
-      location: property.area || property.city || "",
+      location: getLocationDisplayName(property),
+      location_master_id: property.location_master_id || null,
+      region_normalized: property.region_normalized || null,
+      territorial_authority_normalized:
+        property.territorial_authority_normalized || null,
+      major_name_normalized: property.major_name_normalized || null,
+      suburb_locality_normalized: property.suburb_locality_normalized || null,
       address: property.address || property.area || property.city || "",
       rent_weekly: property.rent_weekly,
       status: "気になる",
@@ -381,7 +393,13 @@ export default function PropertiesPage() {
       user_id: user.id,
       title: property.title,
       url: saveUrl,
-      location: property.area || property.city || "",
+      location: getLocationDisplayName(property),
+      location_master_id: property.location_master_id || null,
+      region_normalized: property.region_normalized || null,
+      territorial_authority_normalized:
+        property.territorial_authority_normalized || null,
+      major_name_normalized: property.major_name_normalized || null,
+      suburb_locality_normalized: property.suburb_locality_normalized || null,
       address: property.address || property.area || property.city || "",
       rent_weekly: property.rent_weekly,
       bedrooms: property.bedrooms,
@@ -411,7 +429,11 @@ export default function PropertiesPage() {
       longitude: property.longitude,
     };
 
-    const insertAttempts = [extendedPayload, compatiblePayload, basicPayload];
+    const insertAttempts: Array<Record<string, unknown>> = [
+      extendedPayload,
+      compatiblePayload,
+      basicPayload,
+    ];
     const insertErrors: string[] = [];
 
     for (const payload of insertAttempts) {
@@ -577,7 +599,11 @@ export default function PropertiesPage() {
         property.city,
         property.area,
         property.region,
+        property.region_normalized,
         property.district,
+        property.territorial_authority_normalized,
+        property.major_name_normalized,
+        property.suburb_locality_normalized,
         property.suburb,
         property.address,
         property.description,
@@ -595,12 +621,15 @@ export default function PropertiesPage() {
         !normalizedLocations.includes("現在地")
       ) {
         const propertyLocationText = [
-          property.city,
-          property.area,
+          property.region_normalized,
+          property.territorial_authority_normalized,
+          property.major_name_normalized,
+          property.suburb_locality_normalized,
           property.region,
           property.district,
           property.suburb,
-          property.address,
+          property.area,
+          property.city,
         ]
           .filter(Boolean)
           .join(" ")
@@ -890,14 +919,7 @@ export default function PropertiesPage() {
             id: property.id,
             type: "property" as const,
             title: property.title,
-            locationLabel:
-              [
-                property.region,
-                property.district || property.city,
-                property.area || property.suburb,
-              ]
-                .filter(Boolean)
-                .join(" / ") || "地域未設定",
+            locationLabel: getLocationDisplayName(property),
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
             priceLabel: formatRent(property.rent_weekly),

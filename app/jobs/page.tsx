@@ -9,6 +9,7 @@ import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
 import { resolveNzAddressApproximateCoordinates } from "@/lib/locationCoordinates";
+import { getLocationDisplayName } from "@/lib/locationDisplay";
 
 const PublicListingsMap = dynamic(
   () => import("@/components/maps/PublicListingsMap"),
@@ -49,6 +50,11 @@ type PublicJob = {
   district?: string | null;
   suburb?: string | null;
   area?: string | null;
+  location_master_id?: string | null;
+  region_normalized?: string | null;
+  territorial_authority_normalized?: string | null;
+  major_name_normalized?: string | null;
+  suburb_locality_normalized?: string | null;
   hourly_rate_min?: number | null;
   hourly_rate_max?: number | null;
   weekly_hours?: number | null;
@@ -178,7 +184,7 @@ export default function JobsPage() {
       const extendedResult = await supabase
         .from("public_jobs")
         .select(
-          "id, title, company, city, address, hourly_rate, work_hours, description, application_method, visa_support, japanese_ok, accommodation_available, english_level, visa_conditions, apply_url, latitude, longitude, employment_type, country_code, region, district, suburb, area, hourly_rate_min, hourly_rate_max, weekly_hours, start_date, image_url",
+          "id, title, company, city, address, hourly_rate, work_hours, description, application_method, visa_support, japanese_ok, accommodation_available, english_level, visa_conditions, apply_url, latitude, longitude, employment_type, country_code, region, district, suburb, area, location_master_id, region_normalized, territorial_authority_normalized, major_name_normalized, suburb_locality_normalized, hourly_rate_min, hourly_rate_max, weekly_hours, start_date, image_url",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -260,7 +266,13 @@ export default function JobsPage() {
       visa_conditions: job.visa_conditions,
       start_date: job.start_date,
       status: "気になる",
-      location: job.area || job.suburb || job.district || job.city || "",
+      location: getLocationDisplayName(job),
+      location_master_id: job.location_master_id || null,
+      region_normalized: job.region_normalized || null,
+      territorial_authority_normalized:
+        job.territorial_authority_normalized || null,
+      major_name_normalized: job.major_name_normalized || null,
+      suburb_locality_normalized: job.suburb_locality_normalized || null,
       address:
         job.address || job.area || job.suburb || job.district || job.city || "",
       latitude: job.latitude,
@@ -278,7 +290,13 @@ export default function JobsPage() {
       work_hours: job.weekly_hours ?? job.work_hours,
       employment_type: job.employment_type,
       status: "気になる",
-      location: job.area || job.suburb || job.district || job.city || "",
+      location: getLocationDisplayName(job),
+      location_master_id: job.location_master_id || null,
+      region_normalized: job.region_normalized || null,
+      territorial_authority_normalized:
+        job.territorial_authority_normalized || null,
+      major_name_normalized: job.major_name_normalized || null,
+      suburb_locality_normalized: job.suburb_locality_normalized || null,
       address:
         job.address || job.area || job.suburb || job.district || job.city || "",
       latitude: job.latitude,
@@ -298,7 +316,11 @@ export default function JobsPage() {
       longitude: job.longitude,
     };
 
-    const insertAttempts = [extendedPayload, compatiblePayload, basicPayload];
+    const insertAttempts: Array<Record<string, unknown>> = [
+      extendedPayload,
+      compatiblePayload,
+      basicPayload,
+    ];
     const insertErrors: string[] = [];
 
     for (const payload of insertAttempts) {
@@ -452,7 +474,11 @@ export default function JobsPage() {
         job.description,
         job.city,
         job.region,
+        job.region_normalized,
         job.district,
+        job.territorial_authority_normalized,
+        job.major_name_normalized,
+        job.suburb_locality_normalized,
         job.suburb,
         job.area,
         job.address,
@@ -470,12 +496,15 @@ export default function JobsPage() {
         !normalizedLocations.includes("現在地")
       ) {
         const jobLocationText = [
+          job.region_normalized,
+          job.territorial_authority_normalized,
+          job.major_name_normalized,
+          job.suburb_locality_normalized,
           job.region,
           job.district,
           job.suburb,
           job.area,
           job.city,
-          job.address,
         ]
           .filter(Boolean)
           .join(" ")
@@ -682,10 +711,7 @@ export default function JobsPage() {
             type: "job" as const,
             title: job.title,
             subtitle: job.company || "掲載企業未設定",
-            locationLabel:
-              [job.region, job.district || job.city, job.area || job.suburb]
-                .filter(Boolean)
-                .join(" / ") || "地域未設定",
+            locationLabel: getLocationDisplayName(job),
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
             priceLabel: formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate),

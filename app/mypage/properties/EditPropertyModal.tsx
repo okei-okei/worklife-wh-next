@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { Property } from "./types";
 import { geocodeAddress } from "@/lib/geocoder";
 import NzLocationPicker from "@/components/NzLocationPicker";
+import type { NzLocation } from "@/lib/constants/nzLocations";
+import { getNormalizedLocationPayload } from "@/lib/locationDisplay";
 
 type Props = {
   property: Property | null;
@@ -63,6 +65,9 @@ export default function EditPropertyModal({
   const [utilitiesIncluded, setUtilitiesIncluded] = useState("");
   const [petsAllowed, setPetsAllowed] = useState("");
   const [smokingAllowed, setSmokingAllowed] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<NzLocation | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!property) return;
@@ -90,6 +95,7 @@ export default function EditPropertyModal({
           ? ""
           : String(property.smoking_allowed),
       );
+      setSelectedLocation(null);
     }, 0);
 
     return () => window.clearTimeout(timer);
@@ -131,6 +137,10 @@ export default function EditPropertyModal({
         longitude = geo.longitude;
       }
     }
+
+    const normalizedLocationPayload = selectedLocation
+      ? getNormalizedLocationPayload(selectedLocation)
+      : {};
 
     const fullPayload = {
       title: trimmedTitle,
@@ -178,9 +188,14 @@ export default function EditPropertyModal({
       rent_weekly: rent ? Number(rent) : null,
       latitude,
       longitude,
+      ...normalizedLocationPayload,
     };
 
-    const attempts = [fullPayload, compatiblePayload, basicPayload];
+    const attempts: Array<Record<string, unknown>> = [
+      fullPayload,
+      compatiblePayload,
+      basicPayload,
+    ];
     let lastError: { message?: string } | null = null;
 
     for (const payload of attempts) {
@@ -247,10 +262,31 @@ export default function EditPropertyModal({
 
         <div className="mt-4">
           <NzLocationPicker
-            label="地域"
+            label="地域（検索・絞り込み用）"
             value={location}
             onChange={setLocation}
-            onSelectionChange={(selection) => setLocation(selection.label)}
+            onSelectionChange={(selection) => {
+              setLocation(selection.label);
+              setSelectedLocation({
+                id: selection.id || "",
+                linzId: selection.linzId ?? null,
+                countryCode: selection.countryCode,
+                region: selection.region,
+                district: selection.district,
+                area: selection.area,
+                territorialAuthority:
+                  selection.territorialAuthority || selection.district,
+                majorName: selection.majorName || null,
+                suburbLocality: selection.suburbLocality || selection.area,
+                additionalNames: [],
+                latitude: null,
+                longitude: null,
+                label: selection.label,
+                searchText:
+                  selection.searchText || selection.label.toLowerCase(),
+                isActive: true,
+              });
+            }}
             showCurrentLocation={false}
           />
         </div>

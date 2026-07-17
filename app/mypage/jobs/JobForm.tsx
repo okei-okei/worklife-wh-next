@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import NzLocationPicker from "@/components/NzLocationPicker";
+import type { NzLocation } from "@/lib/constants/nzLocations";
 import { geocodeAddress } from "@/lib/geocoder";
+import { getNormalizedLocationPayload } from "@/lib/locationDisplay";
 import { supabase } from "@/lib/supabase";
 
 type SaveState = "idle" | "geocoding" | "saving";
@@ -40,6 +42,9 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
   const [company, setCompany] = useState("");
   const [url, setUrl] = useState("");
   const [location, setLocation] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<NzLocation | null>(
+    null,
+  );
   const [employmentType, setEmploymentType] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
   const [workHours, setWorkHours] = useState("");
@@ -176,6 +181,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
       address: trimmedAddress,
       latitude,
       longitude,
+      ...getNormalizedLocationPayload(selectedLocation),
     };
 
     const { error } = await supabase.from("saved_jobs").insert(fullPayload);
@@ -200,6 +206,7 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
     setCompany("");
     setUrl("");
     setLocation("");
+    setSelectedLocation(null);
     setEmploymentType("");
     setHourlyRate("");
     setWorkHours("");
@@ -301,10 +308,30 @@ export default function JobForm({ onSaved }: { onSaved: () => void }) {
       </button>
 
       <NzLocationPicker
-        label="地域"
+        label="地域（検索・絞り込み用）"
         value={location}
         onChange={setLocation}
-        onSelectionChange={(selection) => setLocation(selection.label)}
+        onSelectionChange={(selection) => {
+          setLocation(selection.label);
+          setSelectedLocation({
+            id: selection.id || "",
+            linzId: selection.linzId ?? null,
+            countryCode: selection.countryCode,
+            region: selection.region,
+            district: selection.district,
+            area: selection.area,
+            territorialAuthority:
+              selection.territorialAuthority || selection.district,
+            majorName: selection.majorName || null,
+            suburbLocality: selection.suburbLocality || selection.area,
+            additionalNames: [],
+            latitude: null,
+            longitude: null,
+            label: selection.label,
+            searchText: selection.searchText || selection.label.toLowerCase(),
+            isActive: true,
+          });
+        }}
         showCurrentLocation={false}
       />
 

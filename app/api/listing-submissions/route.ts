@@ -18,6 +18,11 @@ type ListingSubmissionPayload = {
   district?: string | null;
   suburb?: string | null;
   area?: string | null;
+  location_master_id?: string | null;
+  region_normalized?: string | null;
+  territorial_authority_normalized?: string | null;
+  major_name_normalized?: string | null;
+  suburb_locality_normalized?: string | null;
   address?: string | null;
   structured_data?: Record<string, unknown>;
   image_urls?: string[];
@@ -119,6 +124,12 @@ export async function POST(request: NextRequest) {
       district: body.district || null,
       suburb: body.suburb || null,
       area: body.area || null,
+      location_master_id: body.location_master_id || null,
+      region_normalized: body.region_normalized || null,
+      territorial_authority_normalized:
+        body.territorial_authority_normalized || null,
+      major_name_normalized: body.major_name_normalized || null,
+      suburb_locality_normalized: body.suburb_locality_normalized || null,
       address: body.address || null,
       structured_data: body.structured_data || {},
       image_urls: body.image_urls || [],

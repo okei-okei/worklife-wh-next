@@ -55,6 +55,7 @@ type PublicJob = {
   territorial_authority_normalized?: string | null;
   major_name_normalized?: string | null;
   suburb_locality_normalized?: string | null;
+  custom_locality?: string | null;
   hourly_rate_min?: number | null;
   hourly_rate_max?: number | null;
   weekly_hours?: number | null;
@@ -184,7 +185,7 @@ export default function JobsPage() {
       const extendedResult = await supabase
         .from("public_jobs")
         .select(
-          "id, title, company, city, address, hourly_rate, work_hours, description, application_method, visa_support, japanese_ok, accommodation_available, english_level, visa_conditions, apply_url, latitude, longitude, employment_type, country_code, region, district, suburb, area, location_master_id, region_normalized, territorial_authority_normalized, major_name_normalized, suburb_locality_normalized, hourly_rate_min, hourly_rate_max, weekly_hours, start_date, image_url",
+          "id, title, company, city, address, hourly_rate, work_hours, description, application_method, visa_support, japanese_ok, accommodation_available, english_level, visa_conditions, apply_url, latitude, longitude, employment_type, country_code, region, district, suburb, area, location_master_id, region_normalized, territorial_authority_normalized, major_name_normalized, suburb_locality_normalized, custom_locality, hourly_rate_min, hourly_rate_max, weekly_hours, start_date, image_url",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -479,6 +480,7 @@ export default function JobsPage() {
         job.territorial_authority_normalized,
         job.major_name_normalized,
         job.suburb_locality_normalized,
+        job.custom_locality,
         job.suburb,
         job.area,
         job.address,
@@ -500,6 +502,7 @@ export default function JobsPage() {
           job.territorial_authority_normalized,
           job.major_name_normalized,
           job.suburb_locality_normalized,
+          job.custom_locality,
           job.region,
           job.district,
           job.suburb,
@@ -516,7 +519,7 @@ export default function JobsPage() {
             .map((part) => part.trim())
             .filter(Boolean);
 
-          return parts.some((part) => jobLocationText.includes(part));
+          return parts.every((part) => jobLocationText.includes(part));
         });
 
         if (!matchesLocation) {

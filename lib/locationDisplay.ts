@@ -6,6 +6,7 @@ export type LocationLikeRecord = {
   territorial_authority_normalized?: string | null;
   major_name_normalized?: string | null;
   suburb_locality_normalized?: string | null;
+  custom_locality?: string | null;
   region?: string | null;
   district?: string | null;
   city?: string | null;
@@ -24,8 +25,11 @@ export type NormalizedLocationPayload = {
 
 export function getLocationDisplayName(record: LocationLikeRecord) {
   return (
+    record.custom_locality ||
     record.suburb_locality_normalized ||
     record.major_name_normalized ||
+    record.territorial_authority_normalized ||
+    record.region_normalized ||
     record.suburb ||
     record.area ||
     record.location ||

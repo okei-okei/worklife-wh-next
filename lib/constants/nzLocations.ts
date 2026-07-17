@@ -74,6 +74,7 @@ const seedLocations: SeedLocation[] = [
   { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Riccarton" },
   { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Addington" },
   { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Hornby", additionalNames: ["Hornby Christchurch", "Christchurch Hornby"] },
+  { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Ilam", additionalNames: ["Ilam Christchurch", "Christchurch Ilam", "Waimairi Road Ilam"] },
   { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Papanui" },
   { region: "Canterbury", territorialAuthority: "Christchurch City", majorName: "Christchurch", suburbLocality: "Sydenham" },
   { region: "Canterbury", territorialAuthority: "Selwyn District", suburbLocality: "Rolleston" },
@@ -129,13 +130,41 @@ export const nzLocations: NzLocation[] = seedLocations.map((item, index) => {
 });
 
 export function filterNzLocations(query: string, limit = 30) {
-  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedQuery = normalizeLocationText(query);
 
   if (!normalizedQuery) {
     return nzLocations.slice(0, limit);
   }
 
   return nzLocations
-    .filter((location) => location.searchText.includes(normalizedQuery))
+    .map((location) => {
+      const normalizedSearchText = normalizeLocationText(location.searchText);
+      const normalizedArea = normalizeLocationText(location.area);
+      const normalizedDistrict = normalizeLocationText(location.district);
+      const normalizedRegion = normalizeLocationText(location.region);
+      const words = normalizedSearchText.split(/\s+/);
+      let score = 0;
+
+      if (normalizedArea === normalizedQuery) score = 100;
+      else if (normalizedDistrict === normalizedQuery) score = 90;
+      else if (normalizedRegion === normalizedQuery) score = 80;
+      else if (normalizedArea.startsWith(normalizedQuery)) score = 70;
+      else if (words.includes(normalizedQuery)) score = 60;
+      else if (normalizedSearchText.includes(normalizedQuery)) score = 40;
+
+      return { location, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.location.label.localeCompare(b.location.label))
+    .map((item) => item.location)
     .slice(0, limit);
+}
+
+function normalizeLocationText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 }

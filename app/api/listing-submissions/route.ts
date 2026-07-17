@@ -23,6 +23,9 @@ type ListingSubmissionPayload = {
   territorial_authority_normalized?: string | null;
   major_name_normalized?: string | null;
   suburb_locality_normalized?: string | null;
+  custom_locality?: string | null;
+  location_source?: string | null;
+  location_review_status?: string | null;
   address?: string | null;
   structured_data?: Record<string, unknown>;
   image_urls?: string[];
@@ -130,6 +133,9 @@ export async function POST(request: NextRequest) {
         body.territorial_authority_normalized || null,
       major_name_normalized: body.major_name_normalized || null,
       suburb_locality_normalized: body.suburb_locality_normalized || null,
+      custom_locality: body.custom_locality?.trim() || null,
+      location_source: body.location_source || null,
+      location_review_status: body.location_review_status || null,
       address: body.address || null,
       structured_data: body.structured_data || {},
       image_urls: body.image_urls || [],

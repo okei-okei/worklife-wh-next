@@ -90,10 +90,16 @@ begin
       execute format('alter table public.%I add column if not exists territorial_authority_normalized text null', target_table);
       execute format('alter table public.%I add column if not exists major_name_normalized text null', target_table);
       execute format('alter table public.%I add column if not exists suburb_locality_normalized text null', target_table);
+      execute format('alter table public.%I add column if not exists custom_locality text null', target_table);
+      execute format('alter table public.%I add column if not exists location_source text null', target_table);
+      execute format('alter table public.%I add column if not exists location_review_status text null', target_table);
       execute format('create index if not exists %I on public.%I (location_master_id)', target_table || '_location_master_id_idx', target_table);
       execute format('create index if not exists %I on public.%I (region_normalized)', target_table || '_region_normalized_idx', target_table);
       execute format('create index if not exists %I on public.%I (territorial_authority_normalized)', target_table || '_ta_normalized_idx', target_table);
       execute format('create index if not exists %I on public.%I (suburb_locality_normalized)', target_table || '_suburb_locality_normalized_idx', target_table);
+      execute format('create index if not exists %I on public.%I (custom_locality)', target_table || '_custom_locality_idx', target_table);
+      execute format('create index if not exists %I on public.%I (location_source)', target_table || '_location_source_idx', target_table);
+      execute format('create index if not exists %I on public.%I (location_review_status)', target_table || '_location_review_status_idx', target_table);
     end if;
   end loop;
 end $$;
@@ -117,6 +123,31 @@ insert into public.nz_locations (
   'Hornby',
   array['Hornby Christchurch', 'Christchurch Hornby'],
   lower('Canterbury Christchurch City Christchurch Hornby Hornby Christchurch Christchurch Hornby New Zealand NZ'),
+  'seed'
+) on conflict (linz_id) do update
+set
+  is_active = true,
+  updated_at = now();
+
+insert into public.nz_locations (
+  linz_id,
+  country_code,
+  region,
+  territorial_authority,
+  major_name,
+  suburb_locality,
+  additional_names,
+  search_text,
+  source
+) values (
+  'seed-ilam-christchurch',
+  'NZ',
+  'Canterbury',
+  'Christchurch City',
+  'Christchurch',
+  'Ilam',
+  array['Ilam Christchurch', 'Christchurch Ilam', 'Waimairi Road Ilam'],
+  lower('Canterbury Christchurch City Christchurch Ilam Ilam Christchurch Christchurch Ilam Waimairi Road Ilam New Zealand NZ'),
   'seed'
 ) on conflict (linz_id) do update
 set

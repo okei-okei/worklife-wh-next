@@ -122,6 +122,11 @@ export default function CompanySubmitPage() {
   const [suburbLocalityNormalized, setSuburbLocalityNormalized] = useState<
     string | null
   >(null);
+  const [customLocality, setCustomLocality] = useState<string | null>(null);
+  const [locationSource, setLocationSource] = useState<string | null>(null);
+  const [locationReviewStatus, setLocationReviewStatus] = useState<
+    string | null
+  >(null);
   const [address, setAddress] = useState("");
   const [employmentType, setEmploymentType] = useState("");
   const [hourlyRateMin, setHourlyRateMin] = useState("");
@@ -433,6 +438,9 @@ export default function CompanySubmitPage() {
         territorial_authority_normalized: territorialAuthorityNormalized,
         major_name_normalized: majorNameNormalized,
         suburb_locality_normalized: suburbLocalityNormalized,
+        custom_locality: customLocality,
+        location_source: locationSource,
+        location_review_status: locationReviewStatus,
         address: address || null,
       };
 
@@ -511,6 +519,9 @@ export default function CompanySubmitPage() {
           territorial_authority_normalized: territorialAuthorityNormalized,
           major_name_normalized: majorNameNormalized,
           suburb_locality_normalized: suburbLocalityNormalized,
+          custom_locality: customLocality,
+          location_source: locationSource,
+          location_review_status: locationReviewStatus,
           address: address || null,
           structured_data: structuredData,
           image_urls: imageUrls,
@@ -719,6 +730,11 @@ export default function CompanySubmitPage() {
                     setMajorNameNormalized(selection.majorName || null);
                     setSuburbLocalityNormalized(
                       selection.suburbLocality || selection.area || null,
+                    );
+                    setCustomLocality(selection.customLocality || null);
+                    setLocationSource(selection.locationSource || null);
+                    setLocationReviewStatus(
+                      selection.locationReviewStatus || null,
                     );
                   }}
                 />

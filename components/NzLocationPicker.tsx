@@ -7,6 +7,8 @@ import {
   type NzLocation,
 } from "@/lib/constants/nzLocations";
 
+const OTHER_AREA_VALUE = "__other_area__";
+
 type Props = {
   label?: string;
   value?: string;
@@ -28,6 +30,9 @@ type Props = {
     majorName?: string | null;
     area: string;
     suburbLocality?: string;
+    customLocality?: string | null;
+    locationSource?: "master" | "custom";
+    locationReviewStatus?: "pending" | null;
     label: string;
     searchText?: string;
   }) => void;
@@ -50,6 +55,8 @@ export default function NzLocationPicker({
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
+  const [showCustomLocality, setShowCustomLocality] = useState(false);
+  const [customLocality, setCustomLocality] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [geoMessage, setGeoMessage] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -93,18 +100,27 @@ export default function NzLocationPicker({
   const selectedValues = multiple ? values : value ? [value] : [];
 
   const setAll = () => {
+    setSelectedRegion("");
+    setSelectedDistrict("");
+    setSelectedArea("");
+    setShowCustomLocality(false);
+    setCustomLocality("");
+    setSearchQuery("");
     onChange?.("");
     onValuesChange?.([]);
     onCoordinatesChange?.({ latitude: null, longitude: null });
   };
 
-  const selectLocation = (labelValue: string) => {
+  const selectLocation = (labelValue: string, parentValues: string[] = []) => {
     if (multiple) {
-      const exists = values.includes(labelValue);
+      const filteredValues = values.filter(
+        (item) => !parentValues.includes(item) || item === labelValue,
+      );
+      const exists = filteredValues.includes(labelValue);
       onValuesChange?.(
         exists
-          ? values.filter((item) => item !== labelValue)
-          : [...values, labelValue],
+          ? filteredValues.filter((item) => item !== labelValue)
+          : [...filteredValues, labelValue],
       );
       return;
     }
@@ -114,7 +130,11 @@ export default function NzLocationPicker({
   };
 
   const emitSelection = (location: NzLocation, labelValue = location.label) => {
-    selectLocation(labelValue);
+    const parentValues = [
+      location.region,
+      `${location.region} / ${location.district}`,
+    ].filter((item) => item !== labelValue);
+    selectLocation(labelValue, parentValues);
     onSelectionChange?.({
       id: location.id,
       linzId: location.linzId,
@@ -125,13 +145,58 @@ export default function NzLocationPicker({
       majorName: location.majorName,
       area: location.area,
       suburbLocality: location.suburbLocality,
+      customLocality: null,
+      locationSource: "master",
+      locationReviewStatus: null,
       label: labelValue,
       searchText: location.searchText,
     });
   };
 
+  const emitManualSelection = ({
+    region,
+    district = "",
+    area = "",
+    custom = false,
+  }: {
+    region: string;
+    district?: string;
+    area?: string;
+    custom?: boolean;
+  }) => {
+    if (!region) return;
+
+    const labelValue = [region, district, area].filter(Boolean).join(" / ");
+    const parentValues = [
+      region,
+      district ? `${region} / ${district}` : "",
+    ].filter(
+      (item): item is string => Boolean(item) && item !== labelValue,
+    );
+    selectLocation(labelValue, parentValues);
+    onSelectionChange?.({
+      countryCode: "NZ",
+      region,
+      district,
+      territorialAuthority: district || null,
+      majorName: null,
+      area,
+      suburbLocality: custom ? "" : area,
+      customLocality: custom ? area : null,
+      locationSource: custom ? "custom" : "master",
+      locationReviewStatus: custom ? "pending" : null,
+      label: labelValue,
+      searchText: labelValue.toLowerCase(),
+    });
+  };
+
   const commitSelection = (area = "") => {
-    if (!selectedRegion || !selectedDistrict) return;
+    if (!selectedRegion) return;
+
+    if (!selectedDistrict) {
+      emitManualSelection({ region: selectedRegion });
+      return;
+    }
 
     const location =
       nzLocations.find(
@@ -150,7 +215,47 @@ export default function NzLocationPicker({
       return;
     }
 
-    selectLocation(labelValue);
+    emitManualSelection({
+      region: selectedRegion,
+      district: selectedDistrict,
+      area,
+    });
+  };
+
+  const commitCustomLocality = () => {
+    const trimmedCustomLocality = customLocality.trim();
+    if (!selectedRegion || !trimmedCustomLocality) return;
+
+    const labelValue = [
+      selectedRegion,
+      selectedDistrict,
+      trimmedCustomLocality,
+    ]
+      .filter(Boolean)
+      .join(" / ");
+
+    setSelectedArea(trimmedCustomLocality);
+    const parentValues = [
+      selectedRegion,
+      selectedDistrict ? `${selectedRegion} / ${selectedDistrict}` : "",
+    ].filter(
+      (item): item is string => Boolean(item) && item !== labelValue,
+    );
+    selectLocation(labelValue, parentValues);
+    onSelectionChange?.({
+      countryCode: "NZ",
+      region: selectedRegion,
+      district: selectedDistrict,
+      territorialAuthority: selectedDistrict || null,
+      majorName: null,
+      area: trimmedCustomLocality,
+      suburbLocality: "",
+      customLocality: trimmedCustomLocality,
+      locationSource: "custom",
+      locationReviewStatus: "pending",
+      label: labelValue,
+      searchText: labelValue.toLowerCase(),
+    });
   };
 
   const handleUseCurrentLocation = () => {
@@ -187,17 +292,17 @@ export default function NzLocationPicker({
     <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
       <p className="text-sm font-bold text-gray-900">{label}</p>
       <p className="text-xs font-medium text-gray-600">
-        地域検索・絞り込み用です。住所や地図上の正確な位置とは別に扱います。
+        RegionやCity / Districtだけでも絞り込めます。住所や地図上の正確な位置とは別に扱います。
       </p>
       <label className="block">
         <span className="text-xs font-bold text-gray-700">
-          Area / Suburb / Locality検索
+          地域検索
         </span>
         <input
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 placeholder:text-gray-500"
-          placeholder="例: Hornby, Hornby Christchurch"
+          placeholder="例: Ilam, Hornby, Riccarton"
         />
       </label>
       {searchQuery.trim() ? (
@@ -222,9 +327,14 @@ export default function NzLocationPicker({
               ))}
             </div>
           ) : (
-            <p className="px-2 py-1.5 text-xs font-bold text-gray-600">
-              候補が見つかりません
-            </p>
+            <div className="space-y-2 px-2 py-1.5">
+              <p className="text-xs font-bold text-gray-600">
+                候補が見つかりません
+              </p>
+              <p className="text-xs font-medium text-gray-600">
+                候補にない場合は、RegionとCity / Districtを選んで「その他」から入力してください。
+              </p>
+            </div>
           )}
         </div>
       ) : null}
@@ -234,9 +344,15 @@ export default function NzLocationPicker({
           <select
             value={selectedRegion}
             onChange={(event) => {
-              setSelectedRegion(event.target.value);
+              const region = event.target.value;
+              setSelectedRegion(region);
               setSelectedDistrict("");
               setSelectedArea("");
+              setShowCustomLocality(false);
+              setCustomLocality("");
+              if (region) {
+                emitManualSelection({ region });
+              }
             }}
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 font-medium text-gray-900"
           >
@@ -257,23 +373,13 @@ export default function NzLocationPicker({
               const district = event.target.value;
               setSelectedDistrict(district);
               setSelectedArea("");
+              setShowCustomLocality(false);
+              setCustomLocality("");
 
-              const districtAreas = nzLocations.filter(
-                (location) =>
-                  location.region === selectedRegion &&
-                  location.district === district &&
-                  location.area,
-              );
-
-              if (district && districtAreas.length === 0) {
-                const labelValue = `${selectedRegion} / ${district}`;
-                selectLocation(labelValue);
-                onSelectionChange?.({
-                  countryCode: "NZ",
+              if (district) {
+                emitManualSelection({
                   region: selectedRegion,
                   district,
-                  area: "",
-                  label: labelValue,
                 });
               }
             }}
@@ -291,16 +397,21 @@ export default function NzLocationPicker({
 
         <label className="block">
           <span className="text-xs font-bold text-gray-700">
-            Area / Suburb / Locality
+            Area / Suburb
           </span>
           <select
             value={selectedArea}
             onChange={(event) => {
               const area = event.target.value;
               setSelectedArea(area);
+              if (area === OTHER_AREA_VALUE) {
+                setShowCustomLocality(true);
+                return;
+              }
+              setShowCustomLocality(false);
               if (area) commitSelection(area);
             }}
-            disabled={!selectedDistrict || areas.length === 0}
+            disabled={!selectedRegion}
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 font-medium text-gray-900 disabled:bg-gray-100"
           >
             <option value="">
@@ -311,9 +422,35 @@ export default function NzLocationPicker({
                 {area}
               </option>
             ))}
+            <option value={OTHER_AREA_VALUE}>その他・候補にない地域</option>
           </select>
         </label>
       </div>
+
+      {showCustomLocality ? (
+        <div className="rounded-lg border border-dashed border-gray-300 bg-white p-3">
+          <label className="block">
+            <span className="text-xs font-bold text-gray-700">地域名を入力</span>
+            <input
+              value={customLocality}
+              onChange={(event) => setCustomLocality(event.target.value)}
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 placeholder:text-gray-500"
+              placeholder="例: Ilam、Hornby、Riccarton"
+            />
+          </label>
+          <p className="mt-2 text-xs font-medium text-gray-600">
+            候補に表示されないArea・Suburbを入力してください。入力内容は検索・絞り込み用に使用します。
+          </p>
+          <button
+            type="button"
+            onClick={commitCustomLocality}
+            disabled={!customLocality.trim()}
+            className="mt-3 w-full rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:bg-gray-300 sm:w-auto"
+          >
+            この地域を選択
+          </button>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <button

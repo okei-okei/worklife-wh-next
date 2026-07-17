@@ -57,6 +57,7 @@ type PublicProperty = {
   territorial_authority_normalized?: string | null;
   major_name_normalized?: string | null;
   suburb_locality_normalized?: string | null;
+  custom_locality?: string | null;
   image_urls?: string[] | null;
 };
 
@@ -292,7 +293,7 @@ export default function PropertiesPage() {
       const extendedResult = await supabase
         .from("public_properties")
         .select(
-          "id, title, city, area, address, rent_weekly, description, inquiry_method, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, smoking_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, location_master_id, region_normalized, territorial_authority_normalized, major_name_normalized, suburb_locality_normalized, image_urls",
+          "id, title, city, area, address, rent_weekly, description, inquiry_method, url, latitude, longitude, bedrooms, bathrooms, parking_spaces, pets_allowed, smoking_allowed, utilities_included, bills_included, available_from, country_code, region, district, suburb, location_master_id, region_normalized, territorial_authority_normalized, major_name_normalized, suburb_locality_normalized, custom_locality, image_urls",
         )
         .eq("is_active", true)
         .order("created_at", {
@@ -604,6 +605,7 @@ export default function PropertiesPage() {
         property.territorial_authority_normalized,
         property.major_name_normalized,
         property.suburb_locality_normalized,
+        property.custom_locality,
         property.suburb,
         property.address,
         property.description,
@@ -625,6 +627,7 @@ export default function PropertiesPage() {
           property.territorial_authority_normalized,
           property.major_name_normalized,
           property.suburb_locality_normalized,
+          property.custom_locality,
           property.region,
           property.district,
           property.suburb,
@@ -641,7 +644,7 @@ export default function PropertiesPage() {
             .map((part) => part.trim())
             .filter(Boolean);
 
-          return parts.some((part) => propertyLocationText.includes(part));
+          return parts.every((part) => propertyLocationText.includes(part));
         });
 
         if (!matchesLocation) {

@@ -10,6 +10,8 @@ const navigationItems = [
   { href: "/", label: "ホーム" },
   { href: "/jobs", label: "仕事" },
   { href: "/properties", label: "物件" },
+  { href: "/partners", label: "比較" },
+  { href: "/articles", label: "記事" },
   { href: "/planner", label: "ライフプランナー" },
   { href: "/mypage", label: "マイページ" },
 ];

@@ -36,6 +36,7 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
               <p className="mt-3 text-xs font-bold text-gray-600">
                 更新日: {article.updated_at?.slice(0, 10) || "随時更新"}
               </p>
+              <p className="mt-2 text-sm font-black text-blue-700">読む</p>
             </Link>
           ))}
         </div>

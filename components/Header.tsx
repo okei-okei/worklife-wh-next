@@ -26,7 +26,7 @@ export default function Header() {
   const isHome = pathname === "/";
   const isHomeHeader = isHome && !isMenuOpen;
   const isMutedHomeScene =
-    isHomeHeader && ["preparation", "information"].includes(homeScene);
+    isHomeHeader && ["preparation", "partners"].includes(homeScene);
   const isTransparent = false;
 
   useEffect(() => {

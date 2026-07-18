@@ -5,19 +5,19 @@ import type { Article } from "@/lib/articles";
 export default function PopularArticles({ articles }: { articles: Article[] }) {
   return (
     <section
-      data-scene="information"
-      data-background-scene="information"
+      data-scene="articles"
+      data-background-scene="articles"
       className="relative overflow-hidden bg-white px-4 py-16 text-[#171717] md:px-6 md:py-28"
     >
       <HomeImagePlane
-        desktopSrc="/images/home/information-desktop.webp"
-        mobileSrc="/images/home/information-mobile.webp"
+        desktopSrc="/images/home/articles-desktop.webp"
+        mobileSrc="/images/home/articles-mobile.webp"
         alt="落ち着いてニュージーランド生活情報を確認する雰囲気"
         sizes="(min-width: 768px) 46vw, 100vw"
-        className="right-[-8vw] top-0 h-[26svh] w-[94vw] opacity-95 md:right-0 md:top-[14%] md:h-[46svh] md:w-[46vw]"
+        className="right-[-8vw] top-0 h-[48svh] w-[94vw] opacity-95 md:right-0 md:top-[12%] md:h-[70svh] md:w-[52vw]"
         imageClassName="object-[48%_50%]"
       />
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[28svh] md:grid-cols-[0.48fr_0.52fr] md:items-start md:pt-0">
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[50svh] md:min-h-[88svh] md:grid-cols-[0.44fr_0.56fr] md:items-start md:pt-0">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <div className="flex items-end justify-between gap-3 md:block">
             <div>
@@ -40,7 +40,7 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
           </div>
         </div>
 
-        <div className="relative z-10 divide-y divide-[#D8D8D4] border-y border-[#D8D8D4] md:mt-[42svh]">
+        <div className="relative z-10 divide-y divide-[#D8D8D4] border-y border-[#D8D8D4] md:mt-[54svh]">
           {articles.map((article, index) => (
             <Link
               key={article.slug}

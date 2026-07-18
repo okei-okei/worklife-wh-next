@@ -1,4 +1,3 @@
-import ExperienceTrust from "@/components/home/ExperienceTrust";
 import FeatureSummary from "@/components/home/FeatureSummary";
 import GoalNavigation from "@/components/home/GoalNavigation";
 import HomeFinalCTA from "@/components/home/HomeFinalCTA";
@@ -80,13 +79,12 @@ export default function Home() {
       <ScrollBackground />
       <div className="relative z-10">
         <HomeHero />
-        <GoalNavigation />
         <HomeValueStatement />
+        <GoalNavigation />
         <FeatureSummary />
         <HomePreparation />
         <PopularArticles articles={popularArticles} />
         <PopularPartners />
-        <ExperienceTrust />
         <HomeFinalCTA />
       </div>
     </main>

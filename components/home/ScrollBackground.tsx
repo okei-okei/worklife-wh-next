@@ -4,10 +4,12 @@ import { useEffect } from "react";
 
 const scenes = [
   "hero",
-  "work-home",
-  "life-plan",
+  "jobs",
+  "properties",
+  "planner",
   "preparation",
-  "information",
+  "articles",
+  "partners",
   "final",
 ] as const;
 

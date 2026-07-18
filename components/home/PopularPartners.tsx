@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HomeImagePlane from "@/components/home/HomeImagePlane";
 
 const comparisons = [
   {
@@ -24,11 +25,20 @@ const comparisons = [
 export default function PopularPartners() {
   return (
     <section
-      data-scene="information"
-      data-background-scene="information"
-      className="bg-[#F7F7F5] px-4 py-16 text-[#171717] md:px-6 md:py-24"
+      data-scene="partners"
+      data-background-scene="partners"
+      className="relative overflow-hidden bg-[#F7F7F5] px-4 py-16 text-[#171717] md:px-6 md:py-28"
     >
-      <div className="mx-auto max-w-6xl">
+      <HomeImagePlane
+        desktopSrc="/images/home/partners-desktop.webp"
+        mobileSrc="/images/home/partners-mobile.webp"
+        alt="通信や送金など渡航前後のサービス比較を想起する写真"
+        sizes="(min-width: 768px) 100vw, 100vw"
+        className="left-0 top-0 h-[48svh] w-full md:left-0 md:top-0 md:h-[58svh] md:w-full"
+        imageClassName="object-[54%_46%]"
+      />
+      <div className="absolute inset-x-0 top-0 h-[48svh] bg-gradient-to-b from-transparent via-[#F7F7F5]/20 to-[#F7F7F5] md:h-[58svh]" />
+      <div className="relative z-10 mx-auto max-w-6xl pt-[48svh] md:min-h-[86svh] md:pt-[46svh]">
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">

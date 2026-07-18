@@ -11,26 +11,28 @@ const metrics = [
 export default function FeatureSummary() {
   return (
     <section
-      data-scene="life-plan"
-      data-background-scene="life-plan"
+      data-scene="planner"
+      data-background-scene="planner"
       className="relative overflow-hidden bg-white px-4 py-16 text-[#171717] md:px-6 md:py-32"
     >
       <HomeImagePlane
-        desktopSrc="/images/home/life-plan-desktop.webp"
-        mobileSrc="/images/home/life-plan-mobile.webp"
+        desktopSrc="/images/home/planner-desktop.webp"
+        mobileSrc="/images/home/planner-mobile.webp"
         alt="街と道路から通勤や生活設計を想起する風景"
         sizes="(min-width: 768px) 68vw, 96vw"
-        className="right-[-4vw] top-0 h-[30svh] w-[96vw] md:right-[-8vw] md:top-[12%] md:h-[58svh] md:w-[68vw]"
+        className="right-[-4vw] top-0 h-[48svh] w-[96vw] md:right-[-8vw] md:top-[10%] md:h-[76svh] md:w-[68vw]"
         imageClassName="object-[50%_50%]"
       />
-      <div className="pointer-events-none absolute left-4 top-[30svh] h-px w-[42vw] bg-[#D8D8D4] md:left-[6vw] md:top-[20%] md:w-[22vw]" />
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[32svh] md:min-h-[76svh] md:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] md:items-center md:pt-0">
+      <div className="pointer-events-none absolute left-4 top-[48svh] h-px w-[42vw] bg-[#D8D8D4] md:left-[6vw] md:top-[20%] md:w-[22vw]" />
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[50svh] md:min-h-[88svh] md:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] md:items-center md:pt-0">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             LIFE PLANNING
           </p>
           <h2 className="mt-3 text-2xl font-black leading-tight md:text-5xl">
-            暮らし全体を比べる
+            仕事と住まいを、
+            <br />
+            一緒に比べる
           </h2>
           <p className="mt-4 max-w-md text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
             通勤時間、家賃、収入、生活費をまとめて確認します。

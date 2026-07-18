@@ -22,19 +22,19 @@ type Scene = {
 };
 
 const scenes = {
-  start: {
+  hero: {
     baseClass: "bg-slate-950",
     main: {
-      desktop: "/images/home/scene-start-desktop.webp",
-      mobile: "/images/home/scene-start-mobile.webp",
+      desktop: "/images/home/hero-desktop.webp",
+      mobile: "/images/home/hero-mobile.webp",
       frameClass:
         "left-[-10%] top-[7%] h-[34vh] w-[92vw] rounded-[0_0_5rem_0] md:left-[4%] md:top-[10%] md:h-[46vh] md:w-[56vw] md:rounded-[0_0_9rem_0]",
       imageClass: "object-center",
       sizes: "(min-width: 768px) 56vw, 92vw",
     },
     secondary: {
-      desktop: "/images/home/scene-work-home-desktop.webp",
-      mobile: "/images/home/scene-work-home-mobile.webp",
+      desktop: "/images/home/work-home-desktop.webp",
+      mobile: "/images/home/work-home-mobile.webp",
       frameClass:
         "right-[6%] bottom-[9%] h-[132px] w-[132px] rounded-full md:right-[9%] md:bottom-[12%] md:h-[210px] md:w-[210px]",
       imageClass: "object-[58%_50%]",
@@ -51,16 +51,16 @@ const scenes = {
   "work-home": {
     baseClass: "bg-[#071b2b]",
     main: {
-      desktop: "/images/home/scene-work-home-desktop.webp",
-      mobile: "/images/home/scene-work-home-mobile.webp",
+      desktop: "/images/home/work-home-desktop.webp",
+      mobile: "/images/home/work-home-mobile.webp",
       frameClass:
         "right-[-10%] top-[13%] h-[300px] w-[210px] rounded-t-full rounded-b-[2rem] md:right-[6%] md:top-[12%] md:h-[62vh] md:w-[34vw] md:rounded-t-full md:rounded-b-[3rem]",
       imageClass: "object-[58%_50%]",
       sizes: "(min-width: 768px) 34vw, 210px",
     },
     secondary: {
-      desktop: "/images/home/scene-start-desktop.webp",
-      mobile: "/images/home/scene-start-mobile.webp",
+      desktop: "/images/home/hero-desktop.webp",
+      mobile: "/images/home/hero-mobile.webp",
       frameClass:
         "left-[5%] bottom-[10%] h-[96px] w-[210px] rounded-full md:left-[9%] md:bottom-[13%] md:h-[150px] md:w-[360px]",
       imageClass: "object-[42%_52%]",
@@ -74,19 +74,19 @@ const scenes = {
     typographyClass:
       "left-4 bottom-[22%] text-white/9 md:left-10 md:bottom-[18%]",
   },
-  planning: {
+  "life-plan": {
     baseClass: "bg-[#eef7f8]",
     main: {
-      desktop: "/images/home/scene-planning-desktop.webp",
-      mobile: "/images/home/scene-planning-mobile.webp",
+      desktop: "/images/home/life-plan-desktop.webp",
+      mobile: "/images/home/life-plan-mobile.webp",
       frameClass:
         "left-[13%] top-[16%] h-[220px] w-[76vw] rounded-full md:left-[24%] md:top-[14%] md:h-[44vh] md:w-[52vw]",
       imageClass: "object-[52%_46%]",
       sizes: "(min-width: 768px) 52vw, 76vw",
     },
     secondary: {
-      desktop: "/images/home/scene-prepare-desktop.webp",
-      mobile: "/images/home/scene-prepare-mobile.webp",
+      desktop: "/images/home/preparation-desktop.webp",
+      mobile: "/images/home/preparation-mobile.webp",
       frameClass:
         "left-[6%] bottom-[12%] h-[92px] w-[174px] rounded-[3rem_1rem_3rem_1rem] md:left-[8%] md:bottom-[12%] md:h-[150px] md:w-[280px]",
       imageClass: "object-[48%_50%]",
@@ -100,19 +100,19 @@ const scenes = {
     typographyClass:
       "right-3 top-[42%] text-slate-900/8 md:right-10 md:top-[28%]",
   },
-  prepare: {
+  preparation: {
     baseClass: "bg-[#e6f5f0]",
     main: {
-      desktop: "/images/home/scene-prepare-desktop.webp",
-      mobile: "/images/home/scene-prepare-mobile.webp",
+      desktop: "/images/home/preparation-desktop.webp",
+      mobile: "/images/home/preparation-mobile.webp",
       frameClass:
         "left-0 top-[-6%] h-[34vh] w-full rounded-b-[5rem] md:left-[4%] md:top-[8%] md:h-[38vh] md:w-[64vw] md:rounded-[0_0_8rem_0]",
       imageClass: "object-[50%_45%]",
       sizes: "(min-width: 768px) 64vw, 100vw",
     },
     secondary: {
-      desktop: "/images/home/scene-planning-desktop.webp",
-      mobile: "/images/home/scene-planning-mobile.webp",
+      desktop: "/images/home/life-plan-desktop.webp",
+      mobile: "/images/home/life-plan-mobile.webp",
       frameClass:
         "left-[7%] bottom-[13%] h-[112px] w-[112px] rounded-full md:left-[10%] md:bottom-[12%] md:h-[176px] md:w-[176px]",
       imageClass: "object-[50%_50%]",
@@ -129,16 +129,16 @@ const scenes = {
   information: {
     baseClass: "bg-[#f6f4ee]",
     main: {
-      desktop: "/images/home/scene-start-desktop.webp",
-      mobile: "/images/home/scene-start-mobile.webp",
+      desktop: "/images/home/information-desktop.webp",
+      mobile: "/images/home/information-mobile.webp",
       frameClass:
         "right-[5%] top-[9%] h-[112px] w-[168px] rounded-[4rem_1rem_4rem_1rem] opacity-70 md:right-[9%] md:top-[11%] md:h-[170px] md:w-[280px]",
       imageClass: "object-[48%_50%]",
       sizes: "(min-width: 768px) 280px, 168px",
     },
     secondary: {
-      desktop: "/images/home/scene-work-home-desktop.webp",
-      mobile: "/images/home/scene-work-home-mobile.webp",
+      desktop: "/images/home/work-home-desktop.webp",
+      mobile: "/images/home/work-home-mobile.webp",
       frameClass:
         "left-[5%] bottom-[10%] h-[98px] w-[98px] rounded-full opacity-70 md:left-[8%] md:bottom-[12%] md:h-[150px] md:w-[150px]",
       imageClass: "object-[58%_50%]",
@@ -155,16 +155,16 @@ const scenes = {
   final: {
     baseClass: "bg-slate-950",
     main: {
-      desktop: "/images/home/scene-final-desktop.webp",
-      mobile: "/images/home/scene-final-mobile.webp",
+      desktop: "/images/home/final-desktop.webp",
+      mobile: "/images/home/final-mobile.webp",
       frameClass:
         "right-[-8%] top-[9%] h-[32vh] w-[86vw] rounded-[5rem_0_0_5rem] md:right-[5%] md:top-[10%] md:h-[38vh] md:w-[54vw]",
       imageClass: "object-[50%_50%]",
       sizes: "(min-width: 768px) 54vw, 86vw",
     },
     secondary: {
-      desktop: "/images/home/scene-start-desktop.webp",
-      mobile: "/images/home/scene-start-mobile.webp",
+      desktop: "/images/home/hero-desktop.webp",
+      mobile: "/images/home/hero-mobile.webp",
       frameClass:
         "left-[7%] bottom-[12%] h-[126px] w-[126px] rounded-full md:left-[9%] md:bottom-[13%] md:h-[210px] md:w-[210px]",
       imageClass: "object-[42%_50%]",
@@ -234,7 +234,7 @@ function SceneCanvas({
         {scene.main ? (
           <ScenePicture
             layer={scene.main}
-            priority={sceneId === "start" && !isPrevious}
+            priority={sceneId === "hero" && !isPrevious}
           />
         ) : null}
         {scene.secondary ? <ScenePicture layer={scene.secondary} /> : null}
@@ -253,14 +253,16 @@ function SceneCanvas({
 }
 
 export default function ScrollBackground() {
-  const [activeScene, setActiveScene] = useState<SceneId>("start");
+  const [activeScene, setActiveScene] = useState<SceneId>("hero");
   const [previousScene, setPreviousScene] = useState<SceneId | null>(null);
   const [isFadingPrevious, setIsFadingPrevious] = useState(false);
   const clearPreviousTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const targets = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-background-scene]"),
+      document.querySelectorAll<HTMLElement>(
+        "[data-scene], [data-background-scene]",
+      ),
     );
     if (!targets.length) return;
 
@@ -272,7 +274,9 @@ export default function ScrollBackground() {
         if (!visibleEntry) return;
 
         const nextScene =
-          (visibleEntry.target as HTMLElement).dataset.backgroundScene ?? null;
+          (visibleEntry.target as HTMLElement).dataset.scene ??
+          (visibleEntry.target as HTMLElement).dataset.backgroundScene ??
+          null;
         if (!isSceneId(nextScene)) return;
 
         setActiveScene((current) => {
@@ -302,7 +306,7 @@ export default function ScrollBackground() {
     );
 
     targets.forEach((target) => observer.observe(target));
-    window.dispatchEvent(new CustomEvent("homeSceneChange", { detail: "start" }));
+    window.dispatchEvent(new CustomEvent("homeSceneChange", { detail: "hero" }));
 
     return () => {
       observer.disconnect();

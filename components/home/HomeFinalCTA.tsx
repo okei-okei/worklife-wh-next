@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function HomeFinalCTA() {
   return (
     <section
-      data-background-scene="final"
+      data-scene="final" data-background-scene="final"
       className="px-4 pb-24 pt-10 text-white md:px-6 md:pb-32 md:pt-16"
     >
       <div className="mx-auto max-w-6xl">

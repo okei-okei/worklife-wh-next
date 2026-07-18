@@ -6,7 +6,7 @@ export default function HomeHero() {
   return (
     <section
       data-home-hero
-      data-background-scene="start"
+      data-scene="hero" data-background-scene="hero"
       className="relative min-h-[620px] overflow-hidden px-4 pb-8 pt-24 text-white md:min-h-[760px] md:px-6 md:pb-16 md:pt-28"
     >
       <HomeHeroScrollEffect />

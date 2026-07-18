@@ -9,7 +9,7 @@ const lifeLinks = [
 export default function HomeValueStatement() {
   return (
     <section
-      data-background-scene="work-home"
+      data-scene="work-home" data-background-scene="work-home"
       className="px-4 py-20 text-white md:px-6 md:py-32"
     >
       <div className="mx-auto max-w-6xl">

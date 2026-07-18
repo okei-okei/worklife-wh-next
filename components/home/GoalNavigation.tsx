@@ -40,7 +40,7 @@ const goals = [
 export default function GoalNavigation() {
   return (
     <section
-      data-background-scene="start"
+      data-scene="hero" data-background-scene="hero"
       className="px-4 py-20 text-white md:px-6 md:py-28"
     >
       <div className="mx-auto max-w-6xl">

@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function ExperienceTrust() {
   return (
     <section
-      data-background-scene="final"
+      data-scene="final" data-background-scene="final"
       className="px-4 py-20 text-white md:px-6 md:py-28"
     >
       <div className="mx-auto grid max-w-6xl gap-6 border-y border-white/18 py-10 md:grid-cols-[0.42fr_0.58fr] md:items-center md:py-14">

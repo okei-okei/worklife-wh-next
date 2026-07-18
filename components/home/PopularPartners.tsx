@@ -24,7 +24,7 @@ const comparisons = [
 export default function PopularPartners() {
   return (
     <section
-      data-background-scene="information"
+      data-scene="information" data-background-scene="information"
       className="px-4 py-16 text-gray-900 md:px-6 md:py-24"
     >
       <div className="mx-auto max-w-6xl">

@@ -10,7 +10,7 @@ const metrics = [
 export default function FeatureSummary() {
   return (
     <section
-      data-background-scene="planning"
+      data-scene="life-plan" data-background-scene="life-plan"
       className="px-4 py-20 text-gray-900 md:px-6 md:py-32"
     >
       <div className="mx-auto max-w-6xl">

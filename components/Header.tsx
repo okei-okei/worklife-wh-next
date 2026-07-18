@@ -21,11 +21,11 @@ export default function Header() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [homeScene, setHomeScene] = useState("start");
+  const [homeScene, setHomeScene] = useState("hero");
 
   const isHome = pathname === "/";
   const isLightHomeScene =
-    isHome && ["planning", "prepare", "information"].includes(homeScene);
+    isHome && ["life-plan", "preparation", "information"].includes(homeScene);
   const isDarkHomeScene = isHome && !isLightHomeScene;
   const isTransparent = isDarkHomeScene && !isMenuOpen;
 

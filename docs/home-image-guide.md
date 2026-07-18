@@ -1,72 +1,54 @@
 # Home Image Guide
 
-WorkLife WH のホームページは、白い余白と大きな写真面を組み合わせる前提で設計しています。
-各ファイルは PC 用とスマホ用で別構図を想定し、`HomeImagePlane` から `picture` 要素で読み分けます。
+WorkLife WH のホームページでは、白い余白と大きな写真面を組み合わせるため、各シーン専用の PC / mobile 画像を使用します。
+同じ画像のコピー、反転、色変更、単純トリミングによる使い回しは避けています。
 
-## Final Assets
+## Image Usage
 
-- `public/images/home/hero-desktop.webp`
-  - 用途: Hero
-  - 構図: 左側にコピーを置ける余白、右側にニュージーランドの街と自然。
-- `public/images/home/hero-mobile.webp`
-  - 用途: Hero mobile
-  - 構図: 上部に景色、下部にコピーを置ける縦長構図。
-- `public/images/home/jobs-desktop.webp`
-  - 用途: 求人セクション
-  - 構図: カフェ、レストラン、街で働く日常感。
-- `public/images/home/jobs-mobile.webp`
-  - 用途: 求人セクション mobile
-  - 構図: 顔の大きなアップを避け、職場の空気が分かる縦長構図。
-- `public/images/home/planner-desktop.webp`
-  - 用途: ライフプランナー
-  - 構図: 住宅街、道路、通勤を想起する風景。地図画像にはしない。
-- `public/images/home/planner-mobile.webp`
-  - 用途: ライフプランナー mobile
-  - 構図: 住まいと移動の距離感が伝わる縦長構図。
-- `public/images/home/preparation-desktop.webp`
-  - 用途: 渡航準備
-  - 構図: 空港、スーツケース、荷物、新生活用品。
-- `public/images/home/preparation-mobile.webp`
-  - 用途: 渡航準備 mobile
-  - 構図: 写真の下に短いコピーを置ける縦長構図。
-- `public/images/home/articles-desktop.webp`
-  - 用途: 役立ち情報
-  - 構図: 明るいカフェ、机、情報収集の雰囲気。
-- `public/images/home/articles-mobile.webp`
-  - 用途: 役立ち情報 mobile
-  - 構図: 文字が読みやすい明るい縦長構図。
-- `public/images/home/final-desktop.webp`
-  - 用途: 最終 CTA
-  - 構図: 海、山、広い空。未来を感じる落ち着いた夕景。
-- `public/images/home/final-mobile.webp`
-  - 用途: 最終 CTA mobile
-  - 構図: 下部または上部にCTAを置ける縦長構図。
+| Scene | Desktop | Mobile | Theme |
+|---|---|---|---|
+| Hero | `public/images/home/hero-desktop.webp` | `public/images/home/hero-mobile.webp` | ニュージーランドの都市と自然、広い空、海外生活の始まり |
+| 求人 | `public/images/home/jobs-desktop.webp` | `public/images/home/jobs-mobile.webp` | カフェ、現地の職場、都市の日常 |
+| 物件 | `public/images/home/properties-desktop.webp` | `public/images/home/properties-mobile.webp` | ニュージーランドの住宅街、シェアハウスや住居 |
+| お試し収支シミュレーション | `public/images/home/simulator-desktop.webp` | `public/images/home/simulator-mobile.webp` | 住宅地と都市、道路、通勤と生活費 |
+| 渡航準備 | `public/images/home/preparation-desktop.webp` | `public/images/home/preparation-mobile.webp` | スーツケース、渡航前の準備 |
+| 役立ち情報 | `public/images/home/articles-desktop.webp` | `public/images/home/articles-mobile.webp` | カフェ、机、情報収集 |
+| 比較・おすすめ | `public/images/home/partners-desktop.webp` | `public/images/home/partners-mobile.webp` | スマートフォン、カード決済、通信や送金の比較 |
+| 最終CTA | `public/images/home/final-desktop.webp` | `public/images/home/final-mobile.webp` | ニュージーランドの夕景、海、山、広い空 |
 
-## Placeholder Assets To Replace
+## Generation Notes
 
-次の画像はファイルパスとレイアウト検証用に用意した仮素材です。
-公開前に、テーマに合う別写真へ差し替えるのが理想です。
+- 画像は Codex の built-in `image_gen` でシーンごとに個別生成しました。
+- 各画像は WebP に変換し、PC 用は約 1672px 幅、mobile 用は約 852-864px 幅に最適化しています。
+- 画像内に企業ロゴ、読めるテキスト、透かし、A8.net広告コードは含めていません。
+- Footer、法務リンク、既存データ、Supabase、migration、API は変更していません。
 
-- `public/images/home/properties-desktop.webp`
-  - TODO: ニュージーランドの住宅街、シェアハウス、家の外観が分かる写真へ差し替え。
-- `public/images/home/properties-mobile.webp`
-  - TODO: 住宅街や住居の縦長写真へ差し替え。
-- `public/images/home/partners-desktop.webp`
-  - TODO: スマートフォン、カード決済、保険・送金・銀行を連想できる生活小物写真へ差し替え。
-- `public/images/home/partners-mobile.webp`
-  - TODO: サービス比較の文脈に合う明るい縦長写真へ差し替え。
+## Duplicate Check
 
-## Tone
+`sha1` はファイル一致確認、`dhash` は簡易的な見た目の近さ確認です。
+今回の16画像では同一 `dhash` はありません。
 
-- 自然光
-- 彩度は控えめ
-- 白、ベージュ、グレー、自然な緑を含む
-- 強い青空加工やHDR感は避ける
-- 観光広告よりも生活感を優先
+| file | size | bytes | sha1 | dhash |
+|---|---:|---:|---|---|
+| `hero-desktop.webp` | 1672x941 | 131082 | `e3a46fc5d286` | `ffffffffbffff921` |
+| `hero-mobile.webp` | 864x1821 | 100146 | `16817e3ccca7` | `263cdcdaffff571f` |
+| `jobs-desktop.webp` | 1672x941 | 66878 | `1317e27061b0` | `c74767a767e78fc7` |
+| `jobs-mobile.webp` | 864x1821 | 88018 | `3d9d63aa7feb` | `1b1b7b3f39040000` |
+| `properties-desktop.webp` | 1672x941 | 233894 | `53270b0999ac` | `3337b76fef2b3e04` |
+| `properties-mobile.webp` | 864x1821 | 153182 | `357363f0fc21` | `403831875899d99a` |
+| `simulator-desktop.webp` | 1672x941 | 238772 | `d701130d6448` | `7fe6e50e55112a27` |
+| `simulator-mobile.webp` | 852x1846 | 182172 | `fe516e143223` | `f0f038d163677ffd` |
+| `preparation-desktop.webp` | 1672x941 | 57802 | `12a0acc381c0` | `061e0d0c0c1d3e6b` |
+| `preparation-mobile.webp` | 864x1821 | 67448 | `533ecb2ae52a` | `8f4f0ff38f3d3832` |
+| `articles-desktop.webp` | 1672x941 | 87316 | `f8441c1abfc1` | `06268e5e0e0f3b0e` |
+| `articles-mobile.webp` | 864x1821 | 88112 | `73c1f6b28489` | `ef3fbf2f369ff9df` |
+| `partners-desktop.webp` | 1672x941 | 86594 | `89aa40d94e74` | `39381e1e87cdad95` |
+| `partners-mobile.webp` | 864x1821 | 50190 | `42214afc939a` | `79fb871fdb2d1682` |
+| `final-desktop.webp` | 1672x941 | 169210 | `c0728b114e21` | `fcfdff9ffffffcf9` |
+| `final-mobile.webp` | 864x1821 | 106810 | `1fadbbe2d9c6` | `7ffffffefffffff9` |
 
-## Layout Safety
+## Route Notes
 
-- 写真は小さなカードとして並べない
-- 各シーンで画面幅またはセクション幅いっぱいに近い写真面として扱う
-- 文字は写真上に詰め込まず、白い余白側に置く
-- 差し替え後も `object-fit: cover` で崩れない構造にする
+- ホームの一般ユーザー向け収支CTAは `/simulator` へ接続します。
+- `/simulator` は未ログインで利用でき、入力値は React state の一時試算として扱われます。
+- 保存求人・保存物件と連携する保存型ライフプランナー `/planner` は変更していません。

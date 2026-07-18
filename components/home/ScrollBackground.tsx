@@ -6,7 +6,7 @@ const scenes = [
   "hero",
   "jobs",
   "properties",
-  "planner",
+  "simulator",
   "preparation",
   "articles",
   "partners",

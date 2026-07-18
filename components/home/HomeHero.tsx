@@ -1,5 +1,6 @@
 import { getImageProps } from "next/image";
 import Link from "next/link";
+import HomeHeroScrollEffect from "@/components/home/HomeHeroScrollEffect";
 import HomeStartButton from "@/components/home/HomeStartButton";
 
 export default function HomeHero() {
@@ -27,18 +28,26 @@ export default function HomeHero() {
     mobileImageProps;
 
   return (
-    <section className="relative min-h-[640px] overflow-hidden bg-slate-950 px-4 pb-8 pt-24 text-white md:min-h-[760px] md:px-6 md:pb-16 md:pt-28">
+    <section
+      data-home-hero
+      className="relative min-h-[640px] overflow-hidden bg-slate-950 px-4 pb-8 pt-24 text-white md:min-h-[760px] md:px-6 md:pb-16 md:pt-28"
+    >
+      <HomeHeroScrollEffect />
       <picture className="absolute inset-0 block">
         <source media="(min-width: 768px)" srcSet={desktopSrcSet} />
         <source media="(max-width: 767px)" srcSet={mobileSrcSet} />
         <img
           {...mobileImageRest}
+          data-home-hero-image
           alt={mobileAlt}
-          className="h-full w-full object-cover object-center"
+          className="h-full w-full scale-[1.035] object-cover object-center transition-transform duration-300 motion-reduce:scale-100 motion-reduce:transition-none"
         />
       </picture>
       <div className="absolute inset-0 bg-slate-950/60 md:bg-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/55 via-slate-950/45 to-slate-950/70 md:bg-gradient-to-r md:from-slate-950/75 md:via-slate-950/40 md:to-slate-950/15" />
+      <div
+        data-home-hero-overlay
+        className="absolute inset-0 bg-gradient-to-b from-slate-950/55 via-slate-950/45 to-slate-950/70 md:bg-gradient-to-r md:from-slate-950/75 md:via-slate-950/40 md:to-slate-950/15"
+      />
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" />
 
       <div className="pointer-events-none absolute right-[-1.5rem] top-20 z-10 hidden select-none text-right text-7xl font-semibold leading-none tracking-tight text-white/10 lg:block xl:text-8xl">
@@ -50,9 +59,12 @@ export default function HomeHero() {
       </div>
 
       <div className="relative z-10 mx-auto grid min-h-[520px] max-w-6xl gap-6 md:min-h-[616px] md:grid-cols-[minmax(0,600px)_1fr] md:items-center">
-        <div className="min-w-0 rounded-3xl border border-white/15 bg-slate-950/34 p-4 shadow-2xl shadow-slate-950/20 md:bg-transparent md:p-0 md:shadow-none">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200 md:text-sm">
-            NEW ZEALAND WORKING HOLIDAY
+        <div
+          data-home-hero-content
+          className="min-w-0 rounded-3xl border border-white/15 bg-slate-950/34 p-4 shadow-2xl shadow-slate-950/20 transition-transform duration-300 motion-reduce:transition-none md:bg-transparent md:p-0 md:shadow-none"
+        >
+          <p className="text-xs font-bold text-emerald-200 md:text-sm">
+            ニュージーランド・ワーキングホリデー
           </p>
           <p className="mt-3 text-4xl font-black leading-tight text-white drop-shadow md:text-7xl">
             海外生活を、
@@ -80,13 +92,13 @@ export default function HomeHero() {
 
           <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold">
             <Link href="/jobs" className="text-blue-100 hover:text-white">
-              求人を見る
+              ニュージーランドの求人を見る
             </Link>
             <Link
               href="/properties"
               className="text-emerald-100 hover:text-white"
             >
-              物件を見る
+              ニュージーランドの物件を見る
             </Link>
           </div>
         </div>
@@ -111,6 +123,14 @@ export default function HomeHero() {
             ))}
           </div>
         </div>
+      </div>
+      <div
+        data-home-hero-scroll
+        className="absolute bottom-7 left-1/2 z-10 hidden -translate-x-1/2 text-center text-[10px] font-black uppercase tracking-[0.28em] text-white/65 transition-opacity duration-300 md:block"
+        aria-hidden="true"
+      >
+        Scroll
+        <span className="mx-auto mt-2 block h-8 w-px bg-white/45" />
       </div>
     </section>
   );

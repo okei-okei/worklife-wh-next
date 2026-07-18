@@ -6,7 +6,7 @@ const comparisons = [
     label: "Mobile",
     title: "SIM・eSIM",
     description: "渡航前後に使える通信手段を比較できます。",
-    points: ["データ容量", "出発前購入", "日本語対応"],
+    points: ["データ容量", "出発前購入"],
     href: "/partners/sim-esim",
   },
   {
@@ -14,7 +14,7 @@ const comparisons = [
     label: "Insurance",
     title: "海外保険",
     description: "医療費や補償内容を契約前に整理できます。",
-    points: ["医療補償", "ワーホリ対応", "請求方法"],
+    points: ["医療補償", "ワーホリ対応"],
     href: "/partners/insurance",
   },
   {
@@ -22,14 +22,14 @@ const comparisons = [
     label: "Money",
     title: "海外送金",
     description: "手数料、為替レート、着金速度を比較できます。",
-    points: ["手数料", "着金速度", "アプリ対応"],
+    points: ["手数料", "着金速度"],
     href: "/partners/money-transfer",
   },
 ];
 
 export default function PopularPartners() {
   return (
-    <section className="bg-gray-50 px-4 py-9 md:px-6 md:py-16">
+    <section className="bg-emerald-50 px-4 py-9 md:px-6 md:py-16">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-end justify-between gap-3">
           <div>
@@ -37,14 +37,17 @@ export default function PopularPartners() {
               COMPARE SERVICES
             </p>
             <h2 className="mt-2 text-xl font-black text-gray-900 md:text-4xl">
-              渡航前後に役立つサービスを比較
+              渡航前後のサービスを比較する
             </h2>
+            <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-gray-600">
+              通信、保険、お金の準備を分かりやすく整理しています。
+            </p>
           </div>
           <Link
             href="/partners"
             className="shrink-0 text-xs font-black text-blue-700 md:text-sm"
           >
-            比較サービスをすべて見る
+            SIM・保険・海外送金を比較する
           </Link>
         </div>
 

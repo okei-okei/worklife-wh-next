@@ -20,7 +20,7 @@ export default function ExperienceTrust() {
             実際の海外生活をもとに発信
           </h2>
           <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-gray-200 md:text-base md:leading-7">
-            WorkLife WH編集部が、ニュージーランドでのワーキングホリデー経験と公式情報をもとに、仕事・住まい・生活情報を継続的に更新しています。
+            WorkLife WH編集部が、ニュージーランドでのワーホリ経験と公式情報をもとに、仕事・住まい・生活情報を更新しています。
           </p>
           <div className="mt-5 grid gap-2 sm:grid-cols-3">
             {["実体験", "公式情報", "継続更新"].map((item) => (

@@ -3,7 +3,16 @@ import Link from "next/link";
 export default function HomeFinalCTA() {
   return (
     <section className="bg-gray-50 px-4 py-9 md:px-6 md:py-16">
-      <div className="mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-gray-900 p-5 text-white md:p-9">
+      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-gray-900 p-5 text-white md:p-9">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-22"
+          style={{
+            backgroundImage: "url('/images/home/hero-desktop.webp')",
+          }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-gray-950/74" aria-hidden="true" />
+        <div className="relative">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.24em] text-emerald-300">
@@ -32,6 +41,7 @@ export default function HomeFinalCTA() {
           <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/35 md:text-xs">
             WorkLife WH / Jobs / Homes / Planning / Real Guides
           </p>
+        </div>
         </div>
       </div>
     </section>

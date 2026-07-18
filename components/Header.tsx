@@ -7,7 +7,6 @@ import { trackMetric } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 
 const navigationItems = [
-  { href: "/", label: "ホーム" },
   { href: "/jobs", label: "求人" },
   { href: "/properties", label: "物件" },
   { href: "/planner", label: "ライフプランナー" },

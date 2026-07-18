@@ -3,7 +3,7 @@ import FeatureSummary from "@/components/home/FeatureSummary";
 import GoalNavigation from "@/components/home/GoalNavigation";
 import HomeFinalCTA from "@/components/home/HomeFinalCTA";
 import HomeHero from "@/components/home/HomeHero";
-import HomeSteps from "@/components/home/HomeSteps";
+import HomeValueStatement from "@/components/home/HomeValueStatement";
 import PopularArticles from "@/components/home/PopularArticles";
 import PopularPartners from "@/components/home/PopularPartners";
 import JsonLd from "@/components/seo/JsonLd";
@@ -78,7 +78,7 @@ export default function Home() {
       <HomeHero />
       <GoalNavigation />
       <FeatureSummary />
-      <HomeSteps />
+      <HomeValueStatement />
       <PopularArticles articles={popularArticles} />
       <PopularPartners />
       <ExperienceTrust />

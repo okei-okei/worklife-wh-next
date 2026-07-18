@@ -13,12 +13,15 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
             <h2 className="mt-2 text-xl font-black text-gray-900 md:text-4xl">
               ニュージーランド生活の役立ち情報
             </h2>
+            <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-gray-600">
+              現地での経験をもとに、準備や暮らしのポイントをまとめています。
+            </p>
           </div>
           <Link
             href="/articles"
             className="shrink-0 text-xs font-black text-blue-700 md:text-sm"
           >
-            記事一覧
+            ニュージーランド生活の記事を読む
           </Link>
         </div>
 

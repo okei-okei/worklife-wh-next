@@ -30,12 +30,12 @@ export default function FeatureSummary() {
             TRIAL SIMULATION
           </p>
           <h2 className="mt-3 text-2xl font-black leading-tight md:text-5xl">
-            仕事と住まいの
+            海外生活を
             <br />
-            収支を試してみる
+            シミュレーションする
           </h2>
           <p className="mt-4 max-w-md text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
-            収入、家賃、生活費を入力して、毎月の収支を確認できます。
+            公開求人と物件を選び、毎月の収入・家賃・生活費を試算できます。
           </p>
 
         <div className="mt-7 grid grid-cols-2 border-y border-[#D8D8D4]">
@@ -60,10 +60,10 @@ export default function FeatureSummary() {
             href="/simulator"
             className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#1E4D43] px-4 py-2 text-sm font-black text-white transition hover:bg-[#173d35] sm:w-auto"
           >
-            収支をお試し計算する
+            海外生活を試算する
           </Link>
           <p className="text-xs font-semibold text-[#666666]">
-            登録不要・保存なし
+            登録不要・お試し計算・保存なし
           </p>
         </div>
       </div>

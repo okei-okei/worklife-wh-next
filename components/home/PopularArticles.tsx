@@ -7,17 +7,17 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
     <section
       data-scene="articles"
       data-background-scene="articles"
-      className="relative overflow-hidden bg-white px-4 py-16 text-[#171717] md:px-6 md:py-28"
+      className="relative overflow-hidden bg-white px-4 py-14 text-[#171717] md:px-6 md:py-24"
     >
       <HomeImagePlane
         desktopSrc="/images/home/articles-desktop.webp"
         mobileSrc="/images/home/articles-mobile.webp"
         alt="落ち着いてニュージーランド生活情報を確認する雰囲気"
-        sizes="(min-width: 768px) 46vw, 100vw"
-        className="right-[-8vw] top-0 h-[48svh] w-[94vw] opacity-95 md:right-0 md:top-[12%] md:h-[70svh] md:w-[52vw]"
-        imageClassName="object-[48%_50%]"
+        sizes="(min-width: 768px) 44vw, 100vw"
+        className="right-[-6vw] top-0 h-[42svh] w-[96vw] opacity-95 md:right-0 md:top-[10%] md:h-[50svh] md:w-[44vw]"
+        imageClassName="object-[56%_48%]"
       />
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[50svh] md:min-h-[88svh] md:grid-cols-[0.44fr_0.56fr] md:items-start md:pt-0">
+      <div className="mx-auto grid max-w-6xl gap-6 pt-[44svh] md:min-h-[72svh] md:grid-cols-[0.38fr_0.62fr] md:items-start md:gap-8 md:pt-0">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <div className="flex items-end justify-between gap-3 md:block">
             <div>
@@ -28,7 +28,7 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
                 ニュージーランド生活の役立ち情報
               </h2>
               <p className="mt-3 max-w-md text-sm font-medium leading-6 text-[#666666]">
-                現地での経験をもとに、準備や暮らしのポイントをまとめています。
+                現地経験をもとに、仕事・住まい・生活のポイントをまとめています。
               </p>
             </div>
             <Link
@@ -40,28 +40,22 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
           </div>
         </div>
 
-        <div className="relative z-10 divide-y divide-[#D8D8D4] border-y border-[#D8D8D4] md:mt-[54svh]">
-          {articles.map((article, index) => (
+        <div className="relative z-10 grid gap-3 md:mt-[34svh] md:grid-cols-[1.15fr_0.85fr] md:gap-5">
+          {articles.slice(0, 1).map((article) => (
             <Link
               key={article.slug}
               href={`/articles/${article.slug}`}
-              className="group block py-4 transition hover:bg-[#F7F7F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] md:px-3"
+              className="group block border-y border-[#D8D8D4] py-4 transition hover:bg-[#F7F7F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] md:border md:p-5"
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[10px] font-black text-[#315C55]">
                   {article.category}
                 </p>
                 <p className="font-serif text-2xl italic leading-none text-[#235347]/25">
-                  0{index + 1}
+                  01
                 </p>
               </div>
-              <h3
-                className={`line-clamp-2 font-black text-[#171717] ${
-                  index === 0
-                    ? "mt-2 text-lg leading-6 md:text-2xl md:leading-8"
-                    : "mt-1 text-base leading-6"
-                }`}
-              >
+              <h3 className="mt-2 line-clamp-2 text-lg font-black leading-6 text-[#171717] md:text-2xl md:leading-8">
                 {article.title}
               </h3>
               <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-[#666666]">
@@ -77,6 +71,35 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
               </div>
             </Link>
           ))}
+          <div className="divide-y divide-[#D8D8D4] border-y border-[#D8D8D4] md:border">
+            {articles.slice(1, 3).map((article, index) => (
+              <Link
+                key={article.slug}
+                href={`/articles/${article.slug}`}
+                className="group block px-0 py-4 transition hover:bg-[#F7F7F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] md:px-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black text-[#315C55]">
+                      {article.category}
+                    </p>
+                    <h3 className="mt-1 line-clamp-2 text-base font-black leading-6 text-[#171717]">
+                      {article.title}
+                    </h3>
+                    <p className="mt-3 text-xs font-bold text-[#666666]">
+                      更新日: {article.updated_at?.slice(0, 10) || "随時更新"}
+                    </p>
+                  </div>
+                  <p className="shrink-0 font-serif text-2xl italic leading-none text-[#235347]/25">
+                    0{index + 2}
+                  </p>
+                </div>
+                <p className="mt-2 text-xs font-black text-[#315C55] transition group-hover:translate-x-0.5">
+                  記事を読む
+                </p>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </section>

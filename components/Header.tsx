@@ -24,10 +24,10 @@ export default function Header() {
   const [homeScene, setHomeScene] = useState("hero");
 
   const isHome = pathname === "/";
-  const isLightHomeScene =
-    isHome && ["life-plan", "preparation", "information"].includes(homeScene);
-  const isDarkHomeScene = isHome && !isLightHomeScene;
-  const isTransparent = isDarkHomeScene && !isMenuOpen;
+  const isHomeHeader = isHome && !isMenuOpen;
+  const isMutedHomeScene =
+    isHomeHeader && ["preparation", "information"].includes(homeScene);
+  const isTransparent = false;
 
   useEffect(() => {
     const loadUser = async () => {
@@ -75,10 +75,10 @@ export default function Header() {
     pathname === href
       ? isTransparent
         ? "whitespace-nowrap rounded-lg bg-white/15 px-3 py-2 text-sm font-bold text-white"
-        : "whitespace-nowrap rounded-lg bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700"
+        : "whitespace-nowrap rounded-lg bg-[#F7F7F5] px-3 py-2 text-sm font-bold text-[#235347]"
       : isTransparent
         ? "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold text-white/90 hover:bg-white/10 hover:text-white"
-        : "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-100";
+        : "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold text-gray-900 hover:bg-[#F7F7F5]";
 
   const trackHeaderLink = (href: string, label: string) => {
     if (href === "/planner") {
@@ -107,14 +107,18 @@ export default function Header() {
       className={`fixed left-0 top-0 z-[10000] h-16 w-full transition-colors ${
         isTransparent
           ? "border-b border-white/10 bg-transparent"
-          : "border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur"
+          : isMutedHomeScene
+            ? "border-b border-[#D8D8D4]/80 bg-[#F7F7F5]/90 backdrop-blur"
+            : isHomeHeader
+              ? "border-b border-[#D8D8D4]/80 bg-white/90 backdrop-blur"
+            : "border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur"
       }`}
     >
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-3 px-4 md:px-6">
         <Link
           href="/"
           className={`min-w-0 shrink-0 whitespace-nowrap text-xl font-bold md:text-2xl ${
-            isTransparent ? "text-white" : "text-blue-700"
+            isTransparent ? "text-white" : "text-[#235347]"
           }`}
         >
           WorkLife WH
@@ -149,7 +153,7 @@ export default function Header() {
                 className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold ${
                   isTransparent
                     ? "text-white hover:bg-white/10"
-                    : "text-gray-900 hover:bg-gray-100"
+                    : "text-gray-900 hover:bg-[#F7F7F5]"
                 }`}
               >
                 ログイン
@@ -160,7 +164,7 @@ export default function Header() {
                 className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold ${
                   isTransparent
                     ? "bg-white text-gray-950"
-                    : "bg-blue-600 text-white"
+                    : "bg-[#1E4D43] text-white"
                 }`}
               >
                 新規登録
@@ -225,7 +229,7 @@ export default function Header() {
                       trackRegisterClick("新規登録");
                       setIsMenuOpen(false);
                     }}
-                    className="w-full whitespace-nowrap rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-bold text-white"
+                    className="w-full whitespace-nowrap rounded-lg bg-[#1E4D43] px-4 py-3 text-center text-sm font-bold text-white"
                   >
                     新規登録
                   </Link>

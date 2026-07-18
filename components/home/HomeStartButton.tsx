@@ -37,7 +37,7 @@ export default function HomeStartButton() {
           },
         });
       }}
-      className="inline-flex w-full items-center justify-center rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 sm:w-auto md:px-5 md:text-base"
+      className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#1E4D43] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#173d35] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E4D43] sm:w-auto md:px-6"
     >
       {href === "/mypage"
         ? "マイページで保存内容を確認する"

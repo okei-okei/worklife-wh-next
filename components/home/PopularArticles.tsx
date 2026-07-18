@@ -1,69 +1,77 @@
 import Link from "next/link";
+import HomeImagePlane from "@/components/home/HomeImagePlane";
 import type { Article } from "@/lib/articles";
 
 export default function PopularArticles({ articles }: { articles: Article[] }) {
   return (
     <section
-      data-scene="information" data-background-scene="information"
-      className="px-4 py-16 text-gray-900 md:px-6 md:py-24"
+      data-scene="information"
+      data-background-scene="information"
+      className="relative overflow-hidden bg-white px-4 py-16 text-[#171717] md:px-6 md:py-28"
     >
-      <div className="mx-auto max-w-6xl">
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-blue-700">
-              USEFUL INFORMATION
-            </p>
-            <h2 className="mt-2 text-xl font-black text-gray-900 md:text-4xl">
-              ニュージーランド生活の役立ち情報
-            </h2>
-            <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-gray-600">
-              現地での経験をもとに、準備や暮らしのポイントをまとめています。
-            </p>
+      <HomeImagePlane
+        desktopSrc="/images/home/information-desktop.webp"
+        mobileSrc="/images/home/information-mobile.webp"
+        alt="落ち着いてニュージーランド生活情報を確認する雰囲気"
+        sizes="(min-width: 768px) 46vw, 100vw"
+        className="right-[-8vw] top-0 h-[26svh] w-[94vw] opacity-95 md:right-0 md:top-[14%] md:h-[46svh] md:w-[46vw]"
+        imageClassName="object-[48%_50%]"
+      />
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[28svh] md:grid-cols-[0.48fr_0.52fr] md:items-start md:pt-0">
+        <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
+          <div className="flex items-end justify-between gap-3 md:block">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
+                USEFUL INFORMATION
+              </p>
+              <h2 className="mt-2 text-2xl font-black leading-tight text-[#171717] md:text-4xl">
+                ニュージーランド生活の役立ち情報
+              </h2>
+              <p className="mt-3 max-w-md text-sm font-medium leading-6 text-[#666666]">
+                現地での経験をもとに、準備や暮らしのポイントをまとめています。
+              </p>
+            </div>
+            <Link
+              href="/articles"
+              className="shrink-0 text-xs font-black text-[#315C55] md:mt-5 md:inline-block md:text-sm"
+            >
+              ニュージーランド生活の記事を読む
+            </Link>
           </div>
-          <Link
-            href="/articles"
-            className="shrink-0 text-xs font-black text-blue-700 md:text-sm"
-          >
-            ニュージーランド生活の記事を読む
-          </Link>
         </div>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-[1.15fr_0.85fr] md:gap-4">
+        <div className="relative z-10 divide-y divide-[#D8D8D4] border-y border-[#D8D8D4] md:mt-[42svh]">
           {articles.map((article, index) => (
             <Link
               key={article.slug}
               href={`/articles/${article.slug}`}
-              className={`group transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 motion-reduce:hover:translate-y-0 ${
-                index === 0
-                  ? "rounded-[1.25rem_4rem_1.25rem_1.25rem] border border-gray-200 bg-white/82 p-4 shadow-sm backdrop-blur md:row-span-2 md:p-6"
-                  : "border-t border-gray-300 py-4"
-              }`}
+              className="group block py-4 transition hover:bg-[#F7F7F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] md:px-3"
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black text-blue-700">
+                <p className="text-[10px] font-black text-[#315C55]">
                   {article.category}
                 </p>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
-                  Article
+                <p className="font-serif text-2xl italic leading-none text-[#235347]/25">
+                  0{index + 1}
                 </p>
               </div>
               <h3
-                className={`mt-3 line-clamp-2 font-black text-gray-900 ${
+                className={`line-clamp-2 font-black text-[#171717] ${
                   index === 0
-                    ? "text-lg leading-6 md:text-2xl md:leading-8"
-                    : "text-base leading-6"
+                    ? "mt-2 text-lg leading-6 md:text-2xl md:leading-8"
+                    : "mt-1 text-base leading-6"
                 }`}
               >
                 {article.title}
               </h3>
-              <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-700">
+              <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-[#666666]">
                 {article.excerpt}
               </p>
               <div className="mt-4 flex items-center justify-between gap-3">
-                <p className="text-xs font-bold text-gray-600">
+                <p className="text-xs font-bold text-[#666666]">
                   更新日: {article.updated_at?.slice(0, 10) || "随時更新"}
                 </p>
-                <p className="text-xs font-black text-blue-700 transition group-hover:translate-x-0.5 md:text-sm">
+                <p className="text-xs font-black text-[#315C55] transition group-hover:translate-x-0.5 md:text-sm">
                   記事を読む
                 </p>
               </div>

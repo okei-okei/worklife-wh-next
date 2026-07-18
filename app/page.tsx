@@ -70,7 +70,7 @@ export default function Home() {
   };
 
   return (
-    <main className="-mt-16 min-h-screen min-w-0 overflow-x-hidden bg-slate-950 text-gray-900">
+    <main className="min-h-screen min-w-0 overflow-x-hidden bg-white text-[#171717]">
       <JsonLd data={organizationJsonLd} />
       <JsonLd data={websiteJsonLd} />
       <JsonLd

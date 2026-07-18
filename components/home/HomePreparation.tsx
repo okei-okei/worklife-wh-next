@@ -1,42 +1,60 @@
 import Link from "next/link";
+import HomeImagePlane from "@/components/home/HomeImagePlane";
 
 const prepareItems = [
-  { label: "通信", href: "/partners/sim-esim" },
-  { label: "保険", href: "/partners/insurance" },
-  { label: "お金", href: "/partners/money-transfer" },
-  { label: "手続き", href: "/mypage/checklist" },
-  { label: "生活用品", href: "/partners/furniture" },
+  { number: "01", label: "SIM・通信", href: "/partners/sim-esim" },
+  { number: "02", label: "保険", href: "/partners/insurance" },
+  { number: "03", label: "銀行・海外送金", href: "/partners/money-transfer" },
+  { number: "04", label: "IRD・手続き", href: "/mypage/checklist" },
+  { number: "05", label: "生活用品", href: "/partners/furniture" },
 ];
 
 export default function HomePreparation() {
   return (
     <section
-      data-scene="preparation" data-background-scene="preparation"
-      className="px-4 py-20 text-gray-900 md:px-6 md:py-32"
+      data-scene="preparation"
+      data-background-scene="preparation"
+      className="relative overflow-hidden bg-[#F7F7F5] px-4 py-16 text-[#171717] md:px-6 md:py-32"
     >
-      <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-[minmax(0,0.46fr)_minmax(0,0.54fr)] md:items-center">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-emerald-700">
+      <HomeImagePlane
+        desktopSrc="/images/home/preparation-desktop.webp"
+        mobileSrc="/images/home/preparation-mobile.webp"
+        alt="渡航準備を想起させる荷物と新生活の風景"
+        sizes="(min-width: 768px) 76vw, 100vw"
+        className="left-0 top-0 h-[30svh] w-full md:left-0 md:top-0 md:h-[48svh] md:w-[76vw]"
+        imageClassName="object-[50%_48%]"
+      />
+      <div className="pointer-events-none absolute right-4 top-[27svh] font-serif text-7xl italic leading-none text-[#235347]/10 md:right-[8vw] md:top-[39svh] md:text-[11rem]">
+        04
+      </div>
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[32svh] md:min-h-[70svh] md:grid-cols-[0.42fr_0.58fr] md:items-center md:pt-[22svh]">
+        <div className="relative z-10 bg-[#F7F7F5]/92 py-5 md:bg-transparent md:py-0">
+          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             PREPARATION
           </p>
           <h2 className="mt-3 text-2xl font-black leading-tight md:text-5xl">
-            準備を一つずつ進める
+            準備を、
+            <br />
+            一つずつ。
           </h2>
-          <p className="mt-4 max-w-lg text-sm font-semibold leading-6 text-gray-700 md:text-base md:leading-7">
+          <p className="mt-4 max-w-lg text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
             SIM、保険、銀行、IRD、生活用品を確認できます。
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {prepareItems.map((item, index) => (
+        <div className="relative z-10 grid gap-2 border-y border-[#D8D8D4] py-2 md:grid-cols-2 md:gap-x-6">
+          {prepareItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex min-h-14 items-center justify-between gap-3 rounded-full border border-gray-900/12 bg-white/72 px-4 py-3 text-sm font-black text-gray-900 backdrop-blur-sm transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${
-                index === 4 ? "col-span-2 sm:col-span-1" : ""
-              }`}
+              className="group flex min-h-12 items-center justify-between gap-3 border-b border-[#D8D8D4] py-2 text-sm font-black text-[#171717] transition last:border-b-0 hover:text-[#235347] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] md:min-h-14"
             >
-              <span>{item.label}</span>
+              <span className="flex items-center gap-3">
+                <span className="font-serif text-xl italic text-[#235347]/35">
+                  {item.number}
+                </span>
+                <span>{item.label}</span>
+              </span>
               <span className="transition group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0">
                 →
               </span>

@@ -41,7 +41,7 @@ export default function HomeStartButton() {
     >
       {href === "/mypage"
         ? "マイページで保存内容を確認する"
-        : "無料で生活設計を始める"}
+        : "生活設計を始める"}
     </Link>
   );
 }

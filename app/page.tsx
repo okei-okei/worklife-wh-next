@@ -15,10 +15,10 @@ import { siteConfig } from "@/lib/siteConfig";
 import { staticArticles } from "@/lib/constants/articles";
 
 const homeDescription =
-  "ニュージーランドのワーホリで必要な仕事探し、家探し、生活費、SIM・eSIM、銀行、海外送金、チェックリスト、ライフプランナーをまとめて利用できる総合サービスです。";
+  "ニュージーランドのワーホリで必要な仕事探し、家探し、生活費、SIM、銀行、海外送金、渡航準備をまとめて支援するサービスです。";
 
 export const metadata = createPageMetadata({
-  title: "ニュージーランドワーホリの仕事・住まい・生活設計｜WorkLife WH",
+  title: "ニュージーランドワーホリの仕事・住まい・生活支援｜WorkLife WH",
   description: homeDescription,
   path: "/",
   keywords: [

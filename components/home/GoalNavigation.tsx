@@ -17,7 +17,7 @@ const goals = [
     description: "物件候補を見る",
     href: "/properties",
     shape:
-      "min-h-[164px] rounded-[999px] bg-emerald-200/18 col-span-1 justify-center text-center",
+      "min-h-[164px] rounded-t-[5rem] rounded-b-[1.5rem] bg-emerald-200/18 col-span-1",
   },
   {
     number: "03",
@@ -33,7 +33,7 @@ const goals = [
     description: "収支と通勤を見る",
     href: "/planner",
     shape:
-      "min-h-[128px] rounded-[1.5rem_4rem_1.5rem_1.5rem] bg-sky-200/18 col-span-2 md:col-span-1",
+      "min-h-[104px] rounded-full bg-sky-200/18 col-span-2 md:col-span-1",
   },
 ];
 

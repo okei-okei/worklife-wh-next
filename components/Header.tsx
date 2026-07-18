@@ -24,7 +24,9 @@ export default function Header() {
   const [homeScene, setHomeScene] = useState("start");
 
   const isHome = pathname === "/";
-  const isDarkHomeScene = isHome && homeScene !== "information";
+  const isLightHomeScene =
+    isHome && ["planning", "prepare", "information"].includes(homeScene);
+  const isDarkHomeScene = isHome && !isLightHomeScene;
   const isTransparent = isDarkHomeScene && !isMenuOpen;
 
   useEffect(() => {

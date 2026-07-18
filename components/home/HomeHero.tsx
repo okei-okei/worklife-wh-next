@@ -41,10 +41,21 @@ export default function HomeHero() {
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950/35 via-slate-950/45 to-slate-950/75 md:bg-gradient-to-r md:from-slate-950/80 md:via-slate-950/45 md:to-slate-950/10" />
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" />
 
+      <div className="pointer-events-none absolute right-[-1.5rem] top-20 z-10 hidden select-none text-right text-7xl font-semibold leading-none tracking-tight text-white/10 lg:block xl:text-8xl">
+        WORK.
+        <br />
+        HOME.
+        <br />
+        LIFE.
+      </div>
+
       <div className="relative z-10 mx-auto grid min-h-[536px] max-w-6xl gap-6 md:min-h-[552px] md:grid-cols-[minmax(0,620px)_1fr] md:items-center">
         <div className="min-w-0 rounded-3xl border border-white/15 bg-slate-950/28 p-4 shadow-2xl shadow-slate-950/20 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-0">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">
-            WorkLife WH
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200 md:text-sm">
+            NEW ZEALAND WORKING HOLIDAY PLATFORM
+          </p>
+          <p className="mt-3 text-sm font-black uppercase tracking-[0.22em] text-white/70 md:text-2xl">
+            REAL LIFE. REAL CHOICES.
           </p>
           <p className="mt-3 text-4xl font-black leading-tight text-white drop-shadow md:text-7xl">
             海外生活を、
@@ -55,7 +66,7 @@ export default function HomeHero() {
             ニュージーランドワーホリの仕事・住まい・生活を一つに
           </h1>
           <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-white/90 md:text-base md:leading-7">
-            仕事探し、家探し、生活費、渡航準備をまとめて管理。現地経験をもとに、あなたの海外生活を支えます。
+            仕事、住まい、生活費、渡航準備をまとめて管理。現地経験をもとに、海外生活の選択を支えます。
           </p>
 
           <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -81,8 +92,10 @@ export default function HomeHero() {
           </div>
         </div>
 
-        <div className="hidden justify-self-end rounded-3xl border border-white/20 bg-white/14 p-4 text-white shadow-2xl shadow-slate-950/20 md:block">
-          <p className="text-xs font-bold text-emerald-200">Plan Preview</p>
+        <div className="hidden w-full max-w-[310px] justify-self-end rounded-3xl border border-white/20 bg-white/14 p-4 text-white shadow-2xl shadow-slate-950/20 md:block">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">
+            Life Plan Mock
+          </p>
           <div className="mt-3 grid gap-2 text-sm font-bold">
             {[
               ["求人", "時給・勤務時間を保存"],

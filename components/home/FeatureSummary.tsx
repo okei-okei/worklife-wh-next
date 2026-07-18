@@ -2,27 +2,24 @@ import Link from "next/link";
 
 const features = [
   {
-    title: "求人と物件をまとめて保存",
-    description:
-      "気になる仕事と住まいを保存し、あとから条件を見直せます。",
+    title: "保存する",
+    description: "求人と物件を、気になった時に保存できます。",
     href: "/mypage",
     mark: "01",
     label: "SAVE",
     mock: ["Saved jobs", "Saved homes", "Checklist"],
   },
   {
-    title: "地図と生活費で比較",
-    description:
-      "通勤距離、家賃、収入を合わせて生活プランを確認できます。",
+    title: "比較する",
+    description: "住所、通勤時間、生活費をまとめて比較できます。",
     href: "/planner",
     mark: "02",
     label: "COMPARE",
     mock: ["Route 18 min", "Rent $260/w", "Balance +$420"],
   },
   {
-    title: "チェックリストで準備管理",
-    description:
-      "SIM、銀行、送金、保険など準備項目を整理できます。",
+    title: "準備する",
+    description: "渡航前後の手続きをチェックリストで管理できます。",
     href: "/mypage/checklist",
     mark: "03",
     label: "PREPARE",
@@ -40,7 +37,7 @@ export default function FeatureSummary() {
               WHAT YOU CAN DO
             </p>
             <h2 className="mt-2 text-xl font-black text-gray-900 md:text-4xl">
-              WorkLife WHでできること
+              仕事・住まい・準備をまとめて管理
             </h2>
           </div>
           <Link href="/mypage" className="text-sm font-black text-blue-700">

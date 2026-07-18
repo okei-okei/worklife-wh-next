@@ -8,10 +8,10 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.24em] text-blue-700">
-              REAL STORIES
+              USEFUL INFORMATION
             </p>
             <h2 className="mt-2 text-xl font-black text-gray-900 md:text-4xl">
-              人気の役立ち情報
+              ニュージーランド生活の役立ち情報
             </h2>
           </div>
           <Link
@@ -56,7 +56,7 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
                   更新日: {article.updated_at?.slice(0, 10) || "随時更新"}
                 </p>
                 <p className="text-xs font-black text-blue-700 transition group-hover:translate-x-0.5 md:text-sm">
-                  Read article
+                  記事を読む
                 </p>
               </div>
             </Link>

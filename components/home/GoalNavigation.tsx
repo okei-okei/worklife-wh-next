@@ -5,7 +5,7 @@ const goals = [
     number: "01",
     label: "FIND A JOB",
     title: "仕事を探す",
-    description: "公開求人を見る",
+    description: "ニュージーランドの求人を確認する",
     href: "/jobs",
     accent: "bg-blue-50 text-blue-700",
     mark: "J",
@@ -14,7 +14,7 @@ const goals = [
     number: "02",
     label: "FIND A HOME",
     title: "住まいを探す",
-    description: "公開物件を見る",
+    description: "公開物件から候補を探す",
     href: "/properties",
     accent: "bg-emerald-50 text-emerald-700",
     mark: "H",
@@ -23,7 +23,7 @@ const goals = [
     number: "03",
     label: "PREPARE",
     title: "渡航準備を進める",
-    description: "チェックリストへ",
+    description: "必要な手続きをチェックする",
     href: "/mypage/checklist",
     accent: "bg-sky-50 text-sky-700",
     mark: "C",
@@ -31,8 +31,8 @@ const goals = [
   {
     number: "04",
     label: "COMPARE",
-    title: "仕事と住まいを比較する",
-    description: "生活プランを確認",
+    title: "生活プランを比較する",
+    description: "仕事・住まい・生活費を考える",
     href: "/planner",
     accent: "bg-teal-50 text-teal-700",
     mark: "P",
@@ -59,7 +59,7 @@ export default function GoalNavigation() {
             <Link
               key={goal.href}
               href={goal.href}
-              className="group flex min-h-[136px] flex-col rounded-3xl border border-gray-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 motion-reduce:hover:translate-y-0 md:min-h-[170px] md:p-4"
+              className="group flex min-h-[136px] flex-col rounded-3xl border border-gray-200 bg-white p-3 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 motion-reduce:hover:translate-y-0 md:min-h-[176px] md:p-5 even:bg-gray-50"
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="text-3xl font-black leading-none text-gray-100 md:text-5xl">

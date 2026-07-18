@@ -2,22 +2,22 @@ const steps = [
   {
     step: "STEP 01",
     label: "SAVE",
-    title: "仕事と住まいを保存する",
-    description: "気になる求人と物件を、まずは候補として残します。",
+    title: "候補を保存する",
+    description: "仕事と住まいの候補をまとめます。",
     className: "bg-white",
   },
   {
     step: "STEP 02",
     label: "COMPARE",
-    title: "通勤時間と生活費を比較する",
-    description: "距離、家賃、収入を並べて現実的に比べます。",
+    title: "条件を比較する",
+    description: "通勤時間と毎月の収支を確認します。",
     className: "bg-blue-50",
   },
   {
     step: "STEP 03",
     label: "DECIDE",
-    title: "自分に合う生活プランを決める",
-    description: "仕事と住まいを別々にせず、暮らしとして判断します。",
+    title: "生活プランを決める",
+    description: "自分に合う仕事と住まいの組み合わせを選びます。",
     className: "bg-emerald-50",
   },
 ];
@@ -27,10 +27,10 @@ export default function HomeSteps() {
     <section className="bg-white px-4 py-8 md:px-6 md:py-16">
       <div className="mx-auto max-w-6xl">
         <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
-          LIFE PLANNING FLOW
+          LIFE PLANNING
         </p>
         <h2 className="mt-2 text-xl font-black text-gray-900 md:text-4xl">
-          海外生活を整える3ステップ
+          海外生活を決めるまでの3ステップ
         </h2>
         <div className="mt-5 grid gap-3 md:grid-cols-3">
           {steps.map((step) => (

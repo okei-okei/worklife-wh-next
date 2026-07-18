@@ -16,9 +16,12 @@ export default function HomeFinalCTA() {
             </h2>
           </div>
           <p className="max-w-md text-sm font-medium leading-6 text-gray-200 md:text-base md:leading-7">
-            求人、物件、通勤時間、生活費をまとめて比較し、自分に合う生活プランを確認できます。
+            求人、物件、通勤時間、生活費をまとめて比較し、自分に合う海外生活を見つけましょう。
           </p>
         </div>
+        <p className="mt-5 text-xs font-bold text-emerald-300">
+          無料で利用できます
+        </p>
         <Link
           href="/planner"
           className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-2.5 text-sm font-black text-gray-900 transition hover:-translate-y-0.5 hover:bg-gray-100 sm:w-auto"

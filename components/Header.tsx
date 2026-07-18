@@ -8,11 +8,11 @@ import { supabase } from "@/lib/supabase";
 
 const navigationItems = [
   { href: "/", label: "ホーム" },
-  { href: "/jobs", label: "仕事" },
+  { href: "/jobs", label: "求人" },
   { href: "/properties", label: "物件" },
-  { href: "/partners", label: "比較" },
-  { href: "/articles", label: "記事" },
   { href: "/planner", label: "ライフプランナー" },
+  { href: "/articles", label: "役立ち情報" },
+  { href: "/partners", label: "比較・おすすめ" },
   { href: "/mypage", label: "マイページ" },
 ];
 
@@ -21,6 +21,10 @@ export default function Header() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  const isHome = pathname === "/";
+  const isTransparent = isHome && !hasScrolled && !isMenuOpen;
 
   useEffect(() => {
     const loadUser = async () => {
@@ -44,6 +48,19 @@ export default function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    const updateScrollState = () => {
+      setHasScrolled(window.scrollY > 24);
+    };
+
+    updateScrollState();
+    window.addEventListener("scroll", updateScrollState, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", updateScrollState);
+    };
+  }, []);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsLoggedIn(false);
@@ -53,8 +70,12 @@ export default function Header() {
 
   const linkClassName = (href: string) =>
     pathname === href
-      ? "whitespace-nowrap rounded-lg bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700"
-      : "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-100";
+      ? isTransparent
+        ? "whitespace-nowrap rounded-lg bg-white/15 px-3 py-2 text-sm font-bold text-white"
+        : "whitespace-nowrap rounded-lg bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700"
+      : isTransparent
+        ? "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold text-white/90 hover:bg-white/10 hover:text-white"
+        : "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-100";
 
   const trackHeaderLink = (href: string, label: string) => {
     if (href === "/planner") {
@@ -79,11 +100,19 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed left-0 top-0 z-[10000] h-16 w-full border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur">
+    <header
+      className={`fixed left-0 top-0 z-[10000] h-16 w-full transition-colors ${
+        isTransparent
+          ? "border-b border-white/10 bg-transparent"
+          : "border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur"
+      }`}
+    >
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-3 px-4 md:px-6">
         <Link
           href="/"
-          className="min-w-0 shrink-0 whitespace-nowrap text-xl font-bold text-blue-700 md:text-2xl"
+          className={`min-w-0 shrink-0 whitespace-nowrap text-xl font-bold md:text-2xl ${
+            isTransparent ? "text-white" : "text-blue-700"
+          }`}
         >
           WorkLife WH
         </Link>
@@ -114,14 +143,22 @@ export default function Header() {
             <>
               <Link
                 href="/login"
-                className="whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-gray-900 hover:bg-gray-100"
+                className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold ${
+                  isTransparent
+                    ? "text-white hover:bg-white/10"
+                    : "text-gray-900 hover:bg-gray-100"
+                }`}
               >
                 ログイン
               </Link>
               <Link
                 href="/register"
                 onClick={() => trackRegisterClick("新規登録")}
-                className="whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white"
+                className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold ${
+                  isTransparent
+                    ? "bg-white text-gray-950"
+                    : "bg-blue-600 text-white"
+                }`}
               >
                 新規登録
               </Link>
@@ -132,7 +169,11 @@ export default function Header() {
         <button
           type="button"
           onClick={() => setIsMenuOpen((current) => !current)}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-900 lg:hidden"
+          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border lg:hidden ${
+            isTransparent
+              ? "border-white/40 text-white"
+              : "border-gray-300 text-gray-900"
+          }`}
           aria-label="メニューを開閉"
           aria-expanded={isMenuOpen}
         >

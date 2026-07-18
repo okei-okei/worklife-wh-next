@@ -4,7 +4,7 @@ const comparisons = [
   {
     number: "01",
     label: "Mobile",
-    title: "SIM/eSIM",
+    title: "SIM・eSIM",
     description: "渡航前後に使える通信手段を比較できます。",
     points: ["データ容量", "出発前購入", "日本語対応"],
     href: "/partners/sim-esim",
@@ -34,10 +34,10 @@ export default function PopularPartners() {
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.24em] text-blue-700">
-              COMPARE BEFORE YOU CHOOSE
+              COMPARE SERVICES
             </p>
             <h2 className="mt-2 text-xl font-black text-gray-900 md:text-4xl">
-              比較・おすすめ
+              渡航前後に役立つサービスを比較
             </h2>
           </div>
           <Link

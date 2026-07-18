@@ -1,56 +1,15 @@
-import { getImageProps } from "next/image";
 import Link from "next/link";
 import HomeHeroScrollEffect from "@/components/home/HomeHeroScrollEffect";
 import HomeStartButton from "@/components/home/HomeStartButton";
 
 export default function HomeHero() {
-  const {
-    props: { srcSet: desktopSrcSet },
-  } = getImageProps({
-    src: "/images/home/hero-desktop.webp",
-    alt: "",
-    width: 1200,
-    height: 675,
-    sizes: "100vw",
-    priority: true,
-  });
-  const {
-    props: mobileImageProps,
-  } = getImageProps({
-    src: "/images/home/hero-mobile.webp",
-    alt: "",
-    width: 720,
-    height: 900,
-    sizes: "100vw",
-    priority: true,
-  });
-  const { srcSet: mobileSrcSet, alt: mobileAlt, ...mobileImageRest } =
-    mobileImageProps;
-
   return (
     <section
       data-home-hero
-      data-home-scene="hero"
-      className="relative min-h-[640px] overflow-hidden bg-slate-950 px-4 pb-8 pt-24 text-white md:min-h-[760px] md:px-6 md:pb-16 md:pt-28"
+      data-background-scene="start"
+      className="relative min-h-[620px] overflow-hidden px-4 pb-8 pt-24 text-white md:min-h-[760px] md:px-6 md:pb-16 md:pt-28"
     >
       <HomeHeroScrollEffect />
-      <picture className="absolute inset-0 block">
-        <source media="(min-width: 768px)" srcSet={desktopSrcSet} />
-        <source media="(max-width: 767px)" srcSet={mobileSrcSet} />
-        <img
-          {...mobileImageRest}
-          data-home-hero-image
-          alt={mobileAlt}
-          className="h-full w-full scale-[1.035] object-cover object-center transition-transform duration-300 motion-reduce:scale-100 motion-reduce:transition-none"
-        />
-      </picture>
-      <div className="absolute inset-0 bg-slate-950/60 md:bg-transparent" />
-      <div
-        data-home-hero-overlay
-        className="absolute inset-0 bg-gradient-to-b from-slate-950/55 via-slate-950/45 to-slate-950/70 md:bg-gradient-to-r md:from-slate-950/75 md:via-slate-950/40 md:to-slate-950/15"
-      />
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white to-transparent" />
-
       <div className="pointer-events-none absolute right-[-1.5rem] top-20 z-10 hidden select-none text-right text-7xl font-semibold leading-none tracking-tight text-white/10 lg:block xl:text-8xl">
         WORK.
         <br />
@@ -59,10 +18,10 @@ export default function HomeHero() {
         LIFE.
       </div>
 
-      <div className="relative z-10 mx-auto grid min-h-[520px] max-w-6xl gap-6 md:min-h-[616px] md:grid-cols-[minmax(0,600px)_1fr] md:items-center">
+      <div className="relative z-10 mx-auto grid min-h-[500px] max-w-6xl gap-6 md:min-h-[616px] md:grid-cols-[minmax(0,600px)_1fr] md:items-center">
         <div
           data-home-hero-content
-          className="min-w-0 rounded-3xl border border-white/15 bg-slate-950/34 p-4 shadow-2xl shadow-slate-950/20 transition-transform duration-300 motion-reduce:transition-none md:bg-transparent md:p-0 md:shadow-none"
+          className="min-w-0 transition-transform duration-300 motion-reduce:transition-none"
         >
           <p className="text-xs font-bold text-emerald-200 md:text-sm">
             ニュージーランド・ワーキングホリデー
@@ -78,7 +37,7 @@ export default function HomeHero() {
           <p className="mt-3 max-w-xl text-sm font-semibold leading-6 text-white/90 md:text-base md:leading-7">
             仕事探し、家探し、生活費、渡航準備をまとめて管理。
             <br className="hidden sm:block" />
-            現地での経験をもとに、あなたの海外生活を支えます。
+            現地での経験をもとに、海外生活の選択を支えます。
           </p>
 
           <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -93,18 +52,18 @@ export default function HomeHero() {
 
           <div className="mt-3 flex flex-wrap gap-3 text-sm font-bold">
             <Link href="/jobs" className="text-blue-100 hover:text-white">
-              ニュージーランドの求人を見る
+              求人を見る
             </Link>
             <Link
               href="/properties"
               className="text-emerald-100 hover:text-white"
             >
-              ニュージーランドの物件を見る
+              物件を見る
             </Link>
           </div>
         </div>
 
-        <div className="hidden w-full max-w-[280px] justify-self-end rounded-3xl border border-white/20 bg-white/14 p-4 text-white shadow-2xl shadow-slate-950/20 md:block">
+        <div className="hidden w-full max-w-[280px] justify-self-end rounded-[2rem_2rem_2rem_5rem] border border-white/20 bg-white/10 p-4 text-white shadow-2xl shadow-slate-950/20 backdrop-blur md:block">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">
             Life Plan Mock
           </p>

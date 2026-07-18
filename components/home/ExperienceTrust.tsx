@@ -3,25 +3,19 @@ import Link from "next/link";
 export default function ExperienceTrust() {
   return (
     <section
-      data-home-scene="final"
-      className="bg-white/90 px-4 py-9 backdrop-blur-[1px] md:px-6 md:py-16"
+      data-background-scene="final"
+      className="px-4 py-20 text-white md:px-6 md:py-28"
     >
-      <div className="mx-auto grid max-w-6xl overflow-hidden rounded-[2rem] bg-gray-950 text-white shadow-xl md:grid-cols-[0.92fr_1.08fr]">
-        <div className="flex min-h-[220px] flex-col justify-between bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.32),transparent_34%),linear-gradient(135deg,#0f172a,#111827)] p-5 md:min-h-[360px] md:p-8">
-          <p className="text-[11px] font-black uppercase tracking-[0.26em] text-emerald-300">
-            REAL EXPERIENCE
-          </p>
-          <p className="font-serif text-5xl italic leading-none text-white/20 md:text-8xl">
-            WH
-          </p>
-        </div>
-        <div className="p-5 md:p-8">
+      <div className="mx-auto grid max-w-6xl gap-6 border-y border-white/18 py-10 md:grid-cols-[0.42fr_0.58fr] md:items-center md:py-14">
+        <div>
           <p className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-300">
-            EDITORIAL POLICY
+            REAL EXPERIENCE
           </p>
           <h2 className="mt-3 text-xl font-black leading-tight text-white md:text-4xl">
             実際の海外生活をもとに発信
           </h2>
+        </div>
+        <div>
           <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-gray-200 md:text-base md:leading-7">
             WorkLife WH編集部が、ニュージーランドでのワーホリ経験と公式情報をもとに、仕事・住まい・生活情報を更新しています。
           </p>
@@ -29,7 +23,7 @@ export default function ExperienceTrust() {
             {["実体験", "公式情報", "継続更新"].map((item) => (
               <div
                 key={item}
-                className="rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-sm font-black text-white"
+                className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-center text-sm font-black text-white"
               >
                 {item}
               </div>

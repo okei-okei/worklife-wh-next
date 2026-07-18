@@ -21,10 +21,11 @@ export default function Header() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hasScrolled, setHasScrolled] = useState(false);
+  const [homeScene, setHomeScene] = useState("start");
 
   const isHome = pathname === "/";
-  const isTransparent = isHome && !hasScrolled && !isMenuOpen;
+  const isDarkHomeScene = isHome && homeScene !== "information";
+  const isTransparent = isDarkHomeScene && !isMenuOpen;
 
   useEffect(() => {
     const loadUser = async () => {
@@ -49,15 +50,15 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    const updateScrollState = () => {
-      setHasScrolled(window.scrollY > 24);
+    const handleSceneChange = (event: Event) => {
+      const scene = (event as CustomEvent<string>).detail;
+      if (scene) setHomeScene(scene);
     };
 
-    updateScrollState();
-    window.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("homeSceneChange", handleSceneChange);
 
     return () => {
-      window.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("homeSceneChange", handleSceneChange);
     };
   }, []);
 

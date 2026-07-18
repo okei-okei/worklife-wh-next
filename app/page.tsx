@@ -3,7 +3,8 @@ import FeatureSummary from "@/components/home/FeatureSummary";
 import GoalNavigation from "@/components/home/GoalNavigation";
 import HomeFinalCTA from "@/components/home/HomeFinalCTA";
 import HomeHero from "@/components/home/HomeHero";
-import HomeSceneBackground from "@/components/home/HomeSceneBackground";
+import HomePreparation from "@/components/home/HomePreparation";
+import ScrollBackground from "@/components/home/ScrollBackground";
 import HomeValueStatement from "@/components/home/HomeValueStatement";
 import PopularArticles from "@/components/home/PopularArticles";
 import PopularPartners from "@/components/home/PopularPartners";
@@ -76,12 +77,13 @@ export default function Home() {
         data={createBreadcrumbJsonLd([{ label: "ホーム", href: "/" }])}
       />
 
-      <HomeSceneBackground />
+      <ScrollBackground />
       <div className="relative z-10">
         <HomeHero />
         <GoalNavigation />
-        <FeatureSummary />
         <HomeValueStatement />
+        <FeatureSummary />
+        <HomePreparation />
         <PopularArticles articles={popularArticles} />
         <PopularPartners />
         <ExperienceTrust />

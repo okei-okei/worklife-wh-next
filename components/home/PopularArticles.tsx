@@ -4,8 +4,8 @@ import type { Article } from "@/lib/articles";
 export default function PopularArticles({ articles }: { articles: Article[] }) {
   return (
     <section
-      data-home-scene="preparation"
-      className="bg-white/95 px-4 py-9 backdrop-blur-[1px] md:px-6 md:py-16"
+      data-background-scene="information"
+      className="px-4 py-16 text-gray-900 md:px-6 md:py-24"
     >
       <div className="mx-auto max-w-6xl">
         <div className="flex items-end justify-between gap-3">
@@ -33,15 +33,17 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
             <Link
               key={article.slug}
               href={`/articles/${article.slug}`}
-              className={`group rounded-[1.35rem] border border-gray-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 md:p-5 ${
-                index === 0 ? "md:row-span-2 md:p-6" : ""
+              className={`group transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 motion-reduce:hover:translate-y-0 ${
+                index === 0
+                  ? "rounded-[1.25rem_4rem_1.25rem_1.25rem] border border-gray-200 bg-white/82 p-4 shadow-sm backdrop-blur md:row-span-2 md:p-6"
+                  : "border-t border-gray-300 py-4"
               }`}
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black text-blue-700">
                   {article.category}
                 </p>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
                   Article
                 </p>
               </div>

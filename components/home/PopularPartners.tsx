@@ -3,25 +3,19 @@ import Link from "next/link";
 const comparisons = [
   {
     number: "01",
-    label: "Mobile",
     title: "SIM・eSIM",
-    description: "渡航前後に使える通信手段を比較できます。",
     points: ["データ容量", "出発前購入"],
     href: "/partners/sim-esim",
   },
   {
     number: "02",
-    label: "Insurance",
     title: "海外保険",
-    description: "医療費や補償内容を契約前に整理できます。",
     points: ["医療補償", "ワーホリ対応"],
     href: "/partners/insurance",
   },
   {
     number: "03",
-    label: "Money",
     title: "海外送金",
-    description: "手数料、為替レート、着金速度を比較できます。",
     points: ["手数料", "着金速度"],
     href: "/partners/money-transfer",
   },
@@ -30,8 +24,8 @@ const comparisons = [
 export default function PopularPartners() {
   return (
     <section
-      data-home-scene="preparation"
-      className="bg-emerald-50/90 px-4 py-9 backdrop-blur-[1px] md:px-6 md:py-16"
+      data-background-scene="information"
+      className="px-4 py-16 text-gray-900 md:px-6 md:py-24"
     >
       <div className="mx-auto max-w-6xl">
         <div className="flex items-end justify-between gap-3">
@@ -50,45 +44,37 @@ export default function PopularPartners() {
             href="/partners"
             className="shrink-0 text-xs font-black text-blue-700 md:text-sm"
           >
-            SIM・保険・海外送金を比較する
+            比較一覧へ
           </Link>
         </div>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-3 md:gap-4">
+        <div className="mt-6 divide-y divide-gray-300 border-y border-gray-300">
           {comparisons.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="group rounded-[1.35rem] border border-gray-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 md:p-5"
+              className="group grid gap-3 py-5 transition hover:bg-white/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center md:px-3"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-400">
-                    {item.label}
-                  </p>
-                  <h3 className="mt-2 text-base font-black text-gray-900 md:text-lg">
-                    {item.title}
-                  </h3>
-                </div>
-                <p className="font-serif text-3xl italic text-emerald-600/40 md:text-5xl">
-                  {item.number}
-                </p>
-              </div>
-              <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-gray-700">
-                {item.description}
+              <p className="font-serif text-4xl italic leading-none text-blue-700/35 md:text-6xl">
+                {item.number}
               </p>
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {item.points.map((point) => (
-                  <span
-                    key={point}
-                    className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-700"
-                  >
-                    {point}
-                  </span>
-                ))}
+              <div>
+                <h3 className="text-lg font-black text-gray-900 md:text-2xl">
+                  {item.title}
+                </h3>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {item.points.map((point) => (
+                    <span
+                      key={point}
+                      className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-bold text-gray-700"
+                    >
+                      {point}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <p className="mt-4 text-xs font-black text-blue-700 transition group-hover:translate-x-0.5 md:text-sm">
-                比較を見る
+              <p className="text-xs font-black text-blue-700 transition group-hover:translate-x-1 md:text-sm motion-reduce:group-hover:translate-x-0">
+                比較を見る →
               </p>
             </Link>
           ))}

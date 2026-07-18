@@ -2,7 +2,10 @@ import Link from "next/link";
 
 export default function HomeFinalCTA() {
   return (
-    <section className="bg-gray-50 px-4 py-9 md:px-6 md:py-16">
+    <section
+      data-home-scene="final"
+      className="bg-gray-50/90 px-4 py-9 backdrop-blur-[1px] md:px-6 md:py-16"
+    >
       <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-gray-900 p-5 text-white md:p-9">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-22"

@@ -3,7 +3,10 @@ import Link from "next/link";
 
 export default function HomeValueStatement() {
   return (
-    <section className="bg-white px-4 py-9 md:px-6 md:py-16">
+    <section
+      data-home-scene="life-plan"
+      className="bg-white/90 px-4 py-9 backdrop-blur-[1px] md:px-6 md:py-16"
+    >
       <div className="mx-auto grid max-w-6xl gap-0 overflow-hidden rounded-[2rem] border border-gray-200 bg-white lg:grid-cols-[minmax(0,0.66fr)_minmax(320px,0.34fr)]">
         <div className="relative min-h-[240px] lg:min-h-[520px]">
           <Image

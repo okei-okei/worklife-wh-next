@@ -52,7 +52,10 @@ export default function GoalNavigation() {
   const activeGoal = goals[activeIndex] ?? goals[0];
 
   return (
-    <section className="bg-white px-4 py-8 md:px-6 md:py-16">
+    <section
+      data-home-scene="work-home"
+      className="bg-white/90 px-4 py-8 backdrop-blur-[1px] md:px-6 md:py-16"
+    >
       <div className="mx-auto max-w-6xl">
         <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
           CHOOSE YOUR NEXT STEP

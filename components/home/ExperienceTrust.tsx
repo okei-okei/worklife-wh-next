@@ -2,7 +2,10 @@ import Link from "next/link";
 
 export default function ExperienceTrust() {
   return (
-    <section className="bg-white px-4 py-9 md:px-6 md:py-16">
+    <section
+      data-home-scene="final"
+      className="bg-white/90 px-4 py-9 backdrop-blur-[1px] md:px-6 md:py-16"
+    >
       <div className="mx-auto grid max-w-6xl overflow-hidden rounded-[2rem] bg-gray-950 text-white shadow-xl md:grid-cols-[0.92fr_1.08fr]">
         <div className="flex min-h-[220px] flex-col justify-between bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.32),transparent_34%),linear-gradient(135deg,#0f172a,#111827)] p-5 md:min-h-[360px] md:p-8">
           <p className="text-[11px] font-black uppercase tracking-[0.26em] text-emerald-300">

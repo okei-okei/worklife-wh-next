@@ -3,6 +3,7 @@ import FeatureSummary from "@/components/home/FeatureSummary";
 import GoalNavigation from "@/components/home/GoalNavigation";
 import HomeFinalCTA from "@/components/home/HomeFinalCTA";
 import HomeHero from "@/components/home/HomeHero";
+import HomeSceneBackground from "@/components/home/HomeSceneBackground";
 import HomeValueStatement from "@/components/home/HomeValueStatement";
 import PopularArticles from "@/components/home/PopularArticles";
 import PopularPartners from "@/components/home/PopularPartners";
@@ -68,21 +69,24 @@ export default function Home() {
   };
 
   return (
-    <main className="-mt-16 min-h-screen min-w-0 overflow-x-hidden bg-white text-gray-900">
+    <main className="-mt-16 min-h-screen min-w-0 overflow-x-hidden bg-slate-950 text-gray-900">
       <JsonLd data={organizationJsonLd} />
       <JsonLd data={websiteJsonLd} />
       <JsonLd
         data={createBreadcrumbJsonLd([{ label: "ホーム", href: "/" }])}
       />
 
-      <HomeHero />
-      <GoalNavigation />
-      <FeatureSummary />
-      <HomeValueStatement />
-      <PopularArticles articles={popularArticles} />
-      <PopularPartners />
-      <ExperienceTrust />
-      <HomeFinalCTA />
+      <HomeSceneBackground />
+      <div className="relative z-10">
+        <HomeHero />
+        <GoalNavigation />
+        <FeatureSummary />
+        <HomeValueStatement />
+        <PopularArticles articles={popularArticles} />
+        <PopularPartners />
+        <ExperienceTrust />
+        <HomeFinalCTA />
+      </div>
     </main>
   );
 }

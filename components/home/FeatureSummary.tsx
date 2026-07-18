@@ -71,7 +71,10 @@ export default function FeatureSummary() {
   }, []);
 
   return (
-    <section className="bg-gray-50 px-4 py-9 md:px-6 md:py-16">
+    <section
+      data-home-scene="life-plan"
+      className="bg-gray-50/90 px-4 py-9 backdrop-blur-[1px] md:px-6 md:py-16"
+    >
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>

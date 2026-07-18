@@ -3,7 +3,10 @@ import type { Article } from "@/lib/articles";
 
 export default function PopularArticles({ articles }: { articles: Article[] }) {
   return (
-    <section className="bg-white px-4 py-9 md:px-6 md:py-16">
+    <section
+      data-home-scene="preparation"
+      className="bg-white/95 px-4 py-9 backdrop-blur-[1px] md:px-6 md:py-16"
+    >
       <div className="mx-auto max-w-6xl">
         <div className="flex items-end justify-between gap-3">
           <div>

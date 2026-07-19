@@ -23,7 +23,7 @@ export default function HomeHero() {
         priority
         sizes="(min-width: 768px) 56vw, 100vw"
         className="left-0 top-0 h-[36svh] w-full bg-white sm:h-[40svh] md:left-[44vw] md:top-0 md:h-[86svh] md:w-[56vw]"
-        imageClassName="object-[50%_45%] md:object-[48%_50%] group-hover:scale-[1.01]"
+        imageClassName="object-[50%_45%] md:object-[48%_58%] group-hover:scale-[1.01]"
       />
       <div className="absolute right-0 top-0 h-[36svh] w-full bg-gradient-to-b from-white/0 via-white/0 to-white sm:h-[40svh] md:hidden" />
       <div className="pointer-events-none absolute left-4 top-[43svh] hidden h-px w-[22vw] bg-[#D8D8D4] md:left-6 md:top-[76svh] md:block" />
@@ -40,15 +40,22 @@ export default function HomeHero() {
           <p className="text-xs font-bold text-[#315C55] md:text-sm">
             ニュージーランド・ワーキングホリデー
           </p>
-          <p className="mt-2 max-w-[620px] text-balance text-[32px] font-black leading-[1.03] tracking-tight text-[#171717] md:mt-3 md:text-6xl">
-            <span className="block sm:inline">海外生活を、</span>
-            <span className="block sm:inline">もっとリアルに。</span>
-          </p>
-          <h1 className="mt-3 max-w-[680px] text-balance text-[17px] font-black leading-snug text-[#171717] [word-break:auto-phrase] md:mt-4 md:text-2xl">
-            <span className="hidden sm:inline">
-              ニュージーランドワーホリの仕事・住まい・生活を一つに
+          <p className="mt-2 max-w-[720px] text-balance text-[32px] font-black leading-[1.03] tracking-tight text-[#171717] md:mt-3 md:text-6xl">
+            <span className="lg:hidden">
+              <span className="block sm:inline">海外生活を、</span>
+              <span className="block sm:inline">もっとリアルに。</span>
             </span>
-            <span className="sm:hidden">
+            <span className="hidden lg:inline">
+              海外生活を、もっとリアルに。
+            </span>
+          </p>
+          <h1 className="mt-3 max-w-[760px] text-balance text-[17px] font-black leading-snug text-[#171717] [word-break:auto-phrase] md:mt-4 md:text-2xl">
+            <span className="hidden lg:inline">
+              ニュージーランドワーホリの
+              <br />
+              仕事・住まい・生活を一つに
+            </span>
+            <span className="lg:hidden">
               ニュージーランドワーホリの
               <br />
               仕事・住まい・生活を一つに

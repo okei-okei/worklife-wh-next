@@ -20,7 +20,7 @@ export default function HomeValueStatement() {
         alt="ニュージーランドのカフェや街で働く日常"
         sizes="(min-width: 768px) 66vw, 100vw"
         className="left-0 top-0 h-[42svh] w-full bg-[#F3F0EA] md:left-0 md:top-[10%] md:h-[76svh] md:w-[66vw]"
-        imageClassName="object-[50%_42%] md:object-[54%_46%]"
+        imageClassName="object-[50%_42%] md:object-[54%_58%]"
       />
       <div className="mx-auto grid max-w-6xl gap-7 pt-[43svh] md:min-h-[88svh] md:grid-cols-[minmax(0,0.62fr)_minmax(280px,0.38fr)] md:items-center md:pt-0">
         <div className="hidden md:block" />

@@ -32,7 +32,7 @@ export default function GoalNavigation() {
         alt="ニュージーランドで住まいを探す住宅街の風景"
         sizes="(min-width: 768px) 100vw, 100vw"
         className="left-0 top-0 h-[42svh] w-full bg-white md:left-0 md:top-0 md:h-[62svh] md:w-full"
-        imageClassName="object-[50%_42%] md:object-[50%_46%]"
+        imageClassName="object-[50%_42%] md:object-[50%_60%]"
       />
       <div className="absolute inset-x-0 top-0 h-[42svh] bg-gradient-to-b from-transparent via-transparent to-white md:h-[62svh]" />
       <div className="mx-auto grid max-w-6xl gap-7 pt-[42svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:gap-12 md:pt-[50svh]">

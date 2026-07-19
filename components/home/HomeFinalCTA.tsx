@@ -14,7 +14,7 @@ export default function HomeFinalCTA() {
         alt="ニュージーランドの広い空と未来を感じる夕景"
         sizes="(min-width: 768px) 54vw, 100vw"
         className="left-0 top-0 h-[42svh] w-full bg-white md:left-[42vw] md:right-auto md:top-[8%] md:h-[70svh] md:w-[58vw]"
-        imageClassName="object-[50%_42%] md:object-[52%_50%]"
+        imageClassName="object-[50%_42%] md:object-[52%_60%]"
       />
       <div className="absolute right-0 top-0 h-[42svh] w-full bg-gradient-to-b from-transparent to-white md:hidden" />
       <div className="mx-auto grid max-w-6xl gap-8 pt-[42svh] md:min-h-[86svh] md:grid-cols-[minmax(0,430px)_1fr] md:items-center md:pt-0">

@@ -22,7 +22,7 @@ export default function HomePreparation() {
         alt="渡航準備を想起させる荷物と新生活の風景"
         sizes="(min-width: 768px) 76vw, 100vw"
         className="left-0 top-0 h-[40svh] w-full bg-[#F7F7F5] md:left-0 md:top-0 md:h-[64svh] md:w-[82vw]"
-        imageClassName="object-[50%_45%] md:object-[50%_42%]"
+        imageClassName="object-[50%_45%] md:object-[50%_56%]"
       />
       <div className="mx-auto grid max-w-6xl gap-7 pt-[41svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:pt-[50svh]">
         <div className="relative z-10 bg-[#F7F7F5]/92 py-5 md:bg-transparent md:py-0">

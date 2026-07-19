@@ -40,17 +40,18 @@ export default function GoalNavigation() {
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             PROPERTY SEARCH
           </p>
-          <h2 className="mt-2 max-w-[620px] text-balance text-2xl font-black leading-tight [word-break:auto-phrase] md:text-4xl">
+          <h2 className="home-heading mt-2 max-w-[620px] text-2xl font-black leading-tight md:text-4xl">
             <span className="hidden sm:inline">
-              暮らしやすい住まいを探す
+              <span className="home-nowrap">暮らしやすい</span>
+              <span className="home-nowrap">住まいを探す</span>
             </span>
             <span className="sm:hidden">
-              暮らしやすい
+              <span className="home-nowrap">暮らしやすい</span>
               <br />
-              住まいを探す
+              <span className="home-nowrap">住まいを探す</span>
             </span>
           </h2>
-          <p className="mt-3 max-w-sm text-pretty text-sm font-medium leading-6 text-[#666666]">
+          <p className="home-copy mt-3 max-w-sm text-sm font-medium leading-6 text-[#666666]">
             地域、家賃、住所を見ながら候補を比較できます。
           </p>
         </div>

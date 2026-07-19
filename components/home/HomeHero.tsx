@@ -37,38 +37,39 @@ export default function HomeHero() {
           data-home-hero-content
           className="min-w-0"
         >
-          <p className="text-xs font-bold text-[#315C55] md:text-sm">
+          <p className="home-link-label text-xs font-bold text-[#315C55] md:text-sm">
             ニュージーランド・ワーキングホリデー
           </p>
-          <p className="mt-2 max-w-[720px] text-balance text-[32px] font-black leading-[1.03] tracking-tight text-[#171717] md:mt-3 md:text-6xl">
+          <p className="home-heading mt-2 max-w-[720px] text-[32px] font-black leading-[1.03] tracking-tight text-[#171717] md:mt-3 md:text-5xl xl:text-6xl">
             <span className="lg:hidden">
-              <span className="block sm:inline">海外生活を、</span>
-              <span className="block sm:inline">もっとリアルに。</span>
+              <span className="home-nowrap block sm:inline">海外生活を、</span>
+              <span className="home-nowrap block sm:inline">もっとリアルに。</span>
             </span>
             <span className="hidden lg:inline">
-              海外生活を、もっとリアルに。
+              <span className="home-nowrap">海外生活を、</span>
+              <span className="home-nowrap">もっとリアルに。</span>
             </span>
           </p>
-          <h1 className="mt-3 max-w-[760px] text-balance text-[17px] font-black leading-snug text-[#171717] [word-break:auto-phrase] md:mt-4 md:text-2xl">
+          <h1 className="home-heading mt-3 max-w-[760px] text-[17px] font-black leading-snug text-[#171717] md:mt-4 md:text-2xl xl:text-[28px]">
             <span className="hidden lg:inline">
-              ニュージーランドワーホリの
+              <span className="home-nowrap">ニュージーランドワーホリの</span>
               <br />
-              仕事・住まい・生活を一つに
+              <span className="home-nowrap">仕事・住まい・生活を一つに</span>
             </span>
             <span className="lg:hidden">
-              ニュージーランドワーホリの
+              <span className="home-nowrap">ニュージーランドワーホリの</span>
               <br />
-              仕事・住まい・生活を一つに
+              <span className="home-nowrap">仕事・住まい・生活を一つに</span>
             </span>
           </h1>
-          <p className="mt-2 max-w-md text-pretty text-sm font-medium leading-6 text-[#666666] md:mt-3 md:text-base md:leading-7">
+          <p className="home-copy mt-2 max-w-md text-sm font-medium leading-6 text-[#666666] md:mt-3 md:max-w-xl md:text-base md:leading-7">
             <span className="sm:hidden">
-              仕事・住まい・生活準備を
+              <span className="home-nowrap">仕事・住まい・生活準備</span>を
               <br />
               まとめて確認できます。
             </span>
             <span className="hidden sm:inline">
-              仕事探し、家探し、生活費、渡航準備をまとめて管理。
+              <span className="home-nowrap">仕事探し</span>、<span className="home-nowrap">家探し</span>、生活費、渡航準備をまとめて管理。
             </span>
           </p>
 
@@ -83,7 +84,7 @@ export default function HomeHero() {
                     : "inline-flex min-h-[42px] min-w-0 whitespace-nowrap items-center justify-center rounded-full border border-[#D8D8D4] bg-white/85 px-3 py-2 text-[13px] font-bold text-[#171717] transition hover:border-[#235347] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] sm:text-sm"
                 }
               >
-                {item.label}
+                <span className="home-link-label">{item.label}</span>
                 <span className="ml-1.5 hidden min-[360px]:inline" aria-hidden="true">
                   →
                 </span>

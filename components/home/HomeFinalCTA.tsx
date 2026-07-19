@@ -22,17 +22,18 @@ export default function HomeFinalCTA() {
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             START YOUR LIFE PLAN
           </p>
-          <h2 className="mt-3 max-w-[760px] text-balance text-3xl font-black leading-tight [word-break:auto-phrase] md:text-5xl xl:text-6xl">
+          <h2 className="home-heading mt-3 max-w-[760px] text-3xl font-black leading-tight md:text-5xl xl:text-6xl">
             <span className="hidden sm:inline">
-              自分に合う海外生活を、見つける。
+              <span className="home-nowrap">自分に合う海外生活を、</span>
+              <span className="home-nowrap">見つける。</span>
             </span>
             <span className="sm:hidden">
-              自分に合う海外生活を、
+              <span className="home-nowrap">自分に合う海外生活を、</span>
               <br />
-              見つける。
+              <span className="home-nowrap">見つける。</span>
             </span>
           </h2>
-          <p className="mt-4 max-w-md text-pretty text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
+          <p className="home-copy mt-4 max-w-md text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
             仕事、住まい、通勤時間、生活費をまとめて比べられます。
           </p>
           <p className="mt-6 text-xs font-bold text-[#666666]">
@@ -40,7 +41,7 @@ export default function HomeFinalCTA() {
           </p>
           <Link
             href="/register"
-            className="mt-3 inline-flex min-h-12 w-full whitespace-nowrap items-center justify-center rounded-full bg-[#1E4D43] px-6 py-3 text-sm font-black text-white transition hover:bg-[#173d35] sm:w-auto"
+            className="home-link-label mt-3 inline-flex min-h-12 w-full whitespace-nowrap items-center justify-center rounded-full bg-[#1E4D43] px-6 py-3 text-sm font-black text-white transition hover:bg-[#173d35] sm:w-auto"
           >
             会員登録して保存を始める
           </Link>
@@ -48,7 +49,7 @@ export default function HomeFinalCTA() {
         <div className="hidden md:block" />
         <div className="border-t border-[#D8D8D4] pt-4 md:col-span-2">
           <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#666666] md:text-xs">
-            WorkLife WH / Jobs / Homes / Planning / Real Guides
+            <span className="home-nowrap">WorkLife WH</span> / Jobs / Homes / Planning / Real Guides
           </p>
         </div>
       </div>

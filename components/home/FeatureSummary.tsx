@@ -29,27 +29,28 @@ export default function FeatureSummary() {
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             TRIAL SIMULATION
           </p>
-          <h2 className="mt-3 max-w-[700px] text-balance text-2xl font-black leading-tight [word-break:auto-phrase] md:text-4xl xl:text-5xl">
+          <h2 className="home-heading mt-3 max-w-[700px] text-2xl font-black leading-tight md:text-4xl xl:text-5xl">
             <span className="hidden sm:inline">
-              海外生活をシミュレーションする
+              <span className="home-nowrap">海外生活を</span>
+              <span className="home-nowrap">シミュレーションする</span>
             </span>
             <span className="sm:hidden">
-              海外生活を
+              <span className="home-nowrap">海外生活を</span>
               <br />
-              シミュレーションする
+              <span className="home-nowrap">シミュレーションする</span>
             </span>
           </h2>
-          <p className="mt-4 max-w-xl text-pretty text-sm font-medium leading-6 text-[#666666] [word-break:auto-phrase] md:text-base md:leading-7">
+          <p className="home-copy mt-4 max-w-xl text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
             <span className="sm:hidden">
-              求人と物件を選んで、月に残るお金を確認できます。
+              求人と物件を選んで、<span className="home-nowrap">月に残るお金</span>を確認できます。
             </span>
             <span className="hidden lg:inline">
-              公開求人と物件を一つずつ選び、
+              <span className="home-nowrap">公開求人と物件</span>を一つずつ選び、
               <br />
-              月に残るお金と通勤しやすさを確認できます。
+              <span className="home-nowrap">月に残るお金</span>と通勤しやすさを確認できます。
             </span>
             <span className="hidden sm:inline lg:hidden">
-              公開求人と物件を選び、月に残るお金を確認できます。
+              <span className="home-nowrap">公開求人と物件</span>を選び、<span className="home-nowrap">月に残るお金</span>を確認できます。
             </span>
           </p>
 
@@ -74,8 +75,8 @@ export default function FeatureSummary() {
             href="/simulator"
             className="inline-flex min-h-11 w-full whitespace-nowrap items-center justify-center rounded-full bg-[#1E4D43] px-4 py-2 text-sm font-black text-white transition hover:bg-[#173d35] sm:w-auto"
           >
-            <span className="sm:hidden">シミュレーションする</span>
-            <span className="hidden sm:inline">海外生活をシミュレーションする</span>
+            <span className="home-link-label sm:hidden">シミュレーションする</span>
+            <span className="home-link-label hidden sm:inline">海外生活をシミュレーションする</span>
           </Link>
           <p className="text-xs font-semibold text-[#666666]">
             登録不要・保存なし

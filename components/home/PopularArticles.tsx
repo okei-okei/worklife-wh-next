@@ -28,28 +28,29 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             USEFUL INFORMATION
           </p>
-          <h2 className="mt-2 max-w-[680px] text-balance text-2xl font-black leading-tight text-[#171717] [word-break:auto-phrase] md:text-4xl">
+          <h2 className="home-heading mt-2 max-w-[680px] text-2xl font-black leading-tight text-[#171717] md:text-4xl">
             <span className="hidden sm:inline">
-              ニュージーランド生活の役立ち情報
+              <span className="home-nowrap">ニュージーランド生活の</span>
+              <span className="home-nowrap">役立ち情報</span>
             </span>
             <span className="sm:hidden">
-              ニュージーランド生活の
+              <span className="home-nowrap">ニュージーランド生活の</span>
               <br />
-              役立ち情報
+              <span className="home-nowrap">役立ち情報</span>
             </span>
           </h2>
-          <p className="mt-3 max-w-md text-pretty text-sm font-medium leading-6 text-[#666666] [word-break:auto-phrase]">
+          <p className="home-copy mt-3 max-w-md text-sm font-medium leading-6 text-[#666666]">
             <span className="sm:hidden">
-              仕事・住まい・生活のポイントを、
+              <span className="home-nowrap">仕事・住まい・生活</span>のポイントを、
               現地経験をもとにまとめています。
             </span>
             <span className="hidden sm:inline">
-              現地経験をもとに、仕事・住まい・生活のポイントをまとめています。
+              現地経験をもとに、<span className="home-nowrap">仕事・住まい・生活</span>のポイントをまとめています。
             </span>
           </p>
           <Link
             href="/articles"
-            className="mt-4 inline-block shrink-0 whitespace-nowrap text-xs font-black text-[#315C55] md:text-sm"
+            className="home-link-label mt-4 inline-block shrink-0 whitespace-nowrap text-xs font-black text-[#315C55] md:text-sm"
           >
             <span className="sm:hidden">記事を見る</span>
             <span className="hidden sm:inline">すべての記事を見る</span>
@@ -74,17 +75,17 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
               <p className="text-[10px] font-black text-[#315C55]">
                 {featuredArticle.category}
               </p>
-              <h3 className="mt-2 line-clamp-3 text-balance text-base font-black leading-6 text-[#171717] [word-break:auto-phrase] md:line-clamp-2 md:text-2xl md:leading-8">
+              <h3 className="home-heading mt-2 line-clamp-3 text-base font-black leading-6 text-[#171717] md:line-clamp-2 md:text-2xl md:leading-8">
                 {featuredArticle.title}
               </h3>
-              <p className="mt-2 line-clamp-2 text-pretty text-sm font-medium leading-6 text-[#666666] [word-break:auto-phrase]">
+              <p className="home-copy mt-2 line-clamp-2 text-sm font-medium leading-6 text-[#666666]">
                 {featuredArticle.excerpt}
               </p>
               <div className="mt-3 flex items-center justify-between gap-3 md:mt-4">
                 <p className="text-xs font-bold text-[#666666]">
                   更新日: {featuredArticle.updated_at?.slice(0, 10) || "随時更新"}
                 </p>
-                <p className="whitespace-nowrap text-xs font-black text-[#315C55] transition group-hover:translate-x-0.5 md:text-sm">
+                <p className="home-link-label whitespace-nowrap text-xs font-black text-[#315C55] transition group-hover:translate-x-0.5 md:text-sm">
                   記事を読む
                 </p>
               </div>
@@ -104,7 +105,7 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
                   <p className="text-[10px] font-black text-[#315C55]">
                     {article.category}
                   </p>
-                  <h3 className="mt-1 line-clamp-2 text-balance text-base font-black leading-6 text-[#171717] [word-break:auto-phrase]">
+                  <h3 className="home-heading mt-1 line-clamp-2 text-base font-black leading-6 text-[#171717]">
                     {article.title}
                   </h3>
                   <p className="mt-3 text-xs font-bold text-[#666666]">

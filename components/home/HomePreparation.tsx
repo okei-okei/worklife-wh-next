@@ -29,18 +29,19 @@ export default function HomePreparation() {
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             PREPARATION
           </p>
-          <h2 className="mt-3 max-w-[680px] text-balance text-2xl font-black leading-tight md:text-4xl xl:text-5xl">
+          <h2 className="home-heading mt-3 max-w-[680px] text-2xl font-black leading-tight md:text-4xl xl:text-5xl">
             <span className="hidden sm:inline">
-              渡航準備を、一つずつ
+              <span className="home-nowrap">渡航準備を、</span>
+              <span className="home-nowrap">一つずつ</span>
             </span>
             <span className="sm:hidden">
-              渡航準備を
+              <span className="home-nowrap">渡航準備を</span>
               <br />
-              一つずつ
+              <span className="home-nowrap">一つずつ</span>
             </span>
           </h2>
-          <p className="mt-4 max-w-lg text-pretty text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
-            SIM、保険、銀行、IRD、生活用品を確認できます。
+          <p className="home-copy mt-4 max-w-lg text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
+            <span className="home-nowrap">SIM・通信</span>、保険、銀行、IRD、生活用品を確認できます。
           </p>
         </div>
 
@@ -52,7 +53,7 @@ export default function HomePreparation() {
               className="group flex min-h-12 items-center justify-between gap-3 border-b border-[#D8D8D4] py-2 text-sm font-black text-[#171717] transition last:border-b-0 hover:text-[#235347] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] md:min-h-14"
             >
               <span className="flex items-center gap-3">
-                <span>{item.label}</span>
+                <span className="home-link-label whitespace-nowrap">{item.label}</span>
               </span>
               <span className="transition group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0">
                 →

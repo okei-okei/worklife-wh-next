@@ -28,18 +28,18 @@ export default function HomeValueStatement() {
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             JOB SEARCH
           </p>
-          <h2 className="mt-3 max-w-[680px] text-balance text-2xl font-black leading-tight [word-break:auto-phrase] md:text-4xl xl:text-5xl">
+          <h2 className="home-heading mt-3 max-w-[680px] text-2xl font-black leading-tight md:text-4xl xl:text-5xl">
             <span className="hidden sm:inline">
-              ニュージーランドで仕事を探す
+              <span className="home-nowrap">ニュージーランド</span>で<span className="home-nowrap">仕事を探す</span>
             </span>
             <span className="sm:hidden">
-              ニュージーランドで
+              <span className="home-nowrap">ニュージーランド</span>で
               <br />
-              仕事を探す
+              <span className="home-nowrap">仕事を探す</span>
             </span>
           </h2>
-          <p className="mt-4 max-w-md text-pretty text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
-            公開求人を確認し、気になる仕事を保存できます。
+          <p className="home-copy mt-4 max-w-md text-sm font-medium leading-6 text-[#666666] md:max-w-lg md:text-base md:leading-7">
+            <span className="home-nowrap">公開求人</span>を確認し、気になる仕事を保存できます。
           </p>
 
           <div className="mt-7 border-t border-[#D8D8D4]">

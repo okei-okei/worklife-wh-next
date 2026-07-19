@@ -52,6 +52,39 @@ label {
   word-break: normal;
 }
 
+.home-heading,
+.home-copy,
+.home-link-label {
+  hyphens: manual;
+  line-break: strict;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.home-heading {
+  text-wrap: balance;
+}
+
+.home-copy {
+  text-wrap: pretty;
+}
+
+.home-link-label {
+  white-space: nowrap;
+}
+
+.home-nowrap {
+  white-space: nowrap;
+}
+
+@supports (word-break: auto-phrase) {
+  .home-heading,
+  .home-copy,
+  .home-link-label {
+    word-break: auto-phrase;
+  }
+}
+
 button,
 a,
 input,

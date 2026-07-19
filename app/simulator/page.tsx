@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import PublicLifeSimulator from "@/components/simulator/PublicLifeSimulator";
 
 export const metadata: Metadata = {
-  title: "ニュージーランドワーホリ生活費シミュレーション｜WorkLife WH",
+  title: "ニュージーランドワーホリ生活シミュレーション｜WorkLife WH",
   description:
-    "公開求人と物件を選び、収入・家賃・生活費からニュージーランドでの毎月の収支を無料で試算できます。登録不要・保存なしで利用できます。",
+    "公開求人と物件を一つずつ選び、ニュージーランドで月に残るお金と仕事・住まいの位置関係を確認できます。登録不要で利用できます。",
   alternates: {
     canonical: "/simulator",
   },
@@ -24,13 +24,13 @@ export default function SimulatorPage() {
             WorkLife WH
           </p>
           <h1 className="mt-2 text-2xl font-black md:text-4xl">
-            ニュージーランドワーホリ生活費シミュレーション
+            海外生活をシミュレーションする
           </h1>
           <p className="mt-2 text-sm font-medium leading-6 text-gray-700 md:text-base md:leading-7">
-            公開求人と物件を一つずつ選び、収入・家賃・生活費から毎月の収支を試算できます。
+            公開求人と物件を一つずつ選び、月に残るお金と通勤しやすさを確認できます。
           </p>
           <p className="mt-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-gray-700">
-            登録不要・お試し計算・保存なし
+            登録不要・保存なし
           </p>
         </header>
         <PublicLifeSimulator />

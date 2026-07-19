@@ -34,11 +34,11 @@ export default function GoalNavigation() {
         mobileSrc="/images/home/properties-mobile.webp"
         alt="ニュージーランドで住まいを探す住宅街の風景"
         sizes="(min-width: 768px) 100vw, 100vw"
-        className="left-0 top-0 h-[50svh] w-full md:left-0 md:top-0 md:h-[62svh] md:w-full"
-        imageClassName="object-[50%_52%]"
+        className="left-0 top-0 h-[40svh] w-full md:left-0 md:top-0 md:h-[62svh] md:w-full"
+        imageClassName="object-[52%_48%]"
       />
-      <div className="absolute inset-x-0 top-0 h-[50svh] bg-gradient-to-b from-transparent via-transparent to-white md:h-[62svh]" />
-      <div className="mx-auto grid max-w-6xl gap-7 pt-[50svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:gap-12 md:pt-[50svh]">
+      <div className="absolute inset-x-0 top-0 h-[40svh] bg-gradient-to-b from-transparent via-transparent to-white md:h-[62svh]" />
+      <div className="mx-auto grid max-w-6xl gap-7 pt-[40svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:gap-12 md:pt-[50svh]">
         <div className="relative z-10 bg-white/92 py-5 md:bg-white/0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             PROPERTY SEARCH

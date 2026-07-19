@@ -21,13 +21,13 @@ export default function HomePreparation() {
         mobileSrc="/images/home/preparation-mobile.webp"
         alt="渡航準備を想起させる荷物と新生活の風景"
         sizes="(min-width: 768px) 76vw, 100vw"
-        className="left-0 top-0 h-[48svh] w-full md:left-0 md:top-0 md:h-[64svh] md:w-[82vw]"
-        imageClassName="object-[50%_48%]"
+        className="left-0 top-0 h-[40svh] w-full md:left-0 md:top-0 md:h-[64svh] md:w-[82vw]"
+        imageClassName="object-[52%_42%]"
       />
-      <div className="pointer-events-none absolute right-4 top-[47svh] font-serif text-7xl italic leading-none text-[#235347]/10 md:right-[8vw] md:top-[52svh] md:text-[11rem]">
+      <div className="pointer-events-none absolute right-4 top-[39svh] font-serif text-7xl italic leading-none text-[#235347]/10 md:right-[8vw] md:top-[52svh] md:text-[11rem]">
         04
       </div>
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[50svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:pt-[50svh]">
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[42svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:pt-[50svh]">
         <div className="relative z-10 bg-[#F7F7F5]/92 py-5 md:bg-transparent md:py-0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             PREPARATION

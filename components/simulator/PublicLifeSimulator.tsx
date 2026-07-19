@@ -1,13 +1,34 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getRouteInfo, type RouteInfo } from "@/lib/services/routeService";
 
-const pageSize = 12;
+const MapView = dynamic(() => import("@/components/MapView"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[300px] items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 p-4 text-center text-sm font-bold text-gray-700 md:h-[360px]">
+      地図を読み込み中...
+    </div>
+  ),
+});
+
+const pageSize = 10;
 const weeksPerMonth = 4.33;
+const taxRate = 0.15;
+const standardLivingCosts = {
+  food: 500,
+  transport: 150,
+  phone: 40,
+  other: 300,
+};
+const monthlyStandardLivingCost = Object.values(standardLivingCosts).reduce(
+  (sum, value) => sum + value,
+  0,
+);
 
 type PublicJobOption = {
   id: string;
@@ -21,7 +42,6 @@ type PublicJobOption = {
   address: string | null;
   hourly_rate: number | null;
   hourly_rate_min?: number | null;
-  hourly_rate_max?: number | null;
   work_hours: number | null;
   weekly_hours?: number | null;
   employment_type?: string | null;
@@ -44,32 +64,6 @@ type PublicPropertyOption = {
   latitude: number | null;
   longitude: number | null;
 };
-
-type ExpenseField =
-  | "food"
-  | "transport"
-  | "phone"
-  | "insurance"
-  | "daily"
-  | "other";
-
-const initialExpenses: Record<ExpenseField, string> = {
-  food: "500",
-  transport: "160",
-  phone: "50",
-  insurance: "120",
-  daily: "250",
-  other: "150",
-};
-
-const expenseLabels: Array<[ExpenseField, string]> = [
-  ["food", "食費（月額）"],
-  ["transport", "交通費（月額）"],
-  ["phone", "通信費（月額）"],
-  ["insurance", "保険（月額）"],
-  ["daily", "日用品・娯楽費（月額）"],
-  ["other", "その他（月額）"],
-];
 
 const regionOptions = [
   "Auckland",
@@ -120,8 +114,8 @@ function formatLocation(...parts: Array<string | null | undefined>) {
 function formatAddress(address: string | null) {
   if (!address) return "住所未設定";
   const trimmed = address.trim();
-  if (trimmed.length <= 54) return trimmed;
-  return `${trimmed.slice(0, 54)}...`;
+  if (trimmed.length <= 56) return trimmed;
+  return `${trimmed.slice(0, 56)}...`;
 }
 
 function useDebouncedValue(value: string, delay = 350) {
@@ -148,18 +142,6 @@ function hasCoordinates(
   );
 }
 
-function SelectionBadge({ active }: { active: boolean }) {
-  return (
-    <span
-      className={`rounded-full px-2 py-1 text-[11px] font-black ${
-        active ? "bg-[#244C43] text-white" : "bg-gray-100 text-gray-700"
-      }`}
-    >
-      {active ? "選択中" : "未選択"}
-    </span>
-  );
-}
-
 export default function PublicLifeSimulator() {
   const [jobSearch, setJobSearch] = useState("");
   const [propertySearch, setPropertySearch] = useState("");
@@ -180,13 +162,10 @@ export default function PublicLifeSimulator() {
   const [selectedJob, setSelectedJob] = useState<PublicJobOption | null>(null);
   const [selectedProperty, setSelectedProperty] =
     useState<PublicPropertyOption | null>(null);
-  const [expenses, setExpenses] =
-    useState<Record<ExpenseField, string>>(initialExpenses);
-  const [overrideHourlyRate, setOverrideHourlyRate] = useState("");
-  const [overrideWorkHours, setOverrideWorkHours] = useState("");
-  const [overrideRentWeekly, setOverrideRentWeekly] = useState("");
+  const [showResult, setShowResult] = useState(false);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const resultRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -196,7 +175,7 @@ export default function PublicLifeSimulator() {
       let query = supabase
         .from("public_jobs")
         .select(
-          "id,title,company,city,region,district,suburb,area,address,hourly_rate,hourly_rate_min,hourly_rate_max,work_hours,weekly_hours,employment_type,latitude,longitude",
+          "id,title,company,city,region,district,suburb,area,address,hourly_rate,hourly_rate_min,work_hours,weekly_hours,employment_type,latitude,longitude",
         )
         .eq("is_active", true)
         .order("created_at", { ascending: false })
@@ -282,7 +261,7 @@ export default function PublicLifeSimulator() {
     const fetchRoute = async () => {
       setRouteInfo(null);
       setIsLoadingRoute(false);
-      if (!selectedJob || !selectedProperty) return;
+      if (!showResult || !selectedJob || !selectedProperty) return;
       if (!hasCoordinates(selectedJob) || !hasCoordinates(selectedProperty)) {
         return;
       }
@@ -310,24 +289,16 @@ export default function PublicLifeSimulator() {
     return () => {
       isActive = false;
     };
-  }, [selectedJob, selectedProperty]);
+  }, [selectedJob, selectedProperty, showResult]);
 
   const calculation = useMemo(() => {
     const hourlyRate =
-      toNumber(selectedJob?.hourly_rate) ??
-      toNumber(selectedJob?.hourly_rate_min) ??
-      toNumber(overrideHourlyRate);
+      toNumber(selectedJob?.hourly_rate) ?? toNumber(selectedJob?.hourly_rate_min);
     const workHours =
-      toNumber(selectedJob?.work_hours) ??
-      toNumber(selectedJob?.weekly_hours) ??
-      toNumber(overrideWorkHours);
-    const rentWeekly =
-      toNumber(selectedProperty?.rent_weekly) ?? toNumber(overrideRentWeekly);
-    const monthlyExpenses = expenseLabels.reduce((sum, [field]) => {
-      return sum + Math.max(toNumber(expenses[field]) ?? 0, 0);
-    }, 0);
-
+      toNumber(selectedJob?.work_hours) ?? toNumber(selectedJob?.weekly_hours);
+    const rentWeekly = toNumber(selectedProperty?.rent_weekly);
     const missing: string[] = [];
+
     if (!selectedJob) missing.push("求人");
     if (!selectedProperty) missing.push("物件");
     if (selectedJob && hourlyRate === null) missing.push("時給");
@@ -343,38 +314,96 @@ export default function PublicLifeSimulator() {
       return {
         canCalculate: false,
         missing,
-        monthlyIncome: null,
+        monthlyGrossIncome: null,
+        monthlyNetIncome: null,
         monthlyRent: null,
-        monthlyExpenses,
+        monthlyLivingCost: monthlyStandardLivingCost,
         monthlyBalance: null,
-        weeklyBalance: null,
       };
     }
 
-    const monthlyIncome = hourlyRate * workHours * weeksPerMonth;
+    const monthlyGrossIncome = hourlyRate * workHours * weeksPerMonth;
+    const monthlyNetIncome = monthlyGrossIncome * (1 - taxRate);
     const monthlyRent = rentWeekly * weeksPerMonth;
-    const monthlyBalance = monthlyIncome - monthlyRent - monthlyExpenses;
+    const monthlyBalance =
+      monthlyNetIncome - monthlyRent - monthlyStandardLivingCost;
 
     return {
       canCalculate: true,
       missing,
-      monthlyIncome,
+      monthlyGrossIncome,
+      monthlyNetIncome,
       monthlyRent,
-      monthlyExpenses,
+      monthlyLivingCost: monthlyStandardLivingCost,
       monthlyBalance,
-      weeklyBalance: monthlyBalance / weeksPerMonth,
     };
-  }, [
-    expenses,
-    overrideHourlyRate,
-    overrideRentWeekly,
-    overrideWorkHours,
-    selectedJob,
-    selectedProperty,
-  ]);
+  }, [selectedJob, selectedProperty]);
 
-  const updateExpense = (field: ExpenseField, value: string) => {
-    setExpenses((current) => ({ ...current, [field]: value }));
+  const mapData = useMemo(() => {
+    if (!selectedJob || !selectedProperty) return null;
+    if (!hasCoordinates(selectedJob) || !hasCoordinates(selectedProperty)) {
+      return null;
+    }
+
+    const jobPoint = {
+      id: selectedJob.id,
+      lat: selectedJob.latitude!,
+      lng: selectedJob.longitude!,
+      label: "求人",
+      subtitle: selectedJob.title,
+      details: [
+        selectedJob.company || "会社名未設定",
+        formatLocation(
+          selectedJob.region,
+          selectedJob.district,
+          selectedJob.suburb,
+          selectedJob.area,
+          selectedJob.city,
+        ),
+      ],
+    };
+    const propertyPoint = {
+      id: selectedProperty.id,
+      lat: selectedProperty.latitude!,
+      lng: selectedProperty.longitude!,
+      label: "物件",
+      subtitle: selectedProperty.title,
+      details: [
+        formatLocation(
+          selectedProperty.region,
+          selectedProperty.district,
+          selectedProperty.suburb,
+          selectedProperty.area,
+          selectedProperty.city,
+        ),
+        selectedProperty.rent_weekly
+          ? `週家賃 ${money(selectedProperty.rent_weekly)}`
+          : "週家賃未入力",
+      ],
+    };
+    const fallbackLine = {
+      from: { lat: selectedProperty.latitude!, lng: selectedProperty.longitude! },
+      to: { lat: selectedJob.latitude!, lng: selectedJob.longitude! },
+    };
+
+    return {
+      jobs: [jobPoint],
+      properties: [propertyPoint],
+      highlightedLine: routeInfo?.coordinates?.length
+        ? {
+            ...fallbackLine,
+            coordinates: routeInfo.coordinates.map((coordinate) => ({
+              lat: coordinate.latitude,
+              lng: coordinate.longitude,
+            })),
+          }
+        : fallbackLine,
+    };
+  }, [routeInfo, selectedJob, selectedProperty]);
+
+  const resetResult = () => {
+    setShowResult(false);
+    setRouteInfo(null);
   };
 
   const handleJobSearchChange = (value: string) => {
@@ -399,14 +428,22 @@ export default function PublicLifeSimulator() {
 
   const handleSelectJob = (job: PublicJobOption) => {
     setSelectedJob(job);
-    setOverrideHourlyRate("");
-    setOverrideWorkHours("");
+    resetResult();
   };
 
   const handleSelectProperty = (property: PublicPropertyOption) => {
     setSelectedProperty(property);
-    setOverrideRentWeekly("");
+    resetResult();
   };
+
+  const handleShowResult = () => {
+    setShowResult(true);
+    window.setTimeout(() => {
+      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
+
+  const canShowResult = Boolean(selectedJob && selectedProperty);
 
   return (
     <section className="space-y-4 md:space-y-6">
@@ -415,264 +452,316 @@ export default function PublicLifeSimulator() {
           Trial simulation
         </p>
         <h2 className="mt-2 text-xl font-black text-gray-950 md:text-2xl">
-          公開求人と物件で、海外生活を試算する
+          公開求人と物件で、月に残るお金を確認する
         </h2>
-        <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
-          求人と物件を一つずつ選び、生活費を入力して毎月の収支を確認できます。会員登録前の試算内容は保存されません。
+        <p className="mt-2 text-sm font-medium leading-6 text-gray-700 md:max-w-3xl">
+          求人と物件を一つずつ選ぶだけで、月に残るお金と仕事・住まいの位置関係を確認できます。
+          会員登録前の結果は保存されません。
         </p>
       </div>
 
-      <div className="sticky top-16 z-20 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur md:top-20 md:p-4">
-        <div className="grid gap-2 text-sm md:grid-cols-3">
-          <div>
-            <p className="text-xs font-bold text-gray-600">選択中の求人</p>
-            <p className="mt-1 line-clamp-1 font-black text-gray-950">
-              {selectedJob?.title || "未選択"}
-            </p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <StepBlock
+          step="1"
+          title="求人を一つ選ぶ"
+          description="時給と週勤務時間がある求人を選ぶと計算できます。"
+        >
+          <div className="grid gap-2 md:grid-cols-[1fr_190px]">
+            <SearchInput
+              value={jobSearch}
+              onChange={handleJobSearchChange}
+              placeholder="求人名・会社名・地域で検索"
+            />
+            <RegionSelect value={jobRegion} onChange={handleJobRegionChange} />
           </div>
-          <div>
-            <p className="text-xs font-bold text-gray-600">選択中の物件</p>
-            <p className="mt-1 line-clamp-1 font-black text-gray-950">
-              {selectedProperty?.title || "未選択"}
-            </p>
+          <SelectedMiniCard
+            label="選択中の求人"
+            title={selectedJob?.title || "未選択"}
+            description={
+              selectedJob
+                ? `${selectedJob.company || "会社名未設定"} / ${formatLocation(
+                    selectedJob.region,
+                    selectedJob.district,
+                    selectedJob.suburb,
+                    selectedJob.area,
+                    selectedJob.city,
+                  )}`
+                : "求人を一つ選んでください。"
+            }
+          />
+          {jobError ? <ErrorMessage>{jobError}</ErrorMessage> : null}
+          <div className="mt-3 max-h-[520px] space-y-2 overflow-y-auto pr-1">
+            {jobs.map((job) => (
+              <JobOptionCard
+                key={job.id}
+                job={job}
+                selected={selectedJob?.id === job.id}
+                onSelect={() => handleSelectJob(job)}
+              />
+            ))}
           </div>
-          <div>
-            <p className="text-xs font-bold text-gray-600">月間残額</p>
-            <p
-              className={`mt-1 font-black ${
-                calculation.monthlyBalance === null
-                  ? "text-gray-950"
-                  : calculation.monthlyBalance < 0
-                    ? "text-red-600"
-                    : "text-emerald-700"
-              }`}
-            >
-              {calculation.monthlyBalance === null
-                ? "未計算"
-                : money(calculation.monthlyBalance)}
-            </p>
+          {isLoadingJobs ? <LoadingText /> : null}
+          {!isLoadingJobs && !jobs.length ? (
+            <EmptyText>条件に合う公開求人が見つかりません。</EmptyText>
+          ) : null}
+          {jobs.length >= jobPage * pageSize ? (
+            <LoadMoreButton onClick={() => setJobPage((page) => page + 1)} />
+          ) : null}
+        </StepBlock>
+
+        <StepBlock
+          step="2"
+          title="物件を一つ選ぶ"
+          description="週家賃がある物件を選ぶと計算できます。"
+        >
+          <div className="grid gap-2 md:grid-cols-[1fr_190px]">
+            <SearchInput
+              value={propertySearch}
+              onChange={handlePropertySearchChange}
+              placeholder="物件名・地域・住所で検索"
+            />
+            <RegionSelect
+              value={propertyRegion}
+              onChange={handlePropertyRegionChange}
+            />
           </div>
-        </div>
+          <SelectedMiniCard
+            label="選択中の物件"
+            title={selectedProperty?.title || "未選択"}
+            description={
+              selectedProperty
+                ? formatLocation(
+                    selectedProperty.region,
+                    selectedProperty.district,
+                    selectedProperty.suburb,
+                    selectedProperty.area,
+                    selectedProperty.city,
+                  )
+                : "物件を一つ選んでください。"
+            }
+          />
+          {propertyError ? <ErrorMessage>{propertyError}</ErrorMessage> : null}
+          <div className="mt-3 max-h-[520px] space-y-2 overflow-y-auto pr-1">
+            {properties.map((property) => (
+              <PropertyOptionCard
+                key={property.id}
+                property={property}
+                selected={selectedProperty?.id === property.id}
+                onSelect={() => handleSelectProperty(property)}
+              />
+            ))}
+          </div>
+          {isLoadingProperties ? <LoadingText /> : null}
+          {!isLoadingProperties && !properties.length ? (
+            <EmptyText>条件に合う公開物件が見つかりません。</EmptyText>
+          ) : null}
+          {properties.length >= propertyPage * pageSize ? (
+            <LoadMoreButton
+              onClick={() => setPropertyPage((page) => page + 1)}
+            />
+          ) : null}
+        </StepBlock>
       </div>
 
       <StepBlock
-        step="1"
-        title="求人を選ぶ"
-        description="収支計算には時給と週勤務時間が必要です。"
-      >
-        <div className="grid gap-2 md:grid-cols-[1fr_220px]">
-          <SearchInput
-            value={jobSearch}
-            onChange={handleJobSearchChange}
-            placeholder="求人名・会社名・地域で検索"
-          />
-          <RegionSelect value={jobRegion} onChange={handleJobRegionChange} />
-        </div>
-        {jobError ? <ErrorMessage>{jobError}</ErrorMessage> : null}
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          {jobs.map((job) => {
-            const hourlyRate =
-              toNumber(job.hourly_rate) ?? toNumber(job.hourly_rate_min);
-            const workHours =
-              toNumber(job.work_hours) ?? toNumber(job.weekly_hours);
-            const isSelected = selectedJob?.id === job.id;
-
-            return (
-              <button
-                key={job.id}
-                type="button"
-                onClick={() => handleSelectJob(job)}
-                className={`rounded-2xl border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${
-                  isSelected
-                    ? "border-[#244C43] bg-emerald-50"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="line-clamp-2 text-base font-black text-gray-950">
-                      {job.title}
-                    </h3>
-                    <p className="mt-1 line-clamp-1 text-xs font-bold text-gray-600">
-                      {job.company || "会社名未設定"}
-                    </p>
-                  </div>
-                  <SelectionBadge active={isSelected} />
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <Fact
-                    label="時給"
-                    value={hourlyRate ? `${money(hourlyRate)}/h` : "未入力"}
-                  />
-                  <Fact
-                    label="週勤務"
-                    value={workHours ? `${workHours}時間` : "未入力"}
-                  />
-                  <Fact
-                    label="地域"
-                    value={formatLocation(
-                      job.region,
-                      job.district,
-                      job.suburb,
-                      job.area,
-                      job.city,
-                    )}
-                  />
-                  <Fact
-                    label="雇用形態"
-                    value={job.employment_type || "要確認"}
-                  />
-                </div>
-                <p className="mt-2 line-clamp-1 text-xs font-medium text-gray-600">
-                  {formatAddress(job.address)}
-                </p>
-                {!hourlyRate || !workHours ? (
-                  <p className="mt-2 rounded-lg bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800">
-                    収支計算に必要な情報が不足しています
-                  </p>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-        {isLoadingJobs ? <LoadingText /> : null}
-        {!isLoadingJobs && !jobs.length ? (
-          <EmptyText>条件に合う公開求人が見つかりません。</EmptyText>
-        ) : null}
-        {jobs.length >= jobPage * pageSize ? (
-          <LoadMoreButton onClick={() => setJobPage((page) => page + 1)} />
-        ) : null}
-      </StepBlock>
-
-      <StepBlock
-        step="2"
-        title="物件を選ぶ"
-        description="収支計算には週家賃が必要です。"
-      >
-        <div className="grid gap-2 md:grid-cols-[1fr_220px]">
-          <SearchInput
-            value={propertySearch}
-            onChange={handlePropertySearchChange}
-            placeholder="物件名・地域・住所で検索"
-          />
-          <RegionSelect
-            value={propertyRegion}
-            onChange={handlePropertyRegionChange}
-          />
-        </div>
-        {propertyError ? <ErrorMessage>{propertyError}</ErrorMessage> : null}
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          {properties.map((property) => {
-            const rentWeekly = toNumber(property.rent_weekly);
-            const isSelected = selectedProperty?.id === property.id;
-            const utilities =
-              property.utilities_included ?? property.bills_included;
-
-            return (
-              <button
-                key={property.id}
-                type="button"
-                onClick={() => handleSelectProperty(property)}
-                className={`rounded-2xl border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${
-                  isSelected
-                    ? "border-[#244C43] bg-emerald-50"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="line-clamp-2 text-base font-black text-gray-950">
-                    {property.title}
-                  </h3>
-                  <SelectionBadge active={isSelected} />
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <Fact
-                    label="週家賃"
-                    value={rentWeekly ? `${money(rentWeekly)}/w` : "未入力"}
-                  />
-                  <Fact
-                    label="光熱費"
-                    value={
-                      utilities === true
-                        ? "込み"
-                        : utilities === false
-                          ? "別"
-                          : "要確認"
-                    }
-                  />
-                  <Fact
-                    label="地域"
-                    value={formatLocation(
-                      property.region,
-                      property.district,
-                      property.suburb,
-                      property.area,
-                      property.city,
-                    )}
-                  />
-                  <Fact label="住所" value={formatAddress(property.address)} />
-                </div>
-                {!rentWeekly ? (
-                  <p className="mt-2 rounded-lg bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800">
-                    収支計算に必要な家賃情報がありません
-                  </p>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-        {isLoadingProperties ? <LoadingText /> : null}
-        {!isLoadingProperties && !properties.length ? (
-          <EmptyText>条件に合う公開物件が見つかりません。</EmptyText>
-        ) : null}
-        {properties.length >= propertyPage * pageSize ? (
-          <LoadMoreButton onClick={() => setPropertyPage((page) => page + 1)} />
-        ) : null}
-      </StepBlock>
-
-      <StepBlock
         step="3"
-        title="生活費を入力"
-        description="初期値は目安です。自分の生活に合わせて変更できます。"
+        title="結果を見る"
+        description="生活費はサイトの標準設定を使用しています。"
       >
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {expenseLabels.map(([field, label]) => (
-            <MoneyInput
-              key={field}
-              label={label}
-              value={expenses[field]}
-              onChange={(value) => updateExpense(field, value)}
-            />
-          ))}
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm font-bold text-gray-700">
+          標準生活費: {money(monthlyStandardLivingCost)} / 月
+          <span className="mt-1 block text-xs font-medium text-gray-600">
+            食費、交通費、通信費、日用品などの既定値を合計しています。
+          </span>
         </div>
-        {selectedJob && calculation.missing.includes("時給") ? (
-          <MoneyInput
-            label="時給を仮入力して試算"
-            value={overrideHourlyRate}
-            onChange={setOverrideHourlyRate}
-          />
-        ) : null}
-        {selectedJob && calculation.missing.includes("週勤務時間") ? (
-          <NumberInput
-            label="週勤務時間を仮入力して試算"
-            value={overrideWorkHours}
-            onChange={setOverrideWorkHours}
-          />
-        ) : null}
-        {selectedProperty && calculation.missing.includes("週家賃") ? (
-          <MoneyInput
-            label="週家賃を仮入力して試算"
-            value={overrideRentWeekly}
-            onChange={setOverrideRentWeekly}
-          />
+        <button
+          type="button"
+          disabled={!canShowResult}
+          onClick={handleShowResult}
+          className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#244C43] px-4 py-2 text-sm font-black text-white transition hover:bg-[#173d35] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600 sm:w-auto"
+        >
+          結果を見る
+        </button>
+
+        {showResult ? (
+          <div ref={resultRef} className="mt-4 scroll-mt-24">
+            <ResultPanel
+              calculation={calculation}
+              selectedJob={selectedJob}
+              selectedProperty={selectedProperty}
+              routeInfo={routeInfo}
+              isLoadingRoute={isLoadingRoute}
+              mapData={mapData}
+            />
+          </div>
         ) : null}
       </StepBlock>
+    </section>
+  );
+}
 
-      <StepBlock
-        step="4"
-        title="結果を見る"
-        description="税金・勤務時間・生活状況で変わるため、簡易試算として確認してください。"
-      >
+function JobOptionCard({
+  job,
+  selected,
+  onSelect,
+}: {
+  job: PublicJobOption;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const hourlyRate = toNumber(job.hourly_rate) ?? toNumber(job.hourly_rate_min);
+  const workHours = toNumber(job.work_hours) ?? toNumber(job.weekly_hours);
+  const isMissing = hourlyRate === null || workHours === null;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full rounded-2xl border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${
+        selected
+          ? "border-[#244C43] bg-emerald-50"
+          : "border-gray-200 bg-white hover:border-gray-300"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="line-clamp-2 text-base font-black text-gray-950">
+            {job.title}
+          </h3>
+          <p className="mt-1 line-clamp-1 text-xs font-bold text-gray-600">
+            {job.company || "会社名未設定"}
+          </p>
+        </div>
+        <SelectionBadge active={selected} />
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+        <Fact label="時給" value={hourlyRate ? `${money(hourlyRate)}/h` : "未入力"} />
+        <Fact label="週勤務" value={workHours ? `${workHours}時間` : "未入力"} />
+      </div>
+      <p className="mt-2 line-clamp-1 text-xs font-medium text-gray-600">
+        {formatLocation(job.region, job.district, job.suburb, job.area, job.city)}
+      </p>
+      <p className="mt-1 line-clamp-1 text-xs font-medium text-gray-600">
+        {formatAddress(job.address)}
+      </p>
+      {isMissing ? (
+        <p className="mt-2 rounded-lg bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800">
+          月に残るお金の計算に必要な情報が不足しています
+        </p>
+      ) : null}
+    </button>
+  );
+}
+
+function PropertyOptionCard({
+  property,
+  selected,
+  onSelect,
+}: {
+  property: PublicPropertyOption;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const rentWeekly = toNumber(property.rent_weekly);
+  const utilities = property.utilities_included ?? property.bills_included;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full rounded-2xl border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${
+        selected
+          ? "border-[#244C43] bg-emerald-50"
+          : "border-gray-200 bg-white hover:border-gray-300"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="line-clamp-2 text-base font-black text-gray-950">
+          {property.title}
+        </h3>
+        <SelectionBadge active={selected} />
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+        <Fact
+          label="週家賃"
+          value={rentWeekly ? `${money(rentWeekly)}/w` : "未入力"}
+        />
+        <Fact
+          label="光熱費"
+          value={
+            utilities === true ? "込み" : utilities === false ? "別" : "要確認"
+          }
+        />
+      </div>
+      <p className="mt-2 line-clamp-1 text-xs font-medium text-gray-600">
+        {formatLocation(
+          property.region,
+          property.district,
+          property.suburb,
+          property.area,
+          property.city,
+        )}
+      </p>
+      <p className="mt-1 line-clamp-1 text-xs font-medium text-gray-600">
+        {formatAddress(property.address)}
+      </p>
+      {!rentWeekly ? (
+        <p className="mt-2 rounded-lg bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800">
+          月に残るお金の計算に必要な家賃情報がありません
+        </p>
+      ) : null}
+    </button>
+  );
+}
+
+function ResultPanel({
+  calculation,
+  selectedJob,
+  selectedProperty,
+  routeInfo,
+  isLoadingRoute,
+  mapData,
+}: {
+  calculation: {
+    canCalculate: boolean;
+    missing: string[];
+    monthlyGrossIncome: number | null;
+    monthlyNetIncome: number | null;
+    monthlyRent: number | null;
+    monthlyLivingCost: number;
+    monthlyBalance: number | null;
+  };
+  selectedJob: PublicJobOption | null;
+  selectedProperty: PublicPropertyOption | null;
+  routeInfo: RouteInfo | null;
+  isLoadingRoute: boolean;
+  mapData: {
+    jobs: Array<{
+      id: string;
+      lat: number;
+      lng: number;
+      label: string;
+      subtitle?: string;
+      details?: string[];
+    }>;
+    properties: Array<{
+      id: string;
+      lat: number;
+      lng: number;
+      label: string;
+      subtitle?: string;
+      details?: string[];
+    }>;
+    highlightedLine: {
+      from: { lat: number; lng: number };
+      to: { lat: number; lng: number };
+      coordinates?: Array<{ lat: number; lng: number }>;
+    };
+  } | null;
+}) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="space-y-3">
         {!calculation.canCalculate ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-900">
             不足項目: {calculation.missing.join("、") || "未入力項目"}
@@ -685,15 +774,15 @@ export default function PublicLifeSimulator() {
                 : "border-emerald-200 bg-emerald-50"
             }`}
           >
-            <p className="text-sm font-bold text-gray-700">月間残額</p>
+            <p className="text-sm font-bold text-gray-700">月に残るお金</p>
             <p
-              className={`mt-1 text-3xl font-black ${
+              className={`mt-1 text-4xl font-black tracking-tight ${
                 calculation.monthlyBalance! < 0
                   ? "text-red-600"
                   : "text-emerald-700"
               }`}
             >
-              {money(calculation.monthlyBalance!)}
+              約 {money(Math.abs(calculation.monthlyBalance!))}
             </p>
             <p
               className={`mt-2 text-sm font-bold leading-6 ${
@@ -703,30 +792,82 @@ export default function PublicLifeSimulator() {
               }`}
             >
               {calculation.monthlyBalance! < 0
-                ? `この条件では毎月約${money(Math.abs(calculation.monthlyBalance!))}不足する試算です。`
-                : `この条件では毎月約${money(calculation.monthlyBalance!)}残る試算です。`}
+                ? `この組み合わせでは、月に約${money(Math.abs(calculation.monthlyBalance!))}不足する計算です。`
+                : `この組み合わせでは、月に約${money(calculation.monthlyBalance!)}残る計算です。`}
             </p>
 
-            <dl className="mt-4 grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
               <Fact
-                label="月間総収入"
-                value={money(calculation.monthlyIncome!)}
+                label="月の収入"
+                value={money(calculation.monthlyNetIncome!)}
               />
-              <Fact label="月間家賃" value={money(calculation.monthlyRent!)} />
+              <Fact label="月の家賃" value={money(calculation.monthlyRent!)} />
               <Fact
-                label="その他生活費"
-                value={money(calculation.monthlyExpenses)}
+                label="標準生活費"
+                value={money(calculation.monthlyLivingCost)}
               />
               <Fact
-                label="週単位の目安"
-                value={money(calculation.weeklyBalance!)}
+                label="税引前収入"
+                value={money(calculation.monthlyGrossIncome!)}
               />
-            </dl>
+            </div>
+            <p className="mt-3 text-xs font-medium leading-5 text-gray-700">
+              実際の収入、税金、勤務時間、生活費によって結果は変わります。
+            </p>
           </div>
         )}
 
+        <div className="rounded-2xl border border-[#244C43]/20 bg-white p-4">
+          <h3 className="text-lg font-black text-gray-950">
+            この組み合わせを保存しますか？
+          </h3>
+          <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
+            会員登録すると、求人と物件を保存し、あとからほかの組み合わせと比較できます。
+          </p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <Link
+              href="/register"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#244C43] px-4 py-2 text-sm font-black text-white hover:bg-[#173d35]"
+            >
+              無料で会員登録する
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-black text-gray-950 hover:border-[#244C43]"
+            >
+              ログインする
+            </Link>
+          </div>
+          <p className="mt-3 text-xs font-bold text-gray-600">
+            会員登録前は、この結果を保存しません。
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
-          <h3 className="text-base font-black text-gray-950">通勤距離・時間</h3>
+          <h3 className="text-base font-black text-gray-950">
+            仕事と住まいの位置関係
+          </h3>
+          {mapData ? (
+            <div className="mt-3 overflow-hidden rounded-2xl">
+              <MapView
+                jobs={mapData.jobs}
+                properties={mapData.properties}
+                highlightedJobId={selectedJob?.id}
+                highlightedPropertyId={selectedProperty?.id}
+                highlightedLine={mapData.highlightedLine}
+              />
+            </div>
+          ) : (
+            <p className="mt-2 rounded-xl bg-gray-50 px-3 py-3 text-sm font-bold leading-6 text-gray-700">
+              住所情報が不足しているため、地図を表示できません。
+            </p>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-4">
+          <h3 className="text-base font-black text-gray-950">通勤しやすさ</h3>
           {isLoadingRoute ? (
             <p className="mt-2 text-sm font-bold text-gray-700">
               経路を確認中です...
@@ -749,34 +890,8 @@ export default function PublicLifeSimulator() {
             </p>
           )}
         </div>
-
-        <div className="rounded-2xl border border-[#244C43]/20 bg-white p-4">
-          <h3 className="text-lg font-black text-gray-950">
-            この生活プランを保存しますか？
-          </h3>
-          <p className="mt-2 text-sm font-medium leading-6 text-gray-700">
-            会員登録すると、求人と物件を保存し、あとから条件を比較できます。
-          </p>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <Link
-              href="/register"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#244C43] px-4 py-2 text-sm font-black text-white hover:bg-[#173d35]"
-            >
-              無料で会員登録して保存する
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-black text-gray-950 hover:border-[#244C43]"
-            >
-              ログインして保存する
-            </Link>
-          </div>
-          <p className="mt-3 text-xs font-bold text-gray-600">
-            会員登録前はシミュレーション結果を保存しません。
-          </p>
-        </div>
-      </StepBlock>
-    </section>
+      </div>
+    </div>
   );
 }
 
@@ -859,62 +974,43 @@ function RegionSelect({
   );
 }
 
-function MoneyInput({
+function SelectedMiniCard({
   label,
-  value,
-  onChange,
+  title,
+  description,
 }: {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
+  title: string;
+  description: string;
 }) {
   return (
-    <label className="block">
-      <span className="text-xs font-black text-gray-700">{label}</span>
-      <div className="mt-1 flex h-10 items-center rounded-xl border border-gray-300 bg-white px-3 focus-within:border-[#244C43] focus-within:ring-2 focus-within:ring-emerald-100">
-        <span className="text-sm font-black text-gray-600">$</span>
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          inputMode="decimal"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="min-w-0 flex-1 bg-transparent px-2 text-sm font-bold text-gray-950 outline-none"
-        />
-      </div>
-    </label>
+    <div className="mt-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+      <p className="text-[11px] font-black text-gray-600">{label}</p>
+      <p className="mt-1 line-clamp-1 text-sm font-black text-gray-950">
+        {title}
+      </p>
+      <p className="mt-1 line-clamp-1 text-xs font-medium text-gray-600">
+        {description}
+      </p>
+    </div>
   );
 }
 
-function NumberInput({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
+function SelectionBadge({ active }: { active: boolean }) {
   return (
-    <label className="block">
-      <span className="text-xs font-black text-gray-700">{label}</span>
-      <input
-        type="number"
-        min="0"
-        step="0.5"
-        inputMode="decimal"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-1 h-10 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm font-bold text-gray-950 outline-none focus:border-[#244C43] focus:ring-2 focus:ring-emerald-100"
-      />
-    </label>
+    <span
+      className={`rounded-full px-2 py-1 text-[11px] font-black ${
+        active ? "bg-[#244C43] text-white" : "bg-gray-100 text-gray-700"
+      }`}
+    >
+      {active ? "選択中" : "選択"}
+    </span>
   );
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-gray-50 px-2 py-2">
+    <div className="rounded-xl bg-white/80 px-2 py-2 ring-1 ring-black/5">
       <p className="text-[11px] font-bold text-gray-600">{label}</p>
       <p className="mt-1 break-words text-xs font-black text-gray-950">
         {value}

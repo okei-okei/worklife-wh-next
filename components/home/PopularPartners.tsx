@@ -34,11 +34,11 @@ export default function PopularPartners() {
         mobileSrc="/images/home/partners-mobile.webp"
         alt="通信や送金など渡航前後のサービス比較を想起する写真"
         sizes="(min-width: 768px) 100vw, 100vw"
-        className="left-0 top-0 h-[48svh] w-full md:left-0 md:top-0 md:h-[58svh] md:w-full"
-        imageClassName="object-[54%_46%]"
+        className="left-0 top-0 h-[38svh] w-full md:left-0 md:top-0 md:h-[58svh] md:w-full"
+        imageClassName="object-[54%_44%]"
       />
-      <div className="absolute inset-x-0 top-0 h-[48svh] bg-gradient-to-b from-transparent via-[#F7F7F5]/20 to-[#F7F7F5] md:h-[58svh]" />
-      <div className="relative z-10 mx-auto max-w-6xl pt-[48svh] md:min-h-[86svh] md:pt-[46svh]">
+      <div className="absolute inset-x-0 top-0 h-[38svh] bg-gradient-to-b from-transparent via-[#F7F7F5]/20 to-[#F7F7F5] md:h-[58svh]" />
+      <div className="relative z-10 mx-auto max-w-6xl pt-[39svh] md:min-h-[86svh] md:pt-[46svh]">
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">

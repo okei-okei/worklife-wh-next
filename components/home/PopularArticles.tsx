@@ -1,5 +1,4 @@
 import Link from "next/link";
-import HomeImagePlane from "@/components/home/HomeImagePlane";
 import type { Article } from "@/lib/articles";
 
 export default function PopularArticles({ articles }: { articles: Article[] }) {
@@ -7,17 +6,10 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
     <section
       data-scene="articles"
       data-background-scene="articles"
-      className="relative overflow-hidden bg-white px-4 py-14 text-[#171717] md:px-6 md:py-24"
+      className="relative overflow-hidden bg-white px-4 py-12 text-[#171717] md:px-6 md:py-20"
     >
-      <HomeImagePlane
-        desktopSrc="/images/home/articles-desktop.webp"
-        mobileSrc="/images/home/articles-mobile.webp"
-        alt="落ち着いてニュージーランド生活情報を確認する雰囲気"
-        sizes="(min-width: 768px) 44vw, 100vw"
-        className="right-[-6vw] top-0 h-[42svh] w-[96vw] opacity-95 md:right-0 md:top-[10%] md:h-[50svh] md:w-[44vw]"
-        imageClassName="object-[56%_48%]"
-      />
-      <div className="mx-auto grid max-w-6xl gap-6 pt-[44svh] md:min-h-[72svh] md:grid-cols-[0.38fr_0.62fr] md:items-start md:gap-8 md:pt-0">
+      <div className="pointer-events-none absolute right-0 top-0 hidden h-full w-[34vw] bg-[#F4EFE7] md:block" />
+      <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[0.36fr_0.64fr] md:items-start md:gap-8">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <div className="flex items-end justify-between gap-3 md:block">
             <div>
@@ -40,7 +32,7 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
           </div>
         </div>
 
-        <div className="relative z-10 grid gap-3 md:mt-[34svh] md:grid-cols-[1.15fr_0.85fr] md:gap-5">
+        <div className="relative z-10 grid gap-3 md:grid-cols-[1.15fr_0.85fr] md:gap-5">
           {articles.slice(0, 1).map((article) => (
             <Link
               key={article.slug}

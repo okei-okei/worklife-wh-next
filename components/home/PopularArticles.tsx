@@ -21,7 +21,7 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
         className="left-0 top-0 h-[230px] w-full bg-white lg:hidden"
         imageClassName="object-[50%_44%]"
       />
-      <div className="absolute inset-x-0 top-0 h-[230px] bg-gradient-to-b from-transparent via-white/20 to-white lg:hidden" />
+      <div className="absolute inset-x-0 top-[168px] h-[62px] bg-gradient-to-b from-transparent via-white/35 to-white lg:hidden" />
 
       <div className="relative z-10 mx-auto grid max-w-6xl gap-6 pt-[240px] lg:grid-cols-12 lg:gap-x-10 lg:gap-y-6 lg:pt-0">
         <div className="order-1 bg-white/94 py-5 lg:col-span-5 lg:col-start-8 lg:bg-transparent lg:py-0">

@@ -29,7 +29,7 @@ export default function HomePreparation() {
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             PREPARATION
           </p>
-          <h2 className="mt-3 max-w-[620px] text-balance text-2xl font-black leading-tight md:text-5xl">
+          <h2 className="mt-3 max-w-[680px] text-balance text-2xl font-black leading-tight md:text-4xl xl:text-5xl">
             <span className="hidden sm:inline">
               渡航準備を、一つずつ
             </span>

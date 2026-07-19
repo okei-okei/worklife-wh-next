@@ -16,13 +16,13 @@ export default function HomeFinalCTA() {
         className="left-0 top-0 h-[42svh] w-full bg-white md:left-[42vw] md:right-auto md:top-[8%] md:h-[70svh] md:w-[58vw]"
         imageClassName="object-[50%_42%] md:object-[52%_60%]"
       />
-      <div className="absolute right-0 top-0 h-[42svh] w-full bg-gradient-to-b from-transparent to-white md:hidden" />
+      <div className="absolute inset-x-0 top-[30svh] h-[12svh] bg-gradient-to-b from-transparent via-white/35 to-white md:hidden" />
       <div className="mx-auto grid max-w-6xl gap-8 pt-[42svh] md:min-h-[86svh] md:grid-cols-[minmax(0,430px)_1fr] md:items-center md:pt-0">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             START YOUR LIFE PLAN
           </p>
-          <h2 className="mt-3 max-w-[700px] text-balance text-3xl font-black leading-tight [word-break:auto-phrase] md:text-6xl">
+          <h2 className="mt-3 max-w-[760px] text-balance text-3xl font-black leading-tight [word-break:auto-phrase] md:text-5xl xl:text-6xl">
             <span className="hidden sm:inline">
               自分に合う海外生活を、見つける。
             </span>

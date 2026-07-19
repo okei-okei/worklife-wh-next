@@ -962,7 +962,7 @@ function ResultPanel({
             </div>
             {calculation.resolvedWorkHours.usedDefault ? (
               <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold leading-5 text-blue-800">
-                勤務時間が登録されていない求人は、週20時間として計算しています。
+                勤務時間未設定のため、週20時間で計算しています。
               </p>
             ) : null}
             <p className="mt-3 text-xs font-medium leading-5 text-gray-700">

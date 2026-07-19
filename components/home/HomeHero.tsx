@@ -25,7 +25,7 @@ export default function HomeHero() {
         className="left-0 top-0 h-[36svh] w-full bg-white sm:h-[40svh] md:left-[44vw] md:top-0 md:h-[86svh] md:w-[56vw]"
         imageClassName="object-[50%_45%] md:object-[48%_58%] group-hover:scale-[1.01]"
       />
-      <div className="absolute right-0 top-0 h-[36svh] w-full bg-gradient-to-b from-white/0 via-white/0 to-white sm:h-[40svh] md:hidden" />
+      <div className="absolute inset-x-0 top-[26svh] h-[10svh] bg-gradient-to-b from-transparent via-white/35 to-white sm:top-[29svh] sm:h-[11svh] md:hidden" />
       <div className="pointer-events-none absolute left-4 top-[43svh] hidden h-px w-[22vw] bg-[#D8D8D4] md:left-6 md:top-[76svh] md:block" />
       <div className="pointer-events-none absolute right-[-1.5rem] top-[49svh] hidden select-none text-right font-serif text-7xl font-semibold italic leading-none tracking-tight text-[#235347]/10 md:right-auto md:left-[34%] md:top-[13%] md:block md:text-[8rem]">
         <span className="block">WORK.</span>

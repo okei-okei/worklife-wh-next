@@ -34,7 +34,7 @@ export default function PopularPartners() {
         className="left-0 top-0 h-[260px] w-full bg-[#F7F7F5] md:left-0 md:top-0 md:h-[58svh] md:w-full"
         imageClassName="object-[50%_42%] md:object-[54%_56%]"
       />
-      <div className="absolute inset-x-0 top-0 h-[260px] bg-gradient-to-b from-transparent via-[#F7F7F5]/20 to-[#F7F7F5] md:h-[58svh]" />
+      <div className="absolute inset-x-0 top-[190px] h-[70px] bg-gradient-to-b from-transparent via-[#F7F7F5]/35 to-[#F7F7F5] md:top-0 md:h-[58svh] md:via-[#F7F7F5]/20" />
       <div className="relative z-10 mx-auto max-w-6xl pt-[270px] md:min-h-[86svh] md:pt-[46svh]">
         <div className="flex items-end justify-between gap-3">
           <div>

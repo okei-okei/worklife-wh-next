@@ -19,10 +19,9 @@ export default function FeatureSummary() {
         desktopSrc="/images/home/simulator-desktop.webp"
         mobileSrc="/images/home/simulator-mobile.webp"
         alt="住宅地と都市をつなぐ道路から収支と通勤を想起する風景"
-        sizes="(min-width: 768px) 68vw, 92vw"
+        sizes="(min-width: 768px) 68vw, 100vw"
         className="right-0 top-0 h-[42svh] w-full bg-white md:right-[-8vw] md:top-[10%] md:h-[76svh] md:w-[68vw]"
-        fitClassName="object-contain md:object-cover"
-        imageClassName="object-[50%_48%] md:object-[50%_50%]"
+        imageClassName="object-[50%_44%] md:object-[50%_50%]"
       />
       <div className="pointer-events-none absolute left-4 top-[42svh] h-px w-[42vw] bg-[#D8D8D4] md:left-[6vw] md:top-[20%] md:w-[22vw]" />
       <div className="mx-auto grid max-w-6xl gap-7 pt-[43svh] md:min-h-[88svh] md:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] md:items-center md:pt-0">
@@ -31,7 +30,14 @@ export default function FeatureSummary() {
             TRIAL SIMULATION
           </p>
           <h2 className="mt-3 max-w-[620px] text-balance text-2xl font-black leading-tight [word-break:auto-phrase] md:text-5xl">
-            海外生活をシミュレーションする
+            <span className="hidden sm:inline">
+              海外生活をシミュレーションする
+            </span>
+            <span className="sm:hidden">
+              海外生活を
+              <br />
+              シミュレーションする
+            </span>
           </h2>
           <p className="mt-4 max-w-md text-pretty text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
             <span className="sm:hidden">

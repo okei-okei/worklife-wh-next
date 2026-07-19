@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Article } from "@/lib/articles";
+import HomeImagePlane from "@/components/home/HomeImagePlane";
 
 export default function PopularArticles({ articles }: { articles: Article[] }) {
   return (
@@ -8,8 +9,16 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
       data-background-scene="articles"
       className="relative overflow-hidden bg-white px-4 py-10 text-[#171717] md:px-6 md:py-20"
     >
-      <div className="pointer-events-none absolute right-0 top-0 hidden h-full w-[34vw] bg-[#F4EFE7] md:block" />
-      <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[0.36fr_0.64fr] md:items-start md:gap-8">
+      <HomeImagePlane
+        desktopSrc="/images/home/articles-desktop.webp"
+        mobileSrc="/images/home/articles-mobile.webp"
+        alt="ニュージーランド生活の情報を落ち着いて確認する風景"
+        sizes="(min-width: 768px) 34vw, 100vw"
+        className="left-0 top-0 h-[230px] w-full bg-white md:left-auto md:right-0 md:h-full md:w-[34vw]"
+        imageClassName="object-[50%_44%] md:object-[52%_50%]"
+      />
+      <div className="absolute inset-x-0 top-0 h-[230px] bg-gradient-to-b from-transparent via-white/20 to-white md:hidden" />
+      <div className="relative z-10 mx-auto grid max-w-6xl gap-6 pt-[240px] md:grid-cols-[0.36fr_0.64fr] md:items-start md:gap-8 md:pt-0">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <div className="flex items-end justify-between gap-3 md:block">
             <div>
@@ -28,7 +37,8 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
               </h2>
               <p className="mt-3 max-w-md text-pretty text-sm font-medium leading-6 text-[#666666]">
                 <span className="sm:hidden">
-                  現地で役立つ仕事・住まい・生活情報をまとめています。
+                  仕事・住まい・生活のポイントを、
+                  現地経験をもとにまとめています。
                 </span>
                 <span className="hidden sm:inline">
                   現地経験をもとに、仕事・住まい・生活のポイントをまとめています。

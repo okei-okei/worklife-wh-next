@@ -12,19 +12,25 @@ export default function HomeFinalCTA() {
         desktopSrc="/images/home/final-desktop.webp"
         mobileSrc="/images/home/final-mobile.webp"
         alt="ニュージーランドの広い空と未来を感じる夕景"
-        sizes="(min-width: 768px) 54vw, 92vw"
-        className="right-0 top-0 h-[50svh] w-full bg-white md:left-[42vw] md:right-auto md:top-[8%] md:h-[70svh] md:w-[58vw]"
-        fitClassName="object-contain md:object-cover"
-        imageClassName="object-[50%_48%] md:object-[52%_50%]"
+        sizes="(min-width: 768px) 54vw, 100vw"
+        className="left-0 top-0 h-[42svh] w-full bg-white md:left-[42vw] md:right-auto md:top-[8%] md:h-[70svh] md:w-[58vw]"
+        imageClassName="object-[50%_42%] md:object-[52%_50%]"
       />
-      <div className="absolute right-0 top-0 h-[50svh] w-full bg-gradient-to-b from-transparent to-white md:hidden" />
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[50svh] md:min-h-[86svh] md:grid-cols-[minmax(0,430px)_1fr] md:items-center md:pt-0">
+      <div className="absolute right-0 top-0 h-[42svh] w-full bg-gradient-to-b from-transparent to-white md:hidden" />
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[42svh] md:min-h-[86svh] md:grid-cols-[minmax(0,430px)_1fr] md:items-center md:pt-0">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             START YOUR LIFE PLAN
           </p>
           <h2 className="mt-3 max-w-[700px] text-balance text-3xl font-black leading-tight [word-break:auto-phrase] md:text-6xl">
-            自分に合う海外生活を、見つける。
+            <span className="hidden sm:inline">
+              自分に合う海外生活を、見つける。
+            </span>
+            <span className="sm:hidden">
+              自分に合う海外生活を、
+              <br />
+              見つける。
+            </span>
           </h2>
           <p className="mt-4 max-w-md text-pretty text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
             仕事、住まい、通勤時間、生活費をまとめて比べられます。

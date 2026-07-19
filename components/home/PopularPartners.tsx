@@ -30,13 +30,12 @@ export default function PopularPartners() {
         desktopSrc="/images/home/partners-desktop.webp"
         mobileSrc="/images/home/partners-mobile.webp"
         alt="通信や送金など渡航前後のサービス比較を想起する写真"
-        sizes="(min-width: 768px) 100vw, 92vw"
-        className="left-0 top-0 h-[280px] w-full bg-[#F7F7F5] md:left-0 md:top-0 md:h-[58svh] md:w-full"
-        fitClassName="object-contain md:object-cover"
-        imageClassName="object-[50%_44%] md:object-[54%_44%]"
+        sizes="(min-width: 768px) 100vw, 100vw"
+        className="left-0 top-0 h-[260px] w-full bg-[#F7F7F5] md:left-0 md:top-0 md:h-[58svh] md:w-full"
+        imageClassName="object-[50%_42%] md:object-[54%_44%]"
       />
-      <div className="absolute inset-x-0 top-0 h-[280px] bg-gradient-to-b from-transparent via-[#F7F7F5]/20 to-[#F7F7F5] md:h-[58svh]" />
-      <div className="relative z-10 mx-auto max-w-6xl pt-[290px] md:min-h-[86svh] md:pt-[46svh]">
+      <div className="absolute inset-x-0 top-0 h-[260px] bg-gradient-to-b from-transparent via-[#F7F7F5]/20 to-[#F7F7F5] md:h-[58svh]" />
+      <div className="relative z-10 mx-auto max-w-6xl pt-[270px] md:min-h-[86svh] md:pt-[46svh]">
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">

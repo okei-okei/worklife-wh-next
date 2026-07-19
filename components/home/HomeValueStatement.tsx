@@ -18,10 +18,9 @@ export default function HomeValueStatement() {
         desktopSrc="/images/home/jobs-desktop.webp"
         mobileSrc="/images/home/jobs-mobile.webp"
         alt="ニュージーランドのカフェや街で働く日常"
-        sizes="(min-width: 768px) 66vw, 92vw"
+        sizes="(min-width: 768px) 66vw, 100vw"
         className="left-0 top-0 h-[42svh] w-full bg-[#F3F0EA] md:left-0 md:top-[10%] md:h-[76svh] md:w-[66vw]"
-        fitClassName="object-contain md:object-cover"
-        imageClassName="object-[50%_44%] md:object-[54%_46%]"
+        imageClassName="object-[50%_42%] md:object-[54%_46%]"
       />
       <div className="mx-auto grid max-w-6xl gap-7 pt-[43svh] md:min-h-[88svh] md:grid-cols-[minmax(0,0.62fr)_minmax(280px,0.38fr)] md:items-center md:pt-0">
         <div className="hidden md:block" />
@@ -30,7 +29,14 @@ export default function HomeValueStatement() {
             JOB SEARCH
           </p>
           <h2 className="mt-3 max-w-[620px] text-balance text-2xl font-black leading-tight [word-break:auto-phrase] md:text-5xl">
-            ニュージーランドで仕事を探す
+            <span className="hidden sm:inline">
+              ニュージーランドで仕事を探す
+            </span>
+            <span className="sm:hidden">
+              ニュージーランドで
+              <br />
+              仕事を探す
+            </span>
           </h2>
           <p className="mt-4 max-w-md text-pretty text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
             公開求人を確認し、気になる仕事を保存できます。

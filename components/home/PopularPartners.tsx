@@ -30,27 +30,28 @@ export default function PopularPartners() {
         desktopSrc="/images/home/partners-desktop.webp"
         mobileSrc="/images/home/partners-mobile.webp"
         alt="通信や送金など渡航前後のサービス比較を想起する写真"
-        sizes="(min-width: 768px) 100vw, 100vw"
-        className="left-0 top-0 h-[260px] w-full md:left-0 md:top-0 md:h-[58svh] md:w-full"
-        imageClassName="object-[54%_44%]"
+        sizes="(min-width: 768px) 100vw, 92vw"
+        className="left-0 top-0 h-[280px] w-full bg-[#F7F7F5] md:left-0 md:top-0 md:h-[58svh] md:w-full"
+        fitClassName="object-contain md:object-cover"
+        imageClassName="object-[50%_44%] md:object-[54%_44%]"
       />
-      <div className="absolute inset-x-0 top-0 h-[260px] bg-gradient-to-b from-transparent via-[#F7F7F5]/20 to-[#F7F7F5] md:h-[58svh]" />
-      <div className="relative z-10 mx-auto max-w-6xl pt-[270px] md:min-h-[86svh] md:pt-[46svh]">
+      <div className="absolute inset-x-0 top-0 h-[280px] bg-gradient-to-b from-transparent via-[#F7F7F5]/20 to-[#F7F7F5] md:h-[58svh]" />
+      <div className="relative z-10 mx-auto max-w-6xl pt-[290px] md:min-h-[86svh] md:pt-[46svh]">
         <div className="flex items-end justify-between gap-3">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
               COMPARE SERVICES
             </p>
-            <h2 className="mt-2 text-xl font-black text-[#171717] md:text-4xl">
+            <h2 className="mt-2 max-w-[680px] text-balance text-xl font-black text-[#171717] md:text-4xl">
               渡航前後のサービスを比較する
             </h2>
-            <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-[#666666]">
+            <p className="mt-2 max-w-xl text-pretty text-sm font-medium leading-6 text-[#666666]">
               通信、保険、お金の準備を分かりやすく整理しています。
             </p>
           </div>
           <Link
             href="/partners"
-            className="shrink-0 text-xs font-black text-[#315C55] md:text-sm"
+            className="shrink-0 whitespace-nowrap text-xs font-black text-[#315C55] md:text-sm"
           >
             比較一覧へ
           </Link>

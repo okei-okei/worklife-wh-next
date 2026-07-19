@@ -21,19 +21,19 @@ export default function HomeHero() {
         mobileSrc="/images/home/hero-mobile.webp"
         alt="ニュージーランドの空と街を感じる広い風景"
         priority
-        sizes="(min-width: 768px) 56vw, 100vw"
-        className="right-[-6vw] top-0 h-[44svh] w-[106vw] md:left-[44vw] md:right-auto md:top-0 md:h-[86svh] md:w-[56vw]"
-        imageClassName="object-[50%_44%] md:object-[48%_50%] group-hover:scale-[1.01]"
+        sizes="(min-width: 768px) 56vw, 92vw"
+        className="right-0 top-0 h-[50svh] w-full bg-white md:left-[44vw] md:right-auto md:top-0 md:h-[86svh] md:w-[56vw]"
+        fitClassName="object-contain md:object-cover"
+        imageClassName="object-[50%_46%] md:object-[48%_50%] group-hover:scale-[1.01]"
       />
-      <div className="absolute right-0 top-0 h-[44svh] w-full bg-gradient-to-b from-white/0 via-white/0 to-white md:hidden" />
+      <div className="absolute right-0 top-0 h-[50svh] w-full bg-gradient-to-b from-white/0 via-white/0 to-white md:hidden" />
       <div className="pointer-events-none absolute left-4 top-[43svh] hidden h-px w-[22vw] bg-[#D8D8D4] md:left-6 md:top-[76svh] md:block" />
       <div className="pointer-events-none absolute right-[-1.5rem] top-[49svh] select-none text-right font-serif text-7xl font-semibold italic leading-none tracking-tight text-[#235347]/10 md:right-auto md:left-[34%] md:top-[13%] md:text-[8rem]">
-        WORK.
-        <br />
-        HOME.
+        <span className="block">WORK.</span>
+        <span className="block">HOME.</span>
       </div>
 
-      <div className="relative z-10 mx-auto grid min-h-[calc(98svh-5rem)] max-w-6xl content-end gap-8 pt-[46svh] md:min-h-[calc(96svh-5rem)] md:grid-cols-[minmax(0,460px)_1fr] md:content-center md:pt-0">
+      <div className="relative z-10 mx-auto grid min-h-[calc(98svh-5rem)] max-w-6xl content-end gap-8 pt-[50svh] md:min-h-[calc(96svh-5rem)] md:grid-cols-[minmax(0,460px)_1fr] md:content-center md:pt-0">
         <div
           data-home-hero-content
           className="min-w-0"
@@ -41,15 +41,14 @@ export default function HomeHero() {
           <p className="text-xs font-bold text-[#315C55] md:text-sm">
             ニュージーランド・ワーキングホリデー
           </p>
-          <p className="mt-3 text-[34px] font-black leading-[1.02] tracking-tight text-[#171717] md:text-6xl">
-            海外生活を、
-            <br />
-            もっとリアルに。
+          <p className="mt-3 max-w-[620px] text-balance text-[34px] font-black leading-[1.04] tracking-tight text-[#171717] md:text-6xl">
+            <span className="block sm:inline">海外生活を、</span>
+            <span className="block sm:inline">もっとリアルに。</span>
           </p>
-          <h1 className="mt-4 max-w-md text-lg font-black leading-snug text-[#171717] md:text-2xl">
+          <h1 className="mt-4 max-w-[680px] text-balance text-lg font-black leading-snug text-[#171717] [word-break:auto-phrase] md:text-2xl">
             ニュージーランドワーホリの仕事・住まい・生活を一つに
           </h1>
-          <p className="mt-3 max-w-md text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
+          <p className="mt-3 max-w-md text-pretty text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
             仕事探し、家探し、生活費、渡航準備をまとめて管理。
           </p>
 
@@ -60,8 +59,8 @@ export default function HomeHero() {
                 href={item.href}
                 className={
                   item.variant === "primary"
-                    ? "inline-flex min-h-11 items-center justify-center rounded-full bg-[#1E4D43] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#173d35] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347]"
-                    : "inline-flex min-h-11 items-center justify-center rounded-full border border-[#D8D8D4] bg-white/85 px-4 py-2 text-sm font-bold text-[#171717] transition hover:border-[#235347] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347]"
+                    ? "inline-flex min-h-11 whitespace-nowrap items-center justify-center rounded-full bg-[#1E4D43] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#173d35] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] sm:px-4"
+                    : "inline-flex min-h-11 whitespace-nowrap items-center justify-center rounded-full border border-[#D8D8D4] bg-white/85 px-3 py-2 text-sm font-bold text-[#171717] transition hover:border-[#235347] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] sm:px-4"
                 }
               >
                 {item.label}

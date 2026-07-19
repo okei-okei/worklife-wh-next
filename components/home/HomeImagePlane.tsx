@@ -6,6 +6,7 @@ type HomeImagePlaneProps = {
   alt: string;
   className: string;
   imageClassName?: string;
+  fitClassName?: string;
   priority?: boolean;
   sizes: string;
 };
@@ -16,6 +17,7 @@ export default function HomeImagePlane({
   alt,
   className,
   imageClassName = "object-center",
+  fitClassName = "object-cover",
   priority = false,
   sizes,
 }: HomeImagePlaneProps) {
@@ -28,7 +30,7 @@ export default function HomeImagePlane({
         fill
         priority={priority}
         sizes={sizes}
-        className={`object-cover saturate-[0.92] transition-transform duration-700 ease-out motion-reduce:transition-none ${imageClassName}`}
+        className={`${fitClassName} saturate-[0.92] transition-transform duration-700 ease-out motion-reduce:transition-none ${imageClassName}`}
       />
     </picture>
   );

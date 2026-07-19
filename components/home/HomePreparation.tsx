@@ -20,21 +20,20 @@ export default function HomePreparation() {
         desktopSrc="/images/home/preparation-desktop.webp"
         mobileSrc="/images/home/preparation-mobile.webp"
         alt="渡航準備を想起させる荷物と新生活の風景"
-        sizes="(min-width: 768px) 76vw, 100vw"
-        className="left-0 top-0 h-[34svh] w-full md:left-0 md:top-0 md:h-[64svh] md:w-[82vw]"
+        sizes="(min-width: 768px) 76vw, 92vw"
+        className="left-0 top-0 h-[40svh] w-full bg-[#F7F7F5] md:left-0 md:top-0 md:h-[64svh] md:w-[82vw]"
+        fitClassName="object-contain md:object-cover"
         imageClassName="object-[50%_42%]"
       />
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[36svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:pt-[50svh]">
+      <div className="mx-auto grid max-w-6xl gap-7 pt-[41svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:pt-[50svh]">
         <div className="relative z-10 bg-[#F7F7F5]/92 py-5 md:bg-transparent md:py-0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             PREPARATION
           </p>
-          <h2 className="mt-3 text-2xl font-black leading-tight md:text-5xl">
-            準備を、
-            <br />
-            一つずつ。
+          <h2 className="mt-3 max-w-[620px] text-balance text-2xl font-black leading-tight md:text-5xl">
+            準備を、一つずつ。
           </h2>
-          <p className="mt-4 max-w-lg text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
+          <p className="mt-4 max-w-lg text-pretty text-sm font-medium leading-6 text-[#666666] md:text-base md:leading-7">
             SIM、保険、銀行、IRD、生活用品を確認できます。
           </p>
         </div>

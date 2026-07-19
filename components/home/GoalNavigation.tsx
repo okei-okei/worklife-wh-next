@@ -30,22 +30,21 @@ export default function GoalNavigation() {
         desktopSrc="/images/home/properties-desktop.webp"
         mobileSrc="/images/home/properties-mobile.webp"
         alt="ニュージーランドで住まいを探す住宅街の風景"
-        sizes="(min-width: 768px) 100vw, 100vw"
-        className="left-0 top-0 h-[36svh] w-full md:left-0 md:top-0 md:h-[62svh] md:w-full"
-        imageClassName="object-[50%_46%]"
+        sizes="(min-width: 768px) 100vw, 92vw"
+        className="left-0 top-0 h-[42svh] w-full bg-white md:left-0 md:top-0 md:h-[62svh] md:w-full"
+        fitClassName="object-contain md:object-cover"
+        imageClassName="object-[50%_44%] md:object-[50%_46%]"
       />
-      <div className="absolute inset-x-0 top-0 h-[36svh] bg-gradient-to-b from-transparent via-transparent to-white md:h-[62svh]" />
-      <div className="mx-auto grid max-w-6xl gap-7 pt-[36svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:gap-12 md:pt-[50svh]">
+      <div className="absolute inset-x-0 top-0 h-[42svh] bg-gradient-to-b from-transparent via-transparent to-white md:h-[62svh]" />
+      <div className="mx-auto grid max-w-6xl gap-7 pt-[42svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:gap-12 md:pt-[50svh]">
         <div className="relative z-10 bg-white/92 py-5 md:bg-white/0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             PROPERTY SEARCH
           </p>
-          <h2 className="mt-2 text-2xl font-black leading-tight md:text-4xl">
-            暮らしやすい
-            <br />
-            住まいを探す
+          <h2 className="mt-2 max-w-[620px] text-balance text-2xl font-black leading-tight [word-break:auto-phrase] md:text-4xl">
+            暮らしやすい住まいを探す
           </h2>
-          <p className="mt-3 max-w-sm text-sm font-medium leading-6 text-[#666666]">
+          <p className="mt-3 max-w-sm text-pretty text-sm font-medium leading-6 text-[#666666]">
             地域、家賃、住所を見ながら候補を比較できます。
           </p>
         </div>

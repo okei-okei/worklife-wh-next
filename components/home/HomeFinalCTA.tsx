@@ -13,11 +13,11 @@ export default function HomeFinalCTA() {
         mobileSrc="/images/home/final-mobile.webp"
         alt="ニュージーランドの広い空と未来を感じる夕景"
         sizes="(min-width: 768px) 54vw, 100vw"
-        className="left-0 top-0 h-[42svh] w-full bg-white md:left-[42vw] md:right-auto md:top-[8%] md:h-[70svh] md:w-[58vw]"
-        imageClassName="object-[50%_42%] md:object-[52%_60%]"
+        className="left-0 top-0 h-[48svh] w-full bg-white md:left-[42vw] md:right-auto md:top-[8%] md:h-[70svh] md:w-[58vw]"
+        imageClassName="object-[50%_68%] md:object-[52%_60%]"
       />
-      <div className="absolute inset-x-0 top-[30svh] h-[12svh] bg-gradient-to-b from-transparent via-white/35 to-white md:hidden" />
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[42svh] md:min-h-[86svh] md:grid-cols-[minmax(0,430px)_1fr] md:items-center md:pt-0">
+      <div className="home-final-mobile-fade absolute inset-x-0 top-0 h-[48svh] md:hidden" />
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[48svh] md:min-h-[86svh] md:grid-cols-[minmax(0,430px)_1fr] md:items-center md:pt-0">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             START YOUR LIFE PLAN

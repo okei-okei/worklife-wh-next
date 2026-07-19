@@ -111,7 +111,7 @@ export default function Header() {
             ? "border-b border-[#D8D8D4]/80 bg-[#F7F7F5]/90 backdrop-blur"
             : isHomeHeader
               ? "border-b border-[#D8D8D4]/80 bg-white/90 backdrop-blur"
-            : "border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur"
+            : "border-b border-[#D8D8D4]/80 bg-white/95 backdrop-blur"
       }`}
     >
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between gap-3 px-4 md:px-6">

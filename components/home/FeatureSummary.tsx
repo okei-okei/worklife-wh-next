@@ -20,11 +20,11 @@ export default function FeatureSummary() {
         mobileSrc="/images/home/simulator-mobile.webp"
         alt="住宅地と都市をつなぐ道路から収支と通勤を想起する風景"
         sizes="(min-width: 768px) 68vw, 96vw"
-        className="right-[-4vw] top-0 h-[40svh] w-[96vw] md:right-[-8vw] md:top-[10%] md:h-[76svh] md:w-[68vw]"
-        imageClassName="object-[50%_54%]"
+        className="right-[-2vw] top-0 h-[34svh] w-[96vw] md:right-[-8vw] md:top-[10%] md:h-[76svh] md:w-[68vw]"
+        imageClassName="object-[50%_50%]"
       />
-      <div className="pointer-events-none absolute left-4 top-[40svh] h-px w-[42vw] bg-[#D8D8D4] md:left-[6vw] md:top-[20%] md:w-[22vw]" />
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[42svh] md:min-h-[88svh] md:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] md:items-center md:pt-0">
+      <div className="pointer-events-none absolute left-4 top-[34svh] h-px w-[42vw] bg-[#D8D8D4] md:left-[6vw] md:top-[20%] md:w-[22vw]" />
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[36svh] md:min-h-[88svh] md:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] md:items-center md:pt-0">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             TRIAL SIMULATION

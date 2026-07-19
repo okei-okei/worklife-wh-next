@@ -22,10 +22,10 @@ export default function HomeHero() {
         alt="ニュージーランドの空と街を感じる広い風景"
         priority
         sizes="(min-width: 768px) 56vw, 100vw"
-        className="right-[-10vw] top-0 h-[48svh] w-[106vw] md:left-[44vw] md:right-auto md:top-0 md:h-[86svh] md:w-[56vw]"
-        imageClassName="object-[52%_46%] md:object-[48%_50%] group-hover:scale-[1.01]"
+        className="right-[-6vw] top-0 h-[44svh] w-[106vw] md:left-[44vw] md:right-auto md:top-0 md:h-[86svh] md:w-[56vw]"
+        imageClassName="object-[50%_44%] md:object-[48%_50%] group-hover:scale-[1.01]"
       />
-      <div className="absolute right-0 top-0 h-[48svh] w-full bg-gradient-to-b from-white/0 via-white/0 to-white md:hidden" />
+      <div className="absolute right-0 top-0 h-[44svh] w-full bg-gradient-to-b from-white/0 via-white/0 to-white md:hidden" />
       <div className="pointer-events-none absolute left-4 top-[43svh] hidden h-px w-[22vw] bg-[#D8D8D4] md:left-6 md:top-[76svh] md:block" />
       <div className="pointer-events-none absolute right-[-1.5rem] top-[49svh] select-none text-right font-serif text-7xl font-semibold italic leading-none tracking-tight text-[#235347]/10 md:right-auto md:left-[34%] md:top-[13%] md:text-[8rem]">
         WORK.
@@ -72,14 +72,6 @@ export default function HomeHero() {
             ))}
           </div>
         </div>
-      </div>
-      <div
-        data-home-hero-scroll
-        className="absolute bottom-7 left-1/2 z-10 hidden -translate-x-1/2 text-center text-[10px] font-black uppercase tracking-[0.28em] text-[#666666] md:block"
-        aria-hidden="true"
-      >
-        Scroll
-        <span className="mx-auto mt-2 block h-8 w-px bg-[#D8D8D4]" />
       </div>
     </section>
   );

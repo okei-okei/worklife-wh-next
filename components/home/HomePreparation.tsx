@@ -2,11 +2,11 @@ import Link from "next/link";
 import HomeImagePlane from "@/components/home/HomeImagePlane";
 
 const prepareItems = [
-  { number: "01", label: "SIM・通信", href: "/partners/sim-esim" },
-  { number: "02", label: "保険", href: "/partners/insurance" },
-  { number: "03", label: "銀行・海外送金", href: "/partners/money-transfer" },
-  { number: "04", label: "IRD・手続き", href: "/mypage/checklist" },
-  { number: "05", label: "生活用品", href: "/partners/furniture" },
+  { label: "SIM・通信", href: "/partners/sim-esim" },
+  { label: "保険", href: "/partners/insurance" },
+  { label: "銀行・海外送金", href: "/partners/money-transfer" },
+  { label: "IRD・手続き", href: "/mypage/checklist" },
+  { label: "生活用品", href: "/partners/furniture" },
 ];
 
 export default function HomePreparation() {
@@ -21,13 +21,10 @@ export default function HomePreparation() {
         mobileSrc="/images/home/preparation-mobile.webp"
         alt="渡航準備を想起させる荷物と新生活の風景"
         sizes="(min-width: 768px) 76vw, 100vw"
-        className="left-0 top-0 h-[40svh] w-full md:left-0 md:top-0 md:h-[64svh] md:w-[82vw]"
-        imageClassName="object-[52%_42%]"
+        className="left-0 top-0 h-[34svh] w-full md:left-0 md:top-0 md:h-[64svh] md:w-[82vw]"
+        imageClassName="object-[50%_42%]"
       />
-      <div className="pointer-events-none absolute right-4 top-[39svh] font-serif text-7xl italic leading-none text-[#235347]/10 md:right-[8vw] md:top-[52svh] md:text-[11rem]">
-        04
-      </div>
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[42svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:pt-[50svh]">
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[36svh] md:min-h-[88svh] md:grid-cols-[0.42fr_0.58fr] md:items-end md:pt-[50svh]">
         <div className="relative z-10 bg-[#F7F7F5]/92 py-5 md:bg-transparent md:py-0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             PREPARATION
@@ -50,9 +47,6 @@ export default function HomePreparation() {
               className="group flex min-h-12 items-center justify-between gap-3 border-b border-[#D8D8D4] py-2 text-sm font-black text-[#171717] transition last:border-b-0 hover:text-[#235347] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#235347] md:min-h-14"
             >
               <span className="flex items-center gap-3">
-                <span className="font-serif text-xl italic text-[#235347]/35">
-                  {item.number}
-                </span>
                 <span>{item.label}</span>
               </span>
               <span className="transition group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0">

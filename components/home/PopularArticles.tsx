@@ -43,9 +43,6 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
                 <p className="text-[10px] font-black text-[#315C55]">
                   {article.category}
                 </p>
-                <p className="font-serif text-2xl italic leading-none text-[#235347]/25">
-                  01
-                </p>
               </div>
               <h3 className="mt-2 line-clamp-2 text-lg font-black leading-6 text-[#171717] md:text-2xl md:leading-8">
                 {article.title}
@@ -64,7 +61,7 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
             </Link>
           ))}
           <div className="divide-y divide-[#D8D8D4] border-y border-[#D8D8D4] md:border">
-            {articles.slice(1, 3).map((article, index) => (
+            {articles.slice(1, 3).map((article) => (
               <Link
                 key={article.slug}
                 href={`/articles/${article.slug}`}
@@ -82,9 +79,6 @@ export default function PopularArticles({ articles }: { articles: Article[] }) {
                       更新日: {article.updated_at?.slice(0, 10) || "随時更新"}
                     </p>
                   </div>
-                  <p className="shrink-0 font-serif text-2xl italic leading-none text-[#235347]/25">
-                    0{index + 2}
-                  </p>
                 </div>
                 <p className="mt-2 text-xs font-black text-[#315C55] transition group-hover:translate-x-0.5">
                   記事を読む

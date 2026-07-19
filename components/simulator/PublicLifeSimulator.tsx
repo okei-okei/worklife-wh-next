@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { geocodeAddress } from "@/lib/geocoder";
 import { supabase } from "@/lib/supabase";
 import { getRouteInfo, type RouteInfo } from "@/lib/services/routeService";
 
@@ -63,6 +64,19 @@ type PublicPropertyOption = {
   bills_included?: boolean | null;
   latitude: number | null;
   longitude: number | null;
+};
+
+type RecordWithLocation = {
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+type ResolvedCoordinates = {
+  latitude: number;
+  longitude: number;
+  source: "saved" | "address";
+  address?: string;
 };
 
 const regionOptions = [
@@ -129,17 +143,86 @@ function useDebouncedValue(value: string, delay = 350) {
   return debounced;
 }
 
-function hasCoordinates(
-  item: Pick<PublicJobOption | PublicPropertyOption, "latitude" | "longitude">,
-) {
+function isValidCoordinatePair(latitude: unknown, longitude: unknown) {
   return Boolean(
-    typeof item.latitude === "number" &&
-      typeof item.longitude === "number" &&
-      Number.isFinite(item.latitude) &&
-      Number.isFinite(item.longitude) &&
-      item.latitude !== 0 &&
-      item.longitude !== 0,
+    typeof latitude === "number" &&
+      typeof longitude === "number" &&
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude) &&
+      latitude !== 0 &&
+      longitude !== 0,
   );
+}
+
+function buildNzGeocodeQuery(address: string) {
+  const normalized = address.trim();
+
+  if (/new zealand|ニュージーランド/i.test(normalized)) {
+    return normalized;
+  }
+
+  return `${normalized}, New Zealand`;
+}
+
+async function resolveTemporaryCoordinates(
+  record: RecordWithLocation,
+  cache: Map<string, ResolvedCoordinates | null>,
+): Promise<ResolvedCoordinates | null> {
+  if (isValidCoordinatePair(record.latitude, record.longitude)) {
+    return {
+      latitude: record.latitude!,
+      longitude: record.longitude!,
+      source: "saved",
+    };
+  }
+
+  const address = record.address?.trim();
+  if (!address) return null;
+
+  const query = buildNzGeocodeQuery(address);
+  if (cache.has(query)) return cache.get(query) ?? null;
+
+  const result = await geocodeAddress(query);
+  if (!isValidCoordinatePair(result.latitude, result.longitude)) {
+    cache.set(query, null);
+    return null;
+  }
+
+  const coordinates = {
+    latitude: result.latitude!,
+    longitude: result.longitude!,
+    source: "address" as const,
+    address: query,
+  };
+
+  cache.set(query, coordinates);
+  return coordinates;
+}
+
+function resolveWeeklyWorkHours(
+  workHours: number | null | undefined,
+  weeklyHours?: number | null,
+) {
+  const primary = toNumber(workHours);
+  if (primary !== null && primary > 0) {
+    return {
+      hours: primary,
+      usedDefault: false,
+    };
+  }
+
+  const fallback = toNumber(weeklyHours);
+  if (fallback !== null && fallback > 0) {
+    return {
+      hours: fallback,
+      usedDefault: false,
+    };
+  }
+
+  return {
+    hours: 20,
+    usedDefault: true,
+  };
 }
 
 export default function PublicLifeSimulator() {
@@ -163,9 +246,15 @@ export default function PublicLifeSimulator() {
   const [selectedProperty, setSelectedProperty] =
     useState<PublicPropertyOption | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [jobCoordinates, setJobCoordinates] =
+    useState<ResolvedCoordinates | null>(null);
+  const [propertyCoordinates, setPropertyCoordinates] =
+    useState<ResolvedCoordinates | null>(null);
+  const [isResolvingCoordinates, setIsResolvingCoordinates] = useState(false);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const resultRef = useRef<HTMLDivElement | null>(null);
+  const coordinateCacheRef = useRef(new Map<string, ResolvedCoordinates | null>());
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -262,19 +351,19 @@ export default function PublicLifeSimulator() {
       setRouteInfo(null);
       setIsLoadingRoute(false);
       if (!showResult || !selectedJob || !selectedProperty) return;
-      if (!hasCoordinates(selectedJob) || !hasCoordinates(selectedProperty)) {
+      if (!jobCoordinates || !propertyCoordinates) {
         return;
       }
 
       setIsLoadingRoute(true);
       const result = await getRouteInfo({
         origin: {
-          latitude: selectedProperty.latitude!,
-          longitude: selectedProperty.longitude!,
+          latitude: propertyCoordinates.latitude,
+          longitude: propertyCoordinates.longitude,
         },
         destination: {
-          latitude: selectedJob.latitude!,
-          longitude: selectedJob.longitude!,
+          latitude: jobCoordinates.latitude,
+          longitude: jobCoordinates.longitude,
         },
         mode: "driving",
       });
@@ -289,31 +378,27 @@ export default function PublicLifeSimulator() {
     return () => {
       isActive = false;
     };
-  }, [selectedJob, selectedProperty, showResult]);
+  }, [jobCoordinates, propertyCoordinates, selectedJob, selectedProperty, showResult]);
 
   const calculation = useMemo(() => {
     const hourlyRate =
       toNumber(selectedJob?.hourly_rate) ?? toNumber(selectedJob?.hourly_rate_min);
-    const workHours =
-      toNumber(selectedJob?.work_hours) ?? toNumber(selectedJob?.weekly_hours);
+    const resolvedWorkHours = selectedJob
+      ? resolveWeeklyWorkHours(selectedJob.work_hours, selectedJob.weekly_hours)
+      : { hours: null, usedDefault: false };
     const rentWeekly = toNumber(selectedProperty?.rent_weekly);
     const missing: string[] = [];
 
     if (!selectedJob) missing.push("求人");
     if (!selectedProperty) missing.push("物件");
     if (selectedJob && hourlyRate === null) missing.push("時給");
-    if (selectedJob && workHours === null) missing.push("週勤務時間");
     if (selectedProperty && rentWeekly === null) missing.push("週家賃");
 
-    if (
-      missing.length ||
-      hourlyRate === null ||
-      workHours === null ||
-      rentWeekly === null
-    ) {
+    if (missing.length || hourlyRate === null || rentWeekly === null) {
       return {
         canCalculate: false,
         missing,
+        resolvedWorkHours,
         monthlyGrossIncome: null,
         monthlyNetIncome: null,
         monthlyRent: null,
@@ -322,7 +407,7 @@ export default function PublicLifeSimulator() {
       };
     }
 
-    const monthlyGrossIncome = hourlyRate * workHours * weeksPerMonth;
+    const monthlyGrossIncome = hourlyRate * resolvedWorkHours.hours! * weeksPerMonth;
     const monthlyNetIncome = monthlyGrossIncome * (1 - taxRate);
     const monthlyRent = rentWeekly * weeksPerMonth;
     const monthlyBalance =
@@ -331,6 +416,7 @@ export default function PublicLifeSimulator() {
     return {
       canCalculate: true,
       missing,
+      resolvedWorkHours,
       monthlyGrossIncome,
       monthlyNetIncome,
       monthlyRent,
@@ -341,68 +427,89 @@ export default function PublicLifeSimulator() {
 
   const mapData = useMemo(() => {
     if (!selectedJob || !selectedProperty) return null;
-    if (!hasCoordinates(selectedJob) || !hasCoordinates(selectedProperty)) {
+    if (!jobCoordinates && !propertyCoordinates) {
       return null;
     }
 
-    const jobPoint = {
-      id: selectedJob.id,
-      lat: selectedJob.latitude!,
-      lng: selectedJob.longitude!,
-      label: "求人",
-      subtitle: selectedJob.title,
-      details: [
-        selectedJob.company || "会社名未設定",
-        formatLocation(
-          selectedJob.region,
-          selectedJob.district,
-          selectedJob.suburb,
-          selectedJob.area,
-          selectedJob.city,
-        ),
-      ],
-    };
-    const propertyPoint = {
-      id: selectedProperty.id,
-      lat: selectedProperty.latitude!,
-      lng: selectedProperty.longitude!,
-      label: "物件",
-      subtitle: selectedProperty.title,
-      details: [
-        formatLocation(
-          selectedProperty.region,
-          selectedProperty.district,
-          selectedProperty.suburb,
-          selectedProperty.area,
-          selectedProperty.city,
-        ),
-        selectedProperty.rent_weekly
-          ? `週家賃 ${money(selectedProperty.rent_weekly)}`
-          : "週家賃未入力",
-      ],
-    };
-    const fallbackLine = {
-      from: { lat: selectedProperty.latitude!, lng: selectedProperty.longitude! },
-      to: { lat: selectedJob.latitude!, lng: selectedJob.longitude! },
-    };
+    const jobPoint = jobCoordinates
+      ? {
+          id: selectedJob.id,
+          lat: jobCoordinates.latitude,
+          lng: jobCoordinates.longitude,
+          label: "求人",
+          subtitle: selectedJob.title,
+          details: [
+            selectedJob.company || "会社名未設定",
+            formatLocation(
+              selectedJob.region,
+              selectedJob.district,
+              selectedJob.suburb,
+              selectedJob.area,
+              selectedJob.city,
+            ),
+            jobCoordinates.source === "address"
+              ? "住所から一時的に位置を確認"
+              : "登録済みの位置情報",
+          ],
+        }
+      : null;
+    const propertyPoint = propertyCoordinates
+      ? {
+          id: selectedProperty.id,
+          lat: propertyCoordinates.latitude,
+          lng: propertyCoordinates.longitude,
+          label: "物件",
+          subtitle: selectedProperty.title,
+          details: [
+            formatLocation(
+              selectedProperty.region,
+              selectedProperty.district,
+              selectedProperty.suburb,
+              selectedProperty.area,
+              selectedProperty.city,
+            ),
+            selectedProperty.rent_weekly
+              ? `週家賃 ${money(selectedProperty.rent_weekly)}`
+              : "週家賃未入力",
+            propertyCoordinates.source === "address"
+              ? "住所から一時的に位置を確認"
+              : "登録済みの位置情報",
+          ],
+        }
+      : null;
+    const fallbackLine =
+      jobCoordinates && propertyCoordinates
+        ? {
+            from: {
+              lat: propertyCoordinates.latitude,
+              lng: propertyCoordinates.longitude,
+            },
+            to: { lat: jobCoordinates.latitude, lng: jobCoordinates.longitude },
+          }
+        : null;
 
     return {
-      jobs: [jobPoint],
-      properties: [propertyPoint],
-      highlightedLine: routeInfo?.coordinates?.length
-        ? {
-            ...fallbackLine,
-            coordinates: routeInfo.coordinates.map((coordinate) => ({
-              lat: coordinate.latitude,
-              lng: coordinate.longitude,
-            })),
-          }
-        : fallbackLine,
+      jobs: jobPoint ? [jobPoint] : [],
+      properties: propertyPoint ? [propertyPoint] : [],
+      highlightedLine: fallbackLine
+        ? routeInfo?.coordinates?.length
+          ? {
+              ...fallbackLine,
+              coordinates: routeInfo.coordinates.map((coordinate) => ({
+                lat: coordinate.latitude,
+                lng: coordinate.longitude,
+              })),
+            }
+          : fallbackLine
+        : null,
     };
-  }, [routeInfo, selectedJob, selectedProperty]);
+  }, [jobCoordinates, propertyCoordinates, routeInfo, selectedJob, selectedProperty]);
 
   const resetResult = () => {
     setShowResult(false);
+    setJobCoordinates(null);
+    setPropertyCoordinates(null);
+    setIsResolvingCoordinates(false);
     setRouteInfo(null);
   };
 
@@ -436,11 +543,24 @@ export default function PublicLifeSimulator() {
     resetResult();
   };
 
-  const handleShowResult = () => {
+  const handleShowResult = async () => {
+    if (!selectedJob || !selectedProperty || isResolvingCoordinates) return;
+
     setShowResult(true);
+    setRouteInfo(null);
+    setIsResolvingCoordinates(true);
     window.setTimeout(() => {
       resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
+
+    const [resolvedJob, resolvedProperty] = await Promise.all([
+      resolveTemporaryCoordinates(selectedJob, coordinateCacheRef.current),
+      resolveTemporaryCoordinates(selectedProperty, coordinateCacheRef.current),
+    ]);
+
+    setJobCoordinates(resolvedJob);
+    setPropertyCoordinates(resolvedProperty);
+    setIsResolvingCoordinates(false);
   };
 
   const canShowResult = Boolean(selectedJob && selectedProperty);
@@ -576,11 +696,11 @@ export default function PublicLifeSimulator() {
         </div>
         <button
           type="button"
-          disabled={!canShowResult}
+          disabled={!canShowResult || isResolvingCoordinates}
           onClick={handleShowResult}
           className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#244C43] px-4 py-2 text-sm font-black text-white transition hover:bg-[#173d35] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600 sm:w-auto"
         >
-          結果を見る
+          {isResolvingCoordinates ? "地図の位置を確認しています" : "結果を見る"}
         </button>
 
         {showResult ? (
@@ -591,6 +711,9 @@ export default function PublicLifeSimulator() {
               selectedProperty={selectedProperty}
               routeInfo={routeInfo}
               isLoadingRoute={isLoadingRoute}
+              isResolvingCoordinates={isResolvingCoordinates}
+              jobCoordinates={jobCoordinates}
+              propertyCoordinates={propertyCoordinates}
               mapData={mapData}
             />
           </div>
@@ -610,8 +733,8 @@ function JobOptionCard({
   onSelect: () => void;
 }) {
   const hourlyRate = toNumber(job.hourly_rate) ?? toNumber(job.hourly_rate_min);
-  const workHours = toNumber(job.work_hours) ?? toNumber(job.weekly_hours);
-  const isMissing = hourlyRate === null || workHours === null;
+  const workHours = resolveWeeklyWorkHours(job.work_hours, job.weekly_hours);
+  const isMissing = hourlyRate === null;
 
   return (
     <button
@@ -636,7 +759,10 @@ function JobOptionCard({
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
         <Fact label="時給" value={hourlyRate ? `${money(hourlyRate)}/h` : "未入力"} />
-        <Fact label="週勤務" value={workHours ? `${workHours}時間` : "未入力"} />
+        <Fact
+          label="週勤務"
+          value={`${workHours.hours}時間${workHours.usedDefault ? "（標準）" : ""}`}
+        />
       </div>
       <p className="mt-2 line-clamp-1 text-xs font-medium text-gray-600">
         {formatLocation(job.region, job.district, job.suburb, job.area, job.city)}
@@ -646,7 +772,11 @@ function JobOptionCard({
       </p>
       {isMissing ? (
         <p className="mt-2 rounded-lg bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800">
-          月に残るお金の計算に必要な情報が不足しています
+          月に残るお金の計算に必要な時給が不足しています
+        </p>
+      ) : workHours.usedDefault ? (
+        <p className="mt-2 rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-blue-800">
+          勤務時間未設定のため、週20時間で計算します
         </p>
       ) : null}
     </button>
@@ -720,11 +850,18 @@ function ResultPanel({
   selectedProperty,
   routeInfo,
   isLoadingRoute,
+  isResolvingCoordinates,
+  jobCoordinates,
+  propertyCoordinates,
   mapData,
 }: {
   calculation: {
     canCalculate: boolean;
     missing: string[];
+    resolvedWorkHours: {
+      hours: number | null;
+      usedDefault: boolean;
+    };
     monthlyGrossIncome: number | null;
     monthlyNetIncome: number | null;
     monthlyRent: number | null;
@@ -735,6 +872,9 @@ function ResultPanel({
   selectedProperty: PublicPropertyOption | null;
   routeInfo: RouteInfo | null;
   isLoadingRoute: boolean;
+  isResolvingCoordinates: boolean;
+  jobCoordinates: ResolvedCoordinates | null;
+  propertyCoordinates: ResolvedCoordinates | null;
   mapData: {
     jobs: Array<{
       id: string;
@@ -756,9 +896,12 @@ function ResultPanel({
       from: { lat: number; lng: number };
       to: { lat: number; lng: number };
       coordinates?: Array<{ lat: number; lng: number }>;
-    };
+    } | null;
   } | null;
 }) {
+  const hasBothCoordinates = Boolean(jobCoordinates && propertyCoordinates);
+  const hasOneCoordinate = Boolean(jobCoordinates || propertyCoordinates);
+
   return (
     <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
       <div className="space-y-3">
@@ -810,7 +953,18 @@ function ResultPanel({
                 label="税引前収入"
                 value={money(calculation.monthlyGrossIncome!)}
               />
+              <Fact
+                label="週勤務時間"
+                value={`${calculation.resolvedWorkHours.hours}時間${
+                  calculation.resolvedWorkHours.usedDefault ? "（標準設定）" : ""
+                }`}
+              />
             </div>
+            {calculation.resolvedWorkHours.usedDefault ? (
+              <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold leading-5 text-blue-800">
+                勤務時間が登録されていない求人は、週20時間として計算しています。
+              </p>
+            ) : null}
             <p className="mt-3 text-xs font-medium leading-5 text-gray-700">
               実際の収入、税金、勤務時間、生活費によって結果は変わります。
             </p>
@@ -849,26 +1003,46 @@ function ResultPanel({
           <h3 className="text-base font-black text-gray-950">
             仕事と住まいの位置関係
           </h3>
-          {mapData ? (
+          {isResolvingCoordinates ? (
+            <p className="mt-2 rounded-xl bg-blue-50 px-3 py-3 text-sm font-bold leading-6 text-blue-800">
+              地図の位置を確認しています
+            </p>
+          ) : mapData ? (
             <div className="mt-3 overflow-hidden rounded-2xl">
               <MapView
                 jobs={mapData.jobs}
                 properties={mapData.properties}
                 highlightedJobId={selectedJob?.id}
                 highlightedPropertyId={selectedProperty?.id}
-                highlightedLine={mapData.highlightedLine}
+                highlightedLine={mapData.highlightedLine || undefined}
               />
+              {!hasBothCoordinates && hasOneCoordinate ? (
+                <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-800">
+                  もう一方の住所から位置を取得できなかったため、2地点の経路は表示できません。
+                </p>
+              ) : null}
+              {hasBothCoordinates &&
+              (jobCoordinates?.source === "address" ||
+                propertyCoordinates?.source === "address") ? (
+                <p className="mt-2 text-xs font-bold leading-5 text-gray-600">
+                  住所から取得した位置情報はこの画面内だけで使用し、既存データには保存しません。
+                </p>
+              ) : null}
             </div>
           ) : (
             <p className="mt-2 rounded-xl bg-gray-50 px-3 py-3 text-sm font-bold leading-6 text-gray-700">
-              住所情報が不足しているため、地図を表示できません。
+              求人または物件の住所から位置を取得できませんでした。
             </p>
           )}
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
           <h3 className="text-base font-black text-gray-950">通勤しやすさ</h3>
-          {isLoadingRoute ? (
+          {isResolvingCoordinates ? (
+            <p className="mt-2 text-sm font-bold text-gray-700">
+              地図の位置を確認しています。
+            </p>
+          ) : isLoadingRoute ? (
             <p className="mt-2 text-sm font-bold text-gray-700">
               経路を確認中です...
             </p>

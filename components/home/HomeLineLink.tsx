@@ -2,7 +2,6 @@ import Link from "next/link";
 
 type HomeLineLinkProps = {
   href: string;
-  number: string;
   title: string;
   description?: string;
   className?: string;
@@ -10,7 +9,6 @@ type HomeLineLinkProps = {
 
 export default function HomeLineLink({
   href,
-  number,
   title,
   description,
   className = "",
@@ -18,11 +16,8 @@ export default function HomeLineLink({
   return (
     <Link
       href={href}
-      className={`group grid min-h-16 grid-cols-[3.25rem_minmax(0,1fr)_1.5rem] items-center gap-3 border-b border-[#D8D8D4] py-3 text-[#171717] transition hover:border-[#235347] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#235347] md:min-h-20 md:grid-cols-[4.5rem_minmax(0,1fr)_2rem] md:py-4 ${className}`}
+      className={`group grid min-h-14 grid-cols-[minmax(0,1fr)_1.5rem] items-center gap-3 border-b border-[#D8D8D4] py-3 text-[#171717] transition hover:border-[#235347] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#235347] md:min-h-16 md:grid-cols-[minmax(0,1fr)_2rem] md:py-4 ${className}`}
     >
-      <span className="font-serif text-2xl italic leading-none text-[#235347]/35 md:text-4xl">
-        {number}
-      </span>
       <span className="min-w-0">
         <span className="block text-[15px] font-black leading-snug md:text-xl">
           {title}

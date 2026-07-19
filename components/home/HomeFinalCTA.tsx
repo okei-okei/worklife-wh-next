@@ -13,14 +13,11 @@ export default function HomeFinalCTA() {
         mobileSrc="/images/home/final-mobile.webp"
         alt="ニュージーランドの広い空と未来を感じる夕景"
         sizes="(min-width: 768px) 54vw, 100vw"
-        className="right-[-10vw] top-0 h-[48svh] w-[100vw] md:left-[42vw] md:right-auto md:top-[8%] md:h-[70svh] md:w-[58vw]"
+        className="right-[-6vw] top-0 h-[42svh] w-[104vw] md:left-[42vw] md:right-auto md:top-[8%] md:h-[70svh] md:w-[58vw]"
         imageClassName="object-[52%_50%]"
       />
-      <div className="absolute right-0 top-0 h-[48svh] w-full bg-gradient-to-b from-transparent to-white md:hidden" />
-      <div className="pointer-events-none absolute left-4 top-[46svh] font-serif text-7xl italic leading-none text-[#235347]/10 md:left-[6vw] md:top-[12%] md:text-[12rem]">
-        07
-      </div>
-      <div className="mx-auto grid max-w-6xl gap-8 pt-[48svh] md:min-h-[86svh] md:grid-cols-[minmax(0,430px)_1fr] md:items-center md:pt-0">
+      <div className="absolute right-0 top-0 h-[42svh] w-full bg-gradient-to-b from-transparent to-white md:hidden" />
+      <div className="mx-auto grid max-w-6xl gap-8 pt-[42svh] md:min-h-[86svh] md:grid-cols-[minmax(0,430px)_1fr] md:items-center md:pt-0">
         <div className="relative z-10 bg-white/92 py-5 md:bg-transparent md:py-0">
           <p className="text-[11px] font-black uppercase tracking-[0.24em] text-[#315C55]">
             START YOUR LIFE PLAN

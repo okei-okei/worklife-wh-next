@@ -14,9 +14,6 @@ export default function HomeHeroScrollEffect() {
     const overlay = document.querySelector<HTMLElement>(
       "[data-home-hero-overlay]",
     );
-    const scrollHint = document.querySelector<HTMLElement>(
-      "[data-home-hero-scroll]",
-    );
     if (!section) return;
 
     let frameId = 0;
@@ -37,9 +34,6 @@ export default function HomeHeroScrollEffect() {
       }
       if (overlay) {
         overlay.style.opacity = String(0.9 - progress * 0.16);
-      }
-      if (scrollHint) {
-        scrollHint.style.opacity = String(1 - progress * 1.5);
       }
     };
 

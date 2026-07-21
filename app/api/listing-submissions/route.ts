@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
+import { normalizeNullableUuid } from "@/lib/uuid";
 
 type SubmissionType = "job" | "property";
 
@@ -37,7 +39,6 @@ type ListingSubmissionPayload = {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
@@ -58,6 +59,10 @@ function isLikelyLegacyColumnError(error: { code?: string; message?: string }) {
   );
 }
 
+function textOrNull(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 function createInsertClients(token: string | null) {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Supabase configuration is missing.");
@@ -68,12 +73,15 @@ function createInsertClients(token: string | null) {
     client: SupabaseClient;
   }> = [];
 
-  if (supabaseServiceRoleKey) {
+  try {
     clients.push({
       label: "service_role",
-      client: createClient(supabaseUrl, supabaseServiceRoleKey, {
-        auth: { persistSession: false, autoRefreshToken: false },
-      }),
+      client: createServiceRoleClient(),
+    });
+  } catch (serviceError) {
+    console.warn("Listing submission service role client skipped", {
+      message:
+        serviceError instanceof Error ? serviceError.message : "Unknown error",
     });
   }
 
@@ -122,6 +130,16 @@ export async function POST(request: NextRequest) {
     const token = request.headers.get("authorization")?.replace("Bearer ", "") || null;
     const userId = await getUserId(token);
     const clients = createInsertClients(token);
+    const rawLocationMasterId =
+      textOrNull(body.location_master_id) ||
+      textOrNull(body.structured_data?.location_master_id) ||
+      textOrNull(body.structured_data?.location_master_id_raw);
+    const locationMasterId = normalizeNullableUuid(rawLocationMasterId);
+    const structuredData: Record<string, unknown> = {
+      ...(body.structured_data || {}),
+      location_master_id: locationMasterId,
+      location_master_id_raw: rawLocationMasterId,
+    };
     const extendedPayload = {
       user_id: userId,
       submitted_by: userId,
@@ -137,7 +155,7 @@ export async function POST(request: NextRequest) {
       district: body.district || null,
       suburb: body.suburb || null,
       area: body.area || null,
-      location_master_id: body.location_master_id || null,
+      location_master_id: locationMasterId,
       region_normalized: body.region_normalized || null,
       territorial_authority_normalized:
         body.territorial_authority_normalized || null,
@@ -151,33 +169,33 @@ export async function POST(request: NextRequest) {
       longitude: typeof body.longitude === "number" ? body.longitude : null,
       hourly_rate:
         body.type === "job" &&
-        typeof body.structured_data?.hourly_rate_min === "number"
-          ? body.structured_data.hourly_rate_min
+        typeof structuredData.hourly_rate_min === "number"
+          ? structuredData.hourly_rate_min
           : null,
       work_hours:
         body.type === "job" &&
-        typeof body.structured_data?.weekly_hours === "number"
-          ? body.structured_data.weekly_hours
+        typeof structuredData.weekly_hours === "number"
+          ? structuredData.weekly_hours
           : null,
       rent_weekly:
         body.type === "property" &&
-        typeof body.structured_data?.rent_weekly === "number"
-          ? body.structured_data.rent_weekly
+        typeof structuredData.rent_weekly === "number"
+          ? structuredData.rent_weekly
           : null,
       utilities_included:
         body.type === "property" &&
-        typeof body.structured_data?.utilities_included === "boolean"
-          ? body.structured_data.utilities_included
+        typeof structuredData.utilities_included === "boolean"
+          ? structuredData.utilities_included
           : null,
       available_from:
         body.type === "property" &&
-        typeof body.structured_data?.available_from === "string"
-          ? body.structured_data.available_from
+        typeof structuredData.available_from === "string"
+          ? structuredData.available_from
           : null,
       employment_type:
         body.type === "job" &&
-        typeof body.structured_data?.employment_type === "string"
-          ? body.structured_data.employment_type
+        typeof structuredData.employment_type === "string"
+          ? structuredData.employment_type
           : null,
       submission_payload: body.submission_payload || {
         schemaVersion: 1,
@@ -195,13 +213,14 @@ export async function POST(request: NextRequest) {
           region: body.region || null,
           district: body.district || null,
           area: body.area || body.suburb || null,
+          locationMasterId: rawLocationMasterId,
           address: body.address || null,
           latitude: typeof body.latitude === "number" ? body.latitude : null,
           longitude: typeof body.longitude === "number" ? body.longitude : null,
         },
-        details: body.structured_data || {},
+        details: structuredData,
       },
-      structured_data: body.structured_data || {},
+      structured_data: structuredData,
       image_urls: body.image_urls || [],
       consent_versions: body.consent_versions || {},
     };
@@ -222,7 +241,7 @@ export async function POST(request: NextRequest) {
       suburb: body.suburb || null,
       area: body.area || null,
       address: body.address || null,
-      structured_data: body.structured_data || {},
+      structured_data: structuredData,
       submission_payload: extendedPayload.submission_payload,
       image_urls: body.image_urls || [],
       consent_versions: body.consent_versions || {},
@@ -245,7 +264,7 @@ export async function POST(request: NextRequest) {
       area: body.area || null,
       address: body.address || null,
       structured_data: {
-        ...(body.structured_data || {}),
+        ...structuredData,
         submission_payload: extendedPayload.submission_payload,
       },
       image_urls: body.image_urls || [],

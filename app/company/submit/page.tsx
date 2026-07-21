@@ -9,6 +9,7 @@ import {
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { LEGAL_VERSION } from "@/app/legal/_data/legalDocuments";
 import { supabase } from "@/lib/supabase";
+import { normalizeNullableUuid } from "@/lib/uuid";
 
 type SubmissionType = "job" | "property";
 type CountryCode = "NZ" | "AU" | "CA";
@@ -552,13 +553,15 @@ export default function CompanySubmitPage() {
         console.warn("Listing submission geocode failed", geocodeError);
       }
 
+      const locationMasterUuid = normalizeNullableUuid(locationMasterId);
       const baseStructuredData = {
         country_code: countryCode,
         region: toTextOrNull(region),
         district: toTextOrNull(district),
         suburb: toTextOrNull(area),
         area: toTextOrNull(area),
-        location_master_id: locationMasterId,
+        location_master_id: locationMasterUuid,
+        location_master_id_raw: locationMasterId?.trim() || null,
         region_normalized: regionNormalized,
         territorial_authority_normalized: territorialAuthorityNormalized,
         major_name_normalized: majorNameNormalized,
@@ -641,7 +644,7 @@ export default function CompanySubmitPage() {
           district: district || null,
           suburb: area || null,
           area: area || null,
-          location_master_id: locationMasterId,
+          location_master_id: locationMasterUuid,
           region_normalized: regionNormalized,
           territorial_authority_normalized: territorialAuthorityNormalized,
           major_name_normalized: majorNameNormalized,

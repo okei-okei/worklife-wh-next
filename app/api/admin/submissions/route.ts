@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
+import { normalizeNullableUuid } from "@/lib/uuid";
 
 type ListingSubmission = {
   id: string;
@@ -24,7 +26,6 @@ type SubmissionAction = "approve" | "reject";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const adminEmail =
   process.env.ADMIN_EMAIL ||
   process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
@@ -128,6 +129,7 @@ function getSubmissionDetails(submission: ListingSubmission) {
     area: textValue(structuredData.area, location.area, location.suburb),
     location_master_id: textValue(
       structuredData.location_master_id,
+      structuredData.location_master_id_raw,
       location.locationMasterId,
     ),
     region_normalized: textValue(
@@ -258,55 +260,16 @@ function createErrorResponse(message: string, status: number) {
 }
 
 function createServiceClient() {
-  if (!supabaseUrl || !supabaseServiceRoleKey) {
-    throw new Error("Supabase service role configuration is missing.");
-  }
-
-  return createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
+  return createServiceRoleClient();
 }
 
-function createUserClient(token: string) {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Supabase configuration is missing.");
-  }
-
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-}
-
-function getAdminDbClients(token: string) {
-  const clients: Array<{ label: string; client: SupabaseClient }> = [];
-
-  if (supabaseUrl && supabaseServiceRoleKey) {
-    clients.push({ label: "service_role", client: createServiceClient() });
-  }
-
-  clients.push({ label: "admin_jwt", client: createUserClient(token) });
-
-  return clients;
+function getAdminDbClients() {
+  return [{ label: "service_role", client: createServiceClient() }];
 }
 
 async function verifyAdmin(request: NextRequest) {
   if (!supabaseUrl || !supabaseAnonKey) {
     return { error: createErrorResponse("Supabase configuration is missing.", 500) };
-  }
-
-  if (!supabaseServiceRoleKey) {
-    return { error: createErrorResponse("SUPABASE_SERVICE_ROLE_KEY is missing.", 500) };
   }
 
   const authorization = request.headers.get("authorization");
@@ -332,7 +295,21 @@ async function verifyAdmin(request: NextRequest) {
     return { error: createErrorResponse("Unauthorized.", 401) };
   }
 
-  const serviceClient = createServiceClient();
+  let serviceClient: SupabaseClient;
+  try {
+    serviceClient = createServiceClient();
+  } catch (serviceError) {
+    console.error("Admin submissions service role setup failed", {
+      message: getErrorDetail(serviceError),
+    });
+    return {
+      error: createErrorResponse(
+        `Service Role設定に失敗しました: ${getErrorDetail(serviceError)}`,
+        500,
+      ),
+    };
+  }
+
   const { data: profile } = await serviceClient
     .from("profiles")
     .select("role")
@@ -354,9 +331,8 @@ async function verifyAdmin(request: NextRequest) {
 async function approveSubmission(
   submission: ListingSubmission,
   approvedBy: string,
-  token: string,
 ): Promise<{ statusUpdated: boolean; warning?: string }> {
-  const clients = getAdminDbClients(token);
+  const clients = getAdminDbClients();
   const details = getSubmissionDetails(submission);
   const imageUrls = getImageUrls(submission);
   let publishedRecordId: string | null = null;
@@ -380,7 +356,7 @@ async function approveSubmission(
       suburb: details.suburb,
       area: details.area,
       address: details.address,
-      location_master_id: details.location_master_id,
+      location_master_id: normalizeNullableUuid(details.location_master_id),
       region_normalized: details.region_normalized,
       territorial_authority_normalized:
         details.territorial_authority_normalized,
@@ -492,7 +468,7 @@ async function approveSubmission(
       suburb: details.suburb,
       area: details.area,
       address: details.address,
-      location_master_id: details.location_master_id,
+      location_master_id: normalizeNullableUuid(details.location_master_id),
       region_normalized: details.region_normalized,
       territorial_authority_normalized:
         details.territorial_authority_normalized,
@@ -622,12 +598,11 @@ async function approveSubmission(
 
 async function filterAlreadyPublishedSubmissions(
   submissions: ListingSubmission[],
-  token: string,
 ) {
   const ids = submissions.map((submission) => submission.id);
   if (ids.length === 0) return submissions;
 
-  for (const { client } of getAdminDbClients(token)) {
+  for (const { client } of getAdminDbClients()) {
     const [jobsResult, propertiesResult] = await Promise.all([
       client
         .from("public_jobs")
@@ -729,7 +704,6 @@ export async function GET(request: NextRequest) {
       if (fallback.error) throw fallback.error;
       const submissions = await filterAlreadyPublishedSubmissions(
         (fallback.data || []) as ListingSubmission[],
-        adminCheck.token,
       );
       return NextResponse.json({ submissions });
     }
@@ -738,7 +712,6 @@ export async function GET(request: NextRequest) {
 
     const submissions = await filterAlreadyPublishedSubmissions(
       (result.data || []) as ListingSubmission[],
-      adminCheck.token,
     );
 
     return NextResponse.json({ submissions });
@@ -815,12 +788,11 @@ export async function PATCH(request: NextRequest) {
       const approvalResult = await approveSubmission(
         data,
         adminCheck.user.id,
-        adminCheck.token,
       );
       warning = approvalResult.warning;
     } else {
       const errors: string[] = [];
-      for (const { label, client } of getAdminDbClients(adminCheck.token)) {
+      for (const { label, client } of getAdminDbClients()) {
         const now = new Date().toISOString();
         const result = await updateSubmissionWithFallback(
           client,

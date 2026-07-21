@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const adminEmail =
   process.env.ADMIN_EMAIL ||
   process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
@@ -14,7 +14,7 @@ function normalizeEmail(value: string | null | undefined) {
 }
 
 export async function getAdminContext(request: NextRequest) {
-  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+  if (!supabaseUrl || !anonKey) {
     return { ok: false as const, status: 500, error: "管理者API設定が不足しています。" };
   }
 
@@ -35,9 +35,12 @@ export async function getAdminContext(request: NextRequest) {
     return { ok: false as const, status: 401, error: "ログインが必要です。" };
   }
 
-  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  let serviceClient;
+  try {
+    serviceClient = createServiceRoleClient();
+  } catch {
+    return { ok: false as const, status: 500, error: "管理者API設定が不足しています。" };
+  }
   const userClient = createClient(supabaseUrl, anonKey, {
     global: {
       headers: {

@@ -14,7 +14,10 @@ type ListingSubmission = {
   status: string;
   created_at: string;
   structured_data?: Record<string, unknown> | null;
+  submission_payload?: Record<string, unknown> | null;
   image_urls?: string[] | null;
+  published_record_id?: string | null;
+  published_table?: string | null;
 };
 
 type SubmissionAction = "approve" | "reject";
@@ -26,6 +29,17 @@ const adminEmail =
   process.env.ADMIN_EMAIL ||
   process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
   "worklife.wh@gmail.com";
+const extendedSubmissionSelect =
+  "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, submission_payload, image_urls, published_record_id, published_table";
+const legacySubmissionSelect =
+  "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, image_urls";
+const minimalSubmissionSelect =
+  "id, user_id, type, title, company_or_owner, email, description, url, status, created_at";
+
+type SupabaseQueryResult<T> = {
+  data: T | null;
+  error: { code?: string; message: string } | null;
+};
 
 function normalizeEmail(value: string | null | undefined) {
   return value?.trim().toLowerCase() || "";
@@ -50,6 +64,193 @@ function getErrorDetail(error: unknown) {
     return error.message;
   }
   return "Unknown error";
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function firstValue(...values: unknown[]) {
+  return values.find((value) => value !== null && value !== undefined && value !== "");
+}
+
+function textValue(...values: unknown[]) {
+  const value = firstValue(...values);
+  return typeof value === "string" ? value : value == null ? null : String(value);
+}
+
+function numberValue(...values: unknown[]) {
+  const value = firstValue(...values);
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function booleanValue(...values: unknown[]) {
+  const value = firstValue(...values);
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    if (value === "true") return true;
+    if (value === "false") return false;
+  }
+  return null;
+}
+
+function getSubmissionPayload(submission: ListingSubmission) {
+  const structuredData = asRecord(submission.structured_data);
+  return asRecord(
+    submission.submission_payload || structuredData.submission_payload,
+  );
+}
+
+function getSubmissionDetails(submission: ListingSubmission) {
+  const structuredData = asRecord(submission.structured_data);
+  const payload = getSubmissionPayload(submission);
+  const common = asRecord(payload.common);
+  const location = asRecord(payload.location);
+  const typeDetails =
+    submission.type === "job" ? asRecord(payload.job) : asRecord(payload.property);
+
+  return {
+    country_code: textValue(
+      structuredData.country_code,
+      location.countryCode,
+      "NZ",
+    ),
+    region: textValue(structuredData.region, location.region),
+    district: textValue(structuredData.district, location.district),
+    suburb: textValue(structuredData.suburb, location.suburb, location.area),
+    area: textValue(structuredData.area, location.area, location.suburb),
+    location_master_id: textValue(
+      structuredData.location_master_id,
+      location.locationMasterId,
+    ),
+    region_normalized: textValue(
+      structuredData.region_normalized,
+      location.regionNormalized,
+    ),
+    territorial_authority_normalized: textValue(
+      structuredData.territorial_authority_normalized,
+      location.territorialAuthorityNormalized,
+    ),
+    major_name_normalized: textValue(
+      structuredData.major_name_normalized,
+      location.majorNameNormalized,
+    ),
+    suburb_locality_normalized: textValue(
+      structuredData.suburb_locality_normalized,
+      location.suburbLocalityNormalized,
+    ),
+    custom_locality: textValue(
+      structuredData.custom_locality,
+      location.customLocality,
+    ),
+    location_source: textValue(
+      structuredData.location_source,
+      location.locationSource,
+    ),
+    location_review_status: textValue(
+      structuredData.location_review_status,
+      location.locationReviewStatus,
+    ),
+    address: textValue(structuredData.address, location.address),
+    latitude: numberValue(structuredData.latitude, location.latitude),
+    longitude: numberValue(structuredData.longitude, location.longitude),
+    employment_type: textValue(
+      structuredData.employment_type,
+      typeDetails.employmentType,
+    ),
+    japanese_ok: booleanValue(structuredData.japanese_ok, typeDetails.japaneseOk),
+    english_level: textValue(structuredData.english_level, typeDetails.englishLevel),
+    visa_conditions: textValue(
+      structuredData.visa_conditions,
+      typeDetails.visaConditions,
+    ),
+    visa_support:
+      booleanValue(structuredData.visa_support) ??
+      /ワーホリ|working holiday|work visa|就労/i.test(
+        textValue(structuredData.visa_conditions, typeDetails.visaConditions) || "",
+      ),
+    hourly_rate_min: numberValue(
+      structuredData.hourly_rate_min,
+      typeDetails.hourlyRateMin,
+    ),
+    hourly_rate_max: numberValue(
+      structuredData.hourly_rate_max,
+      typeDetails.hourlyRateMax,
+    ),
+    weekly_hours: numberValue(structuredData.weekly_hours, typeDetails.weeklyHours),
+    accommodation_available:
+      booleanValue(
+        structuredData.accommodation_available,
+        typeDetails.accommodationAvailable,
+      ) ?? false,
+    start_date: textValue(structuredData.start_date, typeDetails.startDate),
+    application_method: textValue(
+      structuredData.application_method,
+      typeDetails.applicationMethod,
+    ),
+    rent_weekly: numberValue(structuredData.rent_weekly, typeDetails.rentWeekly),
+    bedrooms: numberValue(structuredData.bedrooms, typeDetails.bedrooms),
+    bathrooms: numberValue(structuredData.bathrooms, typeDetails.bathrooms),
+    parking_spaces: numberValue(
+      structuredData.parking_spaces,
+      typeDetails.parkingSpaces,
+    ),
+    available_from: textValue(
+      structuredData.available_from,
+      typeDetails.availableFrom,
+    ),
+    pets_allowed: booleanValue(structuredData.pets_allowed, typeDetails.petsAllowed),
+    smoking_allowed: booleanValue(
+      structuredData.smoking_allowed,
+      typeDetails.smokingAllowed,
+    ),
+    furnished: booleanValue(structuredData.furnished, typeDetails.furnished),
+    utilities_included: booleanValue(
+      structuredData.utilities_included,
+      typeDetails.utilitiesIncluded,
+    ),
+    inquiry_method: textValue(
+      structuredData.inquiry_method,
+      typeDetails.inquiryMethod,
+    ),
+    common,
+    payload,
+  };
+}
+
+function getImageUrls(submission: ListingSubmission) {
+  if (Array.isArray(submission.image_urls)) return submission.image_urls;
+  const payload = getSubmissionPayload(submission);
+  return Array.isArray(payload.imageUrls)
+    ? payload.imageUrls.filter((value): value is string => typeof value === "string")
+    : [];
+}
+
+async function updateSubmissionWithFallback(
+  client: SupabaseClient,
+  submissionId: string,
+  fullPayload: Record<string, unknown>,
+  fallbackPayload: Record<string, unknown>,
+) {
+  const result = await client
+    .from("listing_submissions")
+    .update(fullPayload)
+    .eq("id", submissionId);
+
+  if (!result.error) return result;
+  if (!isMissingColumnError(result.error)) return result;
+
+  return client
+    .from("listing_submissions")
+    .update(fallbackPayload)
+    .eq("id", submissionId);
 }
 
 function createErrorResponse(message: string, status: number) {
@@ -156,16 +357,21 @@ async function approveSubmission(
   token: string,
 ): Promise<{ statusUpdated: boolean; warning?: string }> {
   const clients = getAdminDbClients(token);
-  const details = submission.structured_data || {};
+  const details = getSubmissionDetails(submission);
+  const imageUrls = getImageUrls(submission);
+  let publishedRecordId: string | null = null;
+  let publishedTable: string | null = null;
 
   if (submission.type === "job") {
     const extendedPayload = {
       source_submission_id: submission.id,
-      title: submission.title,
-      company: submission.company_or_owner,
-      contact_email: submission.email,
-      description: submission.description,
-      apply_url: submission.url,
+      title: textValue(details.common.title, submission.title) || submission.title,
+      company:
+        textValue(details.common.companyOrOwner, submission.company_or_owner) ||
+        submission.company_or_owner,
+      contact_email: textValue(details.common.email, submission.email),
+      description: textValue(details.common.description, submission.description),
+      apply_url: textValue(details.common.url, submission.url),
       application_method: details.application_method,
       country_code: details.country_code,
       region: details.region,
@@ -174,6 +380,17 @@ async function approveSubmission(
       suburb: details.suburb,
       area: details.area,
       address: details.address,
+      location_master_id: details.location_master_id,
+      region_normalized: details.region_normalized,
+      territorial_authority_normalized:
+        details.territorial_authority_normalized,
+      major_name_normalized: details.major_name_normalized,
+      suburb_locality_normalized: details.suburb_locality_normalized,
+      custom_locality: details.custom_locality,
+      location_source: details.location_source,
+      location_review_status: details.location_review_status,
+      latitude: details.latitude,
+      longitude: details.longitude,
       employment_type: details.employment_type,
       japanese_ok: details.japanese_ok,
       english_level: details.english_level,
@@ -186,16 +403,18 @@ async function approveSubmission(
       weekly_hours: details.weekly_hours,
       accommodation_available: details.accommodation_available,
       start_date: details.start_date,
-      image_url: submission.image_urls?.[0] || null,
+      image_url: imageUrls[0] || null,
       is_active: true,
     };
     const fallbackPayload = {
       source_submission_id: submission.id,
-      title: submission.title,
-      company: submission.company_or_owner,
-      contact_email: submission.email,
-      description: submission.description,
-      apply_url: submission.url,
+      title: textValue(details.common.title, submission.title) || submission.title,
+      company:
+        textValue(details.common.companyOrOwner, submission.company_or_owner) ||
+        submission.company_or_owner,
+      contact_email: textValue(details.common.email, submission.email),
+      description: textValue(details.common.description, submission.description),
+      apply_url: textValue(details.common.url, submission.url),
       country_code: details.country_code,
       region: details.region,
       city: details.district,
@@ -213,7 +432,9 @@ async function approveSubmission(
       weekly_hours: details.weekly_hours,
       accommodation_available: details.accommodation_available,
       start_date: details.start_date,
-      image_url: submission.image_urls?.[0] || null,
+      latitude: details.latitude,
+      longitude: details.longitude,
+      image_url: imageUrls[0] || null,
       is_active: true,
     };
     const errors: string[] = [];
@@ -221,9 +442,13 @@ async function approveSubmission(
     for (const { label, client } of clients) {
       const extended = await client
         .from("public_jobs")
-        .upsert(extendedPayload, { onConflict: "source_submission_id" });
+        .upsert(extendedPayload, { onConflict: "source_submission_id" })
+        .select("id")
+        .maybeSingle();
 
       if (!extended.error) {
+        publishedRecordId = extended.data?.id || null;
+        publishedTable = "public_jobs";
         errors.length = 0;
         break;
       }
@@ -233,8 +458,12 @@ async function approveSubmission(
       if (isMissingColumnError(extended.error)) {
         const fallback = await client
           .from("public_jobs")
-          .upsert(fallbackPayload, { onConflict: "source_submission_id" });
+          .upsert(fallbackPayload, { onConflict: "source_submission_id" })
+          .select("id")
+          .maybeSingle();
         if (!fallback.error) {
+          publishedRecordId = fallback.data?.id || null;
+          publishedTable = "public_jobs";
           errors.length = 0;
           break;
         }
@@ -248,11 +477,13 @@ async function approveSubmission(
   if (submission.type === "property") {
     const propertyPayload = {
       source_submission_id: submission.id,
-      title: submission.title,
-      owner_name: submission.company_or_owner,
-      contact_email: submission.email,
-      description: submission.description,
-      url: submission.url,
+      title: textValue(details.common.title, submission.title) || submission.title,
+      owner_name:
+        textValue(details.common.companyOrOwner, submission.company_or_owner) ||
+        submission.company_or_owner,
+      contact_email: textValue(details.common.email, submission.email),
+      description: textValue(details.common.description, submission.description),
+      url: textValue(details.common.url, submission.url),
       inquiry_method: details.inquiry_method,
       country_code: details.country_code,
       region: details.region,
@@ -261,6 +492,17 @@ async function approveSubmission(
       suburb: details.suburb,
       area: details.area,
       address: details.address,
+      location_master_id: details.location_master_id,
+      region_normalized: details.region_normalized,
+      territorial_authority_normalized:
+        details.territorial_authority_normalized,
+      major_name_normalized: details.major_name_normalized,
+      suburb_locality_normalized: details.suburb_locality_normalized,
+      custom_locality: details.custom_locality,
+      location_source: details.location_source,
+      location_review_status: details.location_review_status,
+      latitude: details.latitude,
+      longitude: details.longitude,
       rent_weekly: details.rent_weekly,
       bedrooms: details.bedrooms,
       bathrooms: details.bathrooms,
@@ -271,16 +513,18 @@ async function approveSubmission(
       furnished: details.furnished,
       bills_included: details.utilities_included,
       utilities_included: details.utilities_included,
-      image_urls: submission.image_urls || [],
+      image_urls: imageUrls,
       is_active: true,
     };
     const fallbackPropertyPayload = {
       source_submission_id: submission.id,
-      title: submission.title,
-      owner_name: submission.company_or_owner,
-      contact_email: submission.email,
-      description: submission.description,
-      url: submission.url,
+      title: textValue(details.common.title, submission.title) || submission.title,
+      owner_name:
+        textValue(details.common.companyOrOwner, submission.company_or_owner) ||
+        submission.company_or_owner,
+      contact_email: textValue(details.common.email, submission.email),
+      description: textValue(details.common.description, submission.description),
+      url: textValue(details.common.url, submission.url),
       country_code: details.country_code,
       region: details.region,
       city: details.district,
@@ -288,6 +532,8 @@ async function approveSubmission(
       suburb: details.suburb,
       area: details.area,
       address: details.address,
+      latitude: details.latitude,
+      longitude: details.longitude,
       rent_weekly: details.rent_weekly,
       bedrooms: details.bedrooms,
       bathrooms: details.bathrooms,
@@ -298,7 +544,7 @@ async function approveSubmission(
       furnished: details.furnished,
       bills_included: details.utilities_included,
       utilities_included: details.utilities_included,
-      image_urls: submission.image_urls || [],
+      image_urls: imageUrls,
       is_active: true,
     };
     const errors: string[] = [];
@@ -306,9 +552,13 @@ async function approveSubmission(
     for (const { label, client } of clients) {
       const result = await client
         .from("public_properties")
-        .upsert(propertyPayload, { onConflict: "source_submission_id" });
+        .upsert(propertyPayload, { onConflict: "source_submission_id" })
+        .select("id")
+        .maybeSingle();
 
       if (!result.error) {
+        publishedRecordId = result.data?.id || null;
+        publishedTable = "public_properties";
         errors.length = 0;
         break;
       }
@@ -320,8 +570,12 @@ async function approveSubmission(
           .from("public_properties")
           .upsert(fallbackPropertyPayload, {
             onConflict: "source_submission_id",
-          });
+          })
+          .select("id")
+          .maybeSingle();
         if (!fallback.error) {
+          publishedRecordId = fallback.data?.id || null;
+          publishedTable = "public_properties";
           errors.length = 0;
           break;
         }
@@ -334,14 +588,25 @@ async function approveSubmission(
 
   const errors: string[] = [];
   for (const { label, client } of clients) {
-    const result = await client
-      .from("listing_submissions")
-      .update({
+    const now = new Date().toISOString();
+    const result = await updateSubmissionWithFallback(
+      client,
+      submission.id,
+      {
         status: "approved",
-        approved_at: new Date().toISOString(),
+        approved_at: now,
         approved_by: approvedBy,
-      })
-      .eq("id", submission.id);
+        reviewed_at: now,
+        reviewed_by: approvedBy,
+        published_record_id: publishedRecordId,
+        published_table: publishedTable,
+      },
+      {
+        status: "approved",
+        approved_at: now,
+        approved_by: approvedBy,
+      },
+    );
 
     if (!result.error) return { statusUpdated: true };
     errors.push(`${label}: ${result.error.message}`);
@@ -401,22 +666,25 @@ export async function GET(request: NextRequest) {
     const serviceClient = createServiceClient();
     const extendedResult = await serviceClient
       .from("listing_submissions")
-      .select(
-        "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, image_urls",
-      )
+      .select(extendedSubmissionSelect)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
-    const result =
-      extendedResult.error && isMissingColumnError(extendedResult.error)
-        ? await serviceClient
-            .from("listing_submissions")
-            .select(
-              "id, user_id, type, title, company_or_owner, email, description, url, status, created_at",
-            )
-            .eq("status", "pending")
-            .order("created_at", { ascending: false })
-        : extendedResult;
+    let result: SupabaseQueryResult<unknown[]> = extendedResult;
+    if (result.error && isMissingColumnError(result.error)) {
+      result = await serviceClient
+        .from("listing_submissions")
+        .select(legacySubmissionSelect)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+    }
+    if (result.error && isMissingColumnError(result.error)) {
+      result = await serviceClient
+        .from("listing_submissions")
+        .select(minimalSubmissionSelect)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+    }
 
     if (
       result.error &&
@@ -436,13 +704,27 @@ export async function GET(request: NextRequest) {
           autoRefreshToken: false,
         },
       });
-      const fallback = await userClient
+      let fallback: SupabaseQueryResult<unknown[]> = await userClient
         .from("listing_submissions")
-        .select(
-          "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, image_urls",
-        )
+        .select(extendedSubmissionSelect)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
+
+      if (fallback.error && isMissingColumnError(fallback.error)) {
+        fallback = await userClient
+          .from("listing_submissions")
+          .select(legacySubmissionSelect)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false });
+      }
+
+      if (fallback.error && isMissingColumnError(fallback.error)) {
+        fallback = await userClient
+          .from("listing_submissions")
+          .select(minimalSubmissionSelect)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false });
+      }
 
       if (fallback.error) throw fallback.error;
       const submissions = await filterAlreadyPublishedSubmissions(
@@ -495,22 +777,25 @@ export async function PATCH(request: NextRequest) {
     const serviceClient = createServiceClient();
     const extendedResult = await serviceClient
       .from("listing_submissions")
-      .select(
-        "id, user_id, type, title, company_or_owner, email, description, url, status, created_at, structured_data, image_urls",
-      )
+      .select(extendedSubmissionSelect)
       .eq("id", body.id)
       .single<ListingSubmission>();
 
-    const result =
-      extendedResult.error && isMissingColumnError(extendedResult.error)
-        ? await serviceClient
-            .from("listing_submissions")
-            .select(
-              "id, user_id, type, title, company_or_owner, email, description, url, status, created_at",
-            )
-            .eq("id", body.id)
-            .single<ListingSubmission>()
-        : extendedResult;
+    let result: SupabaseQueryResult<unknown> = extendedResult;
+    if (result.error && isMissingColumnError(result.error)) {
+      result = await serviceClient
+        .from("listing_submissions")
+        .select(legacySubmissionSelect)
+        .eq("id", body.id)
+        .single<ListingSubmission>();
+    }
+    if (result.error && isMissingColumnError(result.error)) {
+      result = await serviceClient
+        .from("listing_submissions")
+        .select(minimalSubmissionSelect)
+        .eq("id", body.id)
+        .single<ListingSubmission>();
+    }
 
     if (result.error && !body.submission) throw result.error;
     const data = (result.error ? body.submission : result.data) as
@@ -536,13 +821,22 @@ export async function PATCH(request: NextRequest) {
     } else {
       const errors: string[] = [];
       for (const { label, client } of getAdminDbClients(adminCheck.token)) {
-        const result = await client
-          .from("listing_submissions")
-          .update({
+        const now = new Date().toISOString();
+        const result = await updateSubmissionWithFallback(
+          client,
+          data.id,
+          {
             status: "rejected",
             rejected_reason: body.rejectedReason?.trim() || null,
-          })
-          .eq("id", data.id);
+            review_note: body.rejectedReason?.trim() || null,
+            reviewed_at: now,
+            reviewed_by: adminCheck.user.id,
+          },
+          {
+            status: "rejected",
+            rejected_reason: body.rejectedReason?.trim() || null,
+          },
+        );
 
         if (!result.error) {
           errors.length = 0;

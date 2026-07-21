@@ -54,6 +54,33 @@ type ListingDraft = {
   utilitiesIncluded: boolean;
 };
 
+type GeocodeCoordinates = {
+  latitude: number | null;
+  longitude: number | null;
+};
+
+const toNumberOrNull = (value: string) => {
+  if (!value.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toTextOrNull = (value: string) => value.trim() || null;
+
+const buildGeocodeQuery = (address: string, countryCode: CountryCode) => {
+  const trimmed = address.trim();
+  if (!trimmed) return "";
+  const countryName =
+    countryCode === "NZ"
+      ? "New Zealand"
+      : countryCode === "AU"
+        ? "Australia"
+        : "Canada";
+  return trimmed.toLowerCase().includes(countryName.toLowerCase())
+    ? trimmed
+    : `${trimmed}, ${countryName}`;
+};
+
 function loadImage(file: File) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const imageUrl = URL.createObjectURL(file);
@@ -379,23 +406,114 @@ export default function CompanySubmitPage() {
     return type === "job" ? uploadedUrls.slice(0, 1) : uploadedUrls;
   };
 
-  const submitMinimalDirectly = async () => {
+  const geocodeCurrentAddress = async (): Promise<GeocodeCoordinates> => {
+    const query = buildGeocodeQuery(address, countryCode);
+    if (!query) return { latitude: null, longitude: null };
+
+    const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`);
+    if (!response.ok) return { latitude: null, longitude: null };
+
+    const data = (await response.json().catch(() => null)) as
+      | GeocodeCoordinates
+      | null;
+
+    return {
+      latitude: typeof data?.latitude === "number" ? data.latitude : null,
+      longitude: typeof data?.longitude === "number" ? data.longitude : null,
+    };
+  };
+
+  const submitDirectlyWithSnapshot = async (
+    structuredData: Record<string, unknown>,
+    submissionPayload: Record<string, unknown>,
+    imageUrls: string[],
+    coordinates: GeocodeCoordinates,
+  ) => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const { error } = await supabase.from("listing_submissions").insert({
+    const fullPayload = {
+      user_id: user?.id ?? null,
+      submitted_by: user?.id ?? null,
+      type,
+      title: title.trim(),
+      company_or_owner: toTextOrNull(companyOrOwner),
+      email: email.trim(),
+      description: toTextOrNull(description),
+      url: toTextOrNull(url),
+      status: "pending",
+      country_code: countryCode,
+      region: toTextOrNull(region),
+      district: toTextOrNull(district),
+      suburb: toTextOrNull(area),
+      area: toTextOrNull(area),
+      address: toTextOrNull(address),
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      structured_data: structuredData,
+      submission_payload: submissionPayload,
+      image_urls: imageUrls,
+      consent_versions: {
+        posting_terms: type === "job" ? "job_posting" : "property_posting",
+        business_terms: "business_terms",
+        version: LEGAL_VERSION,
+      },
+    };
+
+    const fullResult = await supabase.from("listing_submissions").insert(fullPayload);
+    if (!fullResult.error) return;
+
+    const compatiblePayload = {
+      user_id: user?.id ?? null,
+      submitted_by: user?.id ?? null,
+      type,
+      title: title.trim(),
+      company_or_owner: toTextOrNull(companyOrOwner),
+      email: email.trim(),
+      description: toTextOrNull(description),
+      url: toTextOrNull(url),
+      status: "pending",
+      country_code: countryCode,
+      region: toTextOrNull(region),
+      district: toTextOrNull(district),
+      suburb: toTextOrNull(area),
+      area: toTextOrNull(area),
+      address: toTextOrNull(address),
+      structured_data: {
+        ...structuredData,
+        submission_payload: submissionPayload,
+      },
+      image_urls: imageUrls,
+      consent_versions: {
+        posting_terms: type === "job" ? "job_posting" : "property_posting",
+        business_terms: "business_terms",
+        version: LEGAL_VERSION,
+      },
+    };
+
+    const compatibleResult = await supabase
+      .from("listing_submissions")
+      .insert(compatiblePayload);
+    if (!compatibleResult.error) return;
+
+    const minimalResult = await supabase.from("listing_submissions").insert({
       user_id: user?.id ?? null,
       type,
       title: title.trim(),
-      company_or_owner: companyOrOwner.trim() || null,
+      company_or_owner: toTextOrNull(companyOrOwner),
       email: email.trim(),
-      description: description.trim() || null,
-      url: url.trim() || null,
+      description: [
+        toTextOrNull(description),
+        `申請時詳細: ${JSON.stringify(submissionPayload)}`,
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+      url: toTextOrNull(url),
       status: "pending",
     });
 
-    if (error) throw error;
+    if (minimalResult.error) throw fullResult.error;
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -403,8 +521,8 @@ export default function CompanySubmitPage() {
     setMessage("");
     setErrorMessage("");
 
-    if (!title.trim() || !email.trim()) {
-      setErrorMessage("タイトルと連絡先メールを入力してください。");
+    if (!title.trim() || !email.trim() || !address.trim()) {
+      setErrorMessage("タイトル、連絡先メール、住所を入力してください。");
       return;
     }
 
@@ -427,12 +545,19 @@ export default function CompanySubmitPage() {
         data: { session },
       } = await supabase.auth.getSession();
 
+      let coordinates: GeocodeCoordinates = { latitude: null, longitude: null };
+      try {
+        coordinates = await geocodeCurrentAddress();
+      } catch (geocodeError) {
+        console.warn("Listing submission geocode failed", geocodeError);
+      }
+
       const baseStructuredData = {
         country_code: countryCode,
-        region: region || null,
-        district: district || null,
-        suburb: area || null,
-        area: area || null,
+        region: toTextOrNull(region),
+        district: toTextOrNull(district),
+        suburb: toTextOrNull(area),
+        area: toTextOrNull(area),
         location_master_id: locationMasterId,
         region_normalized: regionNormalized,
         territorial_authority_normalized: territorialAuthorityNormalized,
@@ -441,41 +566,43 @@ export default function CompanySubmitPage() {
         custom_locality: customLocality,
         location_source: locationSource,
         location_review_status: locationReviewStatus,
-        address: address || null,
+        address: toTextOrNull(address),
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
       };
 
       const structuredData =
         type === "job"
           ? {
               ...baseStructuredData,
-              employment_type: employmentType || null,
+              employment_type: toTextOrNull(employmentType),
               japanese_ok: japaneseOk,
-              english_level: englishLevel || null,
-              visa_conditions: visaConditions || null,
+              english_level: toTextOrNull(englishLevel),
+              visa_conditions: toTextOrNull(visaConditions),
               visa_support:
                 /ワーホリ|working holiday|work visa|就労/i.test(
                   visaConditions,
                 ),
-              hourly_rate_min: hourlyRateMin ? Number(hourlyRateMin) : null,
-              hourly_rate_max: hourlyRateMax ? Number(hourlyRateMax) : null,
-              weekly_hours: weeklyHours ? Number(weeklyHours) : null,
+              hourly_rate_min: toNumberOrNull(hourlyRateMin),
+              hourly_rate_max: toNumberOrNull(hourlyRateMax),
+              weekly_hours: toNumberOrNull(weeklyHours),
               accommodation_available: accommodationAvailable,
-              start_date: startDate || null,
-              application_method: applicationMethod || null,
+              start_date: toTextOrNull(startDate),
+              application_method: toTextOrNull(applicationMethod),
             }
           : {
               ...baseStructuredData,
-              rent_weekly: rentWeekly ? Number(rentWeekly) : null,
-              bedrooms: bedrooms ? Number(bedrooms) : null,
-              bathrooms: bathrooms ? Number(bathrooms) : null,
-              parking_spaces: parkingSpaces ? Number(parkingSpaces) : null,
-              available_from: availableFrom || null,
+              rent_weekly: toNumberOrNull(rentWeekly),
+              bedrooms: toNumberOrNull(bedrooms),
+              bathrooms: toNumberOrNull(bathrooms),
+              parking_spaces: toNumberOrNull(parkingSpaces),
+              available_from: toTextOrNull(availableFrom),
               pets_allowed: petsAllowed === "" ? null : petsAllowed === "true",
               smoking_allowed:
                 smokingAllowed === "" ? null : smokingAllowed === "true",
               furnished,
               utilities_included: utilitiesIncluded,
-              inquiry_method: inquiryMethod || null,
+              inquiry_method: toTextOrNull(inquiryMethod),
             };
 
       let imageUrls: string[] = [];
@@ -523,7 +650,80 @@ export default function CompanySubmitPage() {
           location_source: locationSource,
           location_review_status: locationReviewStatus,
           address: address || null,
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
           structured_data: structuredData,
+          submission_payload: {
+            schemaVersion: 1,
+            type,
+            submittedAt: new Date().toISOString(),
+            common: {
+              title: title.trim(),
+              companyOrOwner: toTextOrNull(companyOrOwner),
+              email: email.trim(),
+              url: toTextOrNull(url),
+              description: toTextOrNull(description),
+            },
+            location: {
+              countryCode,
+              region: toTextOrNull(region),
+              district: toTextOrNull(district),
+              area: toTextOrNull(area),
+              suburb: toTextOrNull(area),
+              locationMasterId,
+              regionNormalized,
+              territorialAuthorityNormalized,
+              majorNameNormalized,
+              suburbLocalityNormalized,
+              customLocality,
+              locationSource,
+              locationReviewStatus,
+              address: toTextOrNull(address),
+              latitude: coordinates.latitude,
+              longitude: coordinates.longitude,
+            },
+            job:
+              type === "job"
+                ? {
+                    employmentType: toTextOrNull(employmentType),
+                    hourlyRateMin: toNumberOrNull(hourlyRateMin),
+                    hourlyRateMax: toNumberOrNull(hourlyRateMax),
+                    weeklyHours: toNumberOrNull(weeklyHours),
+                    accommodationAvailable,
+                    startDate: toTextOrNull(startDate),
+                    applicationMethod: toTextOrNull(applicationMethod),
+                    japaneseOk,
+                    englishLevel: toTextOrNull(englishLevel),
+                    visaConditions: toTextOrNull(visaConditions),
+                  }
+                : null,
+            property:
+              type === "property"
+                ? {
+                    rentWeekly: toNumberOrNull(rentWeekly),
+                    bedrooms: toNumberOrNull(bedrooms),
+                    bathrooms: toNumberOrNull(bathrooms),
+                    parkingSpaces: toNumberOrNull(parkingSpaces),
+                    availableFrom: toTextOrNull(availableFrom),
+                    petsAllowed:
+                      petsAllowed === "" ? null : petsAllowed === "true",
+                    smokingAllowed:
+                      smokingAllowed === ""
+                        ? null
+                        : smokingAllowed === "true",
+                    furnished,
+                    utilitiesIncluded,
+                    inquiryMethod: toTextOrNull(inquiryMethod),
+                  }
+                : null,
+            imageUrls,
+            consentVersions: {
+              postingTerms:
+                type === "job" ? "job_posting" : "property_posting",
+              businessTerms: "business_terms",
+              version: LEGAL_VERSION,
+            },
+          },
           image_urls: imageUrls,
           consent_versions: {
             posting_terms:
@@ -539,7 +739,34 @@ export default function CompanySubmitPage() {
           | { error?: string }
           | null;
         try {
-          await submitMinimalDirectly();
+          await submitDirectlyWithSnapshot(
+            structuredData,
+            {
+              schemaVersion: 1,
+              type,
+              submittedAt: new Date().toISOString(),
+              common: {
+                title: title.trim(),
+                companyOrOwner: toTextOrNull(companyOrOwner),
+                email: email.trim(),
+                url: toTextOrNull(url),
+                description: toTextOrNull(description),
+              },
+              location: {
+                countryCode,
+                region: toTextOrNull(region),
+                district: toTextOrNull(district),
+                area: toTextOrNull(area),
+                address: toTextOrNull(address),
+                latitude: coordinates.latitude,
+                longitude: coordinates.longitude,
+              },
+              details: structuredData,
+              imageUrls,
+            },
+            imageUrls,
+            coordinates,
+          );
         } catch (fallbackError) {
           const fallbackMessage =
             fallbackError instanceof Error

@@ -27,7 +27,10 @@ type ListingSubmissionPayload = {
   location_source?: string | null;
   location_review_status?: string | null;
   address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   structured_data?: Record<string, unknown>;
+  submission_payload?: Record<string, unknown>;
   image_urls?: string[];
   consent_versions?: Record<string, unknown>;
 };
@@ -45,6 +48,13 @@ function isMissingColumnError(error: { code?: string; message?: string }) {
     error.code === "42703" ||
     error.code === "PGRST204" ||
     Boolean(error.message?.includes("column") || error.message?.includes("schema cache"))
+  );
+}
+
+function isLikelyLegacyColumnError(error: { code?: string; message?: string }) {
+  return (
+    isMissingColumnError(error) ||
+    Boolean(error.message?.toLowerCase().includes("schema cache"))
   );
 }
 
@@ -137,7 +147,107 @@ export async function POST(request: NextRequest) {
       location_source: body.location_source || null,
       location_review_status: body.location_review_status || null,
       address: body.address || null,
+      latitude: typeof body.latitude === "number" ? body.latitude : null,
+      longitude: typeof body.longitude === "number" ? body.longitude : null,
+      hourly_rate:
+        body.type === "job" &&
+        typeof body.structured_data?.hourly_rate_min === "number"
+          ? body.structured_data.hourly_rate_min
+          : null,
+      work_hours:
+        body.type === "job" &&
+        typeof body.structured_data?.weekly_hours === "number"
+          ? body.structured_data.weekly_hours
+          : null,
+      rent_weekly:
+        body.type === "property" &&
+        typeof body.structured_data?.rent_weekly === "number"
+          ? body.structured_data.rent_weekly
+          : null,
+      utilities_included:
+        body.type === "property" &&
+        typeof body.structured_data?.utilities_included === "boolean"
+          ? body.structured_data.utilities_included
+          : null,
+      available_from:
+        body.type === "property" &&
+        typeof body.structured_data?.available_from === "string"
+          ? body.structured_data.available_from
+          : null,
+      employment_type:
+        body.type === "job" &&
+        typeof body.structured_data?.employment_type === "string"
+          ? body.structured_data.employment_type
+          : null,
+      submission_payload: body.submission_payload || {
+        schemaVersion: 1,
+        type: body.type,
+        submittedAt: new Date().toISOString(),
+        common: {
+          title: body.title.trim(),
+          companyOrOwner: body.company_or_owner?.trim() || null,
+          email: body.email.trim(),
+          url: body.url?.trim() || null,
+          description: body.description?.trim() || null,
+        },
+        location: {
+          countryCode: body.country_code || "NZ",
+          region: body.region || null,
+          district: body.district || null,
+          area: body.area || body.suburb || null,
+          address: body.address || null,
+          latitude: typeof body.latitude === "number" ? body.latitude : null,
+          longitude: typeof body.longitude === "number" ? body.longitude : null,
+        },
+        details: body.structured_data || {},
+      },
       structured_data: body.structured_data || {},
+      image_urls: body.image_urls || [],
+      consent_versions: body.consent_versions || {},
+    };
+
+    const snapshotPayload = {
+      user_id: userId,
+      submitted_by: userId,
+      type: body.type,
+      title: body.title.trim(),
+      company_or_owner: body.company_or_owner?.trim() || null,
+      email: body.email.trim(),
+      description: body.description?.trim() || null,
+      url: body.url?.trim() || null,
+      status: "pending",
+      country_code: body.country_code || "NZ",
+      region: body.region || null,
+      district: body.district || null,
+      suburb: body.suburb || null,
+      area: body.area || null,
+      address: body.address || null,
+      structured_data: body.structured_data || {},
+      submission_payload: extendedPayload.submission_payload,
+      image_urls: body.image_urls || [],
+      consent_versions: body.consent_versions || {},
+    };
+
+    const compatiblePayload = {
+      user_id: userId,
+      submitted_by: userId,
+      type: body.type,
+      title: body.title.trim(),
+      company_or_owner: body.company_or_owner?.trim() || null,
+      email: body.email.trim(),
+      description: body.description?.trim() || null,
+      url: body.url?.trim() || null,
+      status: "pending",
+      country_code: body.country_code || "NZ",
+      region: body.region || null,
+      district: body.district || null,
+      suburb: body.suburb || null,
+      area: body.area || null,
+      address: body.address || null,
+      structured_data: {
+        ...(body.structured_data || {}),
+        submission_payload: extendedPayload.submission_payload,
+      },
       image_urls: body.image_urls || [],
       consent_versions: body.consent_versions || {},
     };
@@ -173,6 +283,40 @@ export async function POST(request: NextRequest) {
         extendedResult.error.message.toLowerCase().includes("api key");
 
       if (!shouldTryMinimal) continue;
+
+      const snapshotResult = await client
+        .from("listing_submissions")
+        .insert(snapshotPayload);
+
+      if (!snapshotResult.error) {
+        return NextResponse.json({ ok: true, mode: `${label}:snapshot` });
+      }
+
+      errors.push(`${label} snapshot: ${snapshotResult.error.message}`);
+
+      if (isLikelyLegacyColumnError(snapshotResult.error)) {
+        const compatibleResult = await client
+          .from("listing_submissions")
+          .insert(compatiblePayload);
+
+        if (!compatibleResult.error) {
+          return NextResponse.json({
+            ok: true,
+            mode: `${label}:structured_snapshot`,
+          });
+        }
+
+        errors.push(
+          `${label} structured snapshot: ${compatibleResult.error.message}`,
+        );
+      }
+
+      const shouldTryLegacyMinimal =
+        isMissingColumnError(snapshotResult.error) ||
+        snapshotResult.error.message.toLowerCase().includes("permission denied") ||
+        snapshotResult.error.message.toLowerCase().includes("row-level security");
+
+      if (!shouldTryLegacyMinimal) continue;
 
       const minimalResult = await client
         .from("listing_submissions")

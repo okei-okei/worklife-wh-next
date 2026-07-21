@@ -16,10 +16,83 @@ type ListingSubmission = {
   status: string;
   created_at: string;
   structured_data?: Record<string, unknown> | null;
+  submission_payload?: Record<string, unknown> | null;
   image_urls?: string[] | null;
 };
 
 type DetailRow = [string, unknown];
+type EditableField = {
+  key: string;
+  label: string;
+  type?: "text" | "number" | "date" | "select";
+  options?: Array<{ label: string; value: string }>;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function firstValue(...values: unknown[]) {
+  return values.find(
+    (value) => value !== null && value !== undefined && value !== "",
+  );
+}
+
+function getPayload(submission: ListingSubmission) {
+  const structuredData = asRecord(submission.structured_data);
+  return asRecord(
+    submission.submission_payload || structuredData.submission_payload,
+  );
+}
+
+function getResolvedDetails(submission: ListingSubmission) {
+  const data = asRecord(submission.structured_data);
+  const payload = getPayload(submission);
+  const location = asRecord(payload.location);
+  const details =
+    submission.type === "job" ? asRecord(payload.job) : asRecord(payload.property);
+
+  return {
+    country_code: firstValue(data.country_code, location.countryCode),
+    region: firstValue(data.region, location.region),
+    district: firstValue(data.district, location.district),
+    area: firstValue(data.area, data.suburb, location.area, location.suburb),
+    address: firstValue(data.address, location.address),
+    latitude: firstValue(data.latitude, location.latitude),
+    longitude: firstValue(data.longitude, location.longitude),
+    employment_type: firstValue(data.employment_type, details.employmentType),
+    japanese_ok: firstValue(data.japanese_ok, details.japaneseOk),
+    english_level: firstValue(data.english_level, details.englishLevel),
+    visa_conditions: firstValue(data.visa_conditions, details.visaConditions),
+    hourly_rate_min: firstValue(data.hourly_rate_min, details.hourlyRateMin),
+    hourly_rate_max: firstValue(data.hourly_rate_max, details.hourlyRateMax),
+    weekly_hours: firstValue(data.weekly_hours, details.weeklyHours),
+    start_date: firstValue(data.start_date, details.startDate),
+    accommodation_available: firstValue(
+      data.accommodation_available,
+      details.accommodationAvailable,
+    ),
+    application_method: firstValue(
+      data.application_method,
+      details.applicationMethod,
+    ),
+    rent_weekly: firstValue(data.rent_weekly, details.rentWeekly),
+    bedrooms: firstValue(data.bedrooms, details.bedrooms),
+    bathrooms: firstValue(data.bathrooms, details.bathrooms),
+    parking_spaces: firstValue(data.parking_spaces, details.parkingSpaces),
+    available_from: firstValue(data.available_from, details.availableFrom),
+    pets_allowed: firstValue(data.pets_allowed, details.petsAllowed),
+    smoking_allowed: firstValue(data.smoking_allowed, details.smokingAllowed),
+    furnished: firstValue(data.furnished, details.furnished),
+    utilities_included: firstValue(
+      data.utilities_included,
+      details.utilitiesIncluded,
+    ),
+    inquiry_method: firstValue(data.inquiry_method, details.inquiryMethod),
+  };
+}
 
 export default function AdminSubmissionsPage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -133,6 +206,26 @@ export default function AdminSubmissionsPage() {
   const jobCount = submissions.filter((submission) => submission.type === "job").length;
   const propertyCount = submissions.filter((submission) => submission.type === "property").length;
 
+  const updateStructuredData = (
+    submissionId: string,
+    key: string,
+    value: string | number | boolean | null,
+  ) => {
+    setSubmissions((current) =>
+      current.map((submission) =>
+        submission.id === submissionId
+          ? {
+              ...submission,
+              structured_data: {
+                ...(submission.structured_data || {}),
+                [key]: value,
+              },
+            }
+          : submission,
+      ),
+    );
+  };
+
   const formatDetail = (value: unknown) => {
     if (value === true) return "あり";
     if (value === false) return "なし";
@@ -141,13 +234,16 @@ export default function AdminSubmissionsPage() {
   };
 
   const getStructuredDetails = (submission: ListingSubmission): DetailRow[] => {
-    const data = submission.structured_data || {};
-    const location = [data.region, data.district, data.area || data.suburb]
+    const data = getResolvedDetails(submission);
+    const location = [data.region, data.district, data.area]
       .filter(Boolean)
       .join(" / ");
     const common: DetailRow[] = [
+      ["国", data.country_code],
       ["地域", location],
       ["住所", data.address],
+      ["緯度", data.latitude],
+      ["経度", data.longitude],
     ];
 
     if (submission.type === "job") {
@@ -175,9 +271,109 @@ export default function AdminSubmissionsPage() {
       ["入居可能日", data.available_from],
       ["ペット可", data.pets_allowed],
       ["喫煙可", data.smoking_allowed],
-      ["家具付き", data.furnished],
-      ["光熱費込み", data.utilities_included],
+        ["家具付き", data.furnished],
+        ["光熱費込み", data.utilities_included],
+        ["問い合わせ方法", data.inquiry_method],
+      ];
+  };
+
+  const getEditableFields = (submission: ListingSubmission): EditableField[] =>
+    submission.type === "job"
+      ? [
+          { key: "address", label: "住所" },
+          { key: "region", label: "Region" },
+          { key: "district", label: "City / District" },
+          { key: "area", label: "Area / Suburb" },
+          { key: "employment_type", label: "採用形態" },
+          { key: "hourly_rate_min", label: "時給下限", type: "number" },
+          { key: "hourly_rate_max", label: "時給上限", type: "number" },
+          { key: "weekly_hours", label: "週勤務時間", type: "number" },
+          { key: "start_date", label: "勤務開始日", type: "date" },
+          {
+            key: "japanese_ok",
+            label: "日本語対応",
+            type: "select",
+            options: [
+              { label: "未設定", value: "" },
+              { label: "あり", value: "true" },
+              { label: "なし", value: "false" },
+            ],
+          },
+          { key: "english_level", label: "英語レベル" },
+          { key: "visa_conditions", label: "ビザ条件" },
+          { key: "application_method", label: "応募方法" },
+        ]
+      : [
+          { key: "address", label: "住所" },
+          { key: "region", label: "Region" },
+          { key: "district", label: "City / District" },
+          { key: "area", label: "Area / Suburb" },
+          { key: "rent_weekly", label: "週家賃", type: "number" },
+          { key: "bedrooms", label: "ベッドルーム数", type: "number" },
+          { key: "bathrooms", label: "バスルーム数", type: "number" },
+          { key: "parking_spaces", label: "駐車場数", type: "number" },
+          { key: "available_from", label: "入居可能日", type: "date" },
+          {
+            key: "pets_allowed",
+            label: "ペット",
+            type: "select",
+            options: [
+              { label: "要確認", value: "" },
+              { label: "可", value: "true" },
+              { label: "不可", value: "false" },
+            ],
+          },
+          {
+            key: "smoking_allowed",
+            label: "喫煙",
+            type: "select",
+            options: [
+              { label: "要確認", value: "" },
+              { label: "可", value: "true" },
+              { label: "不可", value: "false" },
+            ],
+          },
+          {
+            key: "furnished",
+            label: "家具付き",
+            type: "select",
+            options: [
+              { label: "未設定", value: "" },
+              { label: "あり", value: "true" },
+              { label: "なし", value: "false" },
+            ],
+          },
+          {
+            key: "utilities_included",
+            label: "光熱費込み",
+            type: "select",
+            options: [
+              { label: "未設定", value: "" },
+              { label: "込み", value: "true" },
+              { label: "別", value: "false" },
+            ],
+          },
+          { key: "inquiry_method", label: "問い合わせ方法" },
+        ];
+
+  const getEditableValue = (submission: ListingSubmission, key: string) => {
+    const value = getResolvedDetails(submission)[
+      key as keyof ReturnType<typeof getResolvedDetails>
     ];
+    if (value === null || value === undefined) return "";
+    return String(value);
+  };
+
+  const parseEditableValue = (field: EditableField, value: string) => {
+    if (value === "") return null;
+    if (field.type === "number") {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    if (field.type === "select" && (value === "true" || value === "false")) {
+      return value === "true";
+    }
+    return value;
   };
 
   if (isCheckingAuth) {
@@ -286,6 +482,25 @@ export default function AdminSubmissionsPage() {
                   key={submission.id}
                   className="rounded-xl border border-gray-200 p-5"
                 >
+                  {(() => {
+                    const details = getResolvedDetails(submission);
+                    const summaryRows: DetailRow[] =
+                      submission.type === "job"
+                        ? [
+                            ["時給", details.hourly_rate_min],
+                            ["週勤務時間", details.weekly_hours],
+                            ["採用形態", details.employment_type],
+                            ["地域", [details.region, details.district, details.area].filter(Boolean).join(" / ")],
+                          ]
+                        : [
+                            ["週家賃", details.rent_weekly],
+                            ["入居可能日", details.available_from],
+                            ["ペット", details.pets_allowed],
+                            ["地域", [details.region, details.district, details.area].filter(Boolean).join(" / ")],
+                          ];
+
+                    return (
+                      <>
                   <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -305,6 +520,19 @@ export default function AdminSubmissionsPage() {
                           "ja-JP",
                         )}
                       </p>
+                      <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
+                        {summaryRows.map(([label, value]) => (
+                          <div
+                            key={label}
+                            className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                          >
+                            <dt className="font-bold text-gray-600">{label}</dt>
+                            <dd className="mt-1 font-bold text-gray-900">
+                              {formatDetail(value)}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
@@ -326,6 +554,9 @@ export default function AdminSubmissionsPage() {
                       </button>
                     </div>
                   </div>
+                      </>
+                    );
+                  })()}
 
                   <dl className="grid gap-3 text-sm md:grid-cols-2">
                     <div>
@@ -376,7 +607,7 @@ export default function AdminSubmissionsPage() {
                     </div>
                   ) : null}
 
-                  {submission.structured_data ? (
+                  {submission.structured_data || submission.submission_payload ? (
                     <details className="mt-4 rounded-xl bg-gray-50 p-4">
                       <summary className="cursor-pointer font-bold text-gray-900">
                         詳細条件を確認
@@ -391,6 +622,55 @@ export default function AdminSubmissionsPage() {
                           </div>
                         ))}
                       </dl>
+                      <div className="mt-5 border-t border-gray-200 pt-4">
+                        <p className="text-sm font-bold text-gray-900">
+                          承認前に調整する
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-gray-600">
+                          ここで変更した値は承認時の公開データに反映されます。申請時スナップショット自体は保持します。
+                        </p>
+                        <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                          {getEditableFields(submission).map((field) => (
+                            <label key={field.key}>
+                              <span className="text-xs font-bold text-gray-700">
+                                {field.label}
+                              </span>
+                              {field.type === "select" ? (
+                                <select
+                                  value={getEditableValue(submission, field.key)}
+                                  onChange={(event) =>
+                                    updateStructuredData(
+                                      submission.id,
+                                      field.key,
+                                      parseEditableValue(field, event.target.value),
+                                    )
+                                  }
+                                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900"
+                                >
+                                  {(field.options || []).map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  type={field.type || "text"}
+                                  value={getEditableValue(submission, field.key)}
+                                  onChange={(event) =>
+                                    updateStructuredData(
+                                      submission.id,
+                                      field.key,
+                                      parseEditableValue(field, event.target.value),
+                                    )
+                                  }
+                                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900"
+                                />
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
                     </details>
                   ) : null}
 

@@ -908,7 +908,7 @@ export default function AdminListingsPage() {
                 />
               </label>
               <label>
-                <span className="text-sm font-bold">Area / Suburb</span>
+                <span className="text-sm font-bold">Area / Suburb / Locality</span>
                 <input
                   value={form.suburb}
                   onChange={(event) =>

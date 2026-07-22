@@ -397,7 +397,7 @@ export default function NzLocationPicker({
 
         <label className="block">
           <span className="text-xs font-bold text-gray-700">
-            Area / Suburb
+            Area / Suburb / Locality
           </span>
           <select
             value={selectedArea}
@@ -415,7 +415,7 @@ export default function NzLocationPicker({
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 font-medium text-gray-900 disabled:bg-gray-100"
           >
             <option value="">
-              {areas.length ? "Area / Suburbを選択" : "候補なし"}
+              {areas.length ? "Area / Suburb / Localityを選択" : "候補なし"}
             </option>
             {areas.map((area) => (
               <option key={area} value={area}>

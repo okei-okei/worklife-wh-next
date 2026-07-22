@@ -6,6 +6,9 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
+import ResponsiveJobImage, {
+  getSafeJobImageUrl,
+} from "@/components/jobs/ResponsiveJobImage";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
 import { resolveNzAddressApproximateCoordinates } from "@/lib/locationCoordinates";
@@ -143,50 +146,6 @@ function resolveJobCoordinates(
   }
 
   return resolveNzAddressApproximateCoordinates(job);
-}
-
-function getSafeImageUrl(value: string | null | undefined) {
-  const trimmed = value?.trim();
-  if (!trimmed) return null;
-
-  const lowered = trimmed.toLowerCase();
-  if (lowered === "null" || lowered === "undefined") return null;
-
-  return trimmed;
-}
-
-function PublicJobImage({
-  imageUrl,
-  title,
-  variant = "card",
-}: {
-  imageUrl: string | null | undefined;
-  title: string;
-  variant?: "card" | "map";
-}) {
-  const [hasImageError, setHasImageError] = useState(false);
-  const safeImageUrl = getSafeImageUrl(imageUrl);
-  const shouldShowImage = Boolean(safeImageUrl) && !hasImageError;
-  if (!shouldShowImage) return null;
-
-  const containerClassName =
-    variant === "map"
-      ? "relative aspect-[16/9] w-full overflow-hidden border-b border-gray-100 bg-gray-50 md:max-h-64"
-      : "relative h-20 w-full overflow-hidden border-b border-gray-100 bg-gray-50 sm:h-24 md:h-28";
-
-  return (
-    <div className={containerClassName}>
-      {/* Supabase Storage URLs are configured at runtime. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={safeImageUrl ?? ""}
-        alt={`${title}の求人画像`}
-        onError={() => setHasImageError(true)}
-        className="h-full w-full object-cover object-[center_58%]"
-        loading="lazy"
-      />
-    </div>
-  );
 }
 
 export default function JobsPage() {
@@ -761,7 +720,7 @@ export default function JobsPage() {
             locationLabel: getLocationDisplayName(job),
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
-            imageUrl: getSafeImageUrl(job.image_url),
+            imageUrl: getSafeJobImageUrl(job.image_url),
             priceLabel: formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate),
             metaLabel: job.employment_type || "採用形態未設定",
           };
@@ -1077,10 +1036,10 @@ export default function JobsPage() {
                 className="overflow-hidden rounded-2xl bg-white shadow"
               >
                 <div>
-                  <PublicJobImage
-                    imageUrl={selectedMapJob.image_url}
-                    title={selectedMapJob.title}
-                    variant="map"
+                  <ResponsiveJobImage
+                    src={selectedMapJob.image_url}
+                    alt={`${selectedMapJob.title}の求人画像`}
+                    mode="map"
                   />
                   <div className="p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1221,9 +1180,10 @@ export default function JobsPage() {
                 key={job.id}
                 className="flex flex-col overflow-hidden rounded-2xl bg-white shadow"
               >
-                <PublicJobImage
-                  imageUrl={job.image_url}
-                  title={job.title}
+                <ResponsiveJobImage
+                  src={job.image_url}
+                  alt={`${job.title}の求人画像`}
+                  mode="card"
                 />
                 <div className="flex flex-1 flex-col p-3 md:p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between md:gap-3">

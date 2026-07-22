@@ -158,50 +158,33 @@ function getSafeImageUrl(value: string | null | undefined) {
 function PublicJobImage({
   imageUrl,
   title,
-  locationLabel,
   variant = "card",
 }: {
   imageUrl: string | null | undefined;
   title: string;
-  locationLabel?: string | null;
   variant?: "card" | "map";
 }) {
   const [hasImageError, setHasImageError] = useState(false);
   const safeImageUrl = getSafeImageUrl(imageUrl);
   const shouldShowImage = Boolean(safeImageUrl) && !hasImageError;
+  if (!shouldShowImage) return null;
+
   const containerClassName =
     variant === "map"
-      ? "relative aspect-[16/9] w-full overflow-hidden border-b border-gray-100 bg-gray-50 md:h-full md:min-h-[220px] md:aspect-auto md:border-b-0 md:border-r"
-      : "relative aspect-[16/9] w-full overflow-hidden border-b border-gray-100 bg-gray-50";
+      ? "relative aspect-[16/9] w-full overflow-hidden border-b border-gray-100 bg-gray-50 md:max-h-64"
+      : "relative h-20 w-full overflow-hidden border-b border-gray-100 bg-gray-50 sm:h-24 md:h-28";
 
   return (
     <div className={containerClassName}>
-      {shouldShowImage ? (
-        // Supabase Storage URLs are configured at runtime.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={safeImageUrl || ""}
-          alt={`${title}の求人画像`}
-          onError={() => setHasImageError(true)}
-          className="h-full w-full object-cover object-[center_58%]"
-          loading="lazy"
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-50 to-slate-100 p-4 text-center">
-          <div className="max-w-[12rem]">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-sm font-black text-blue-700 shadow-sm">
-              WH
-            </div>
-            <p className="mt-3 text-sm font-black text-gray-900">求人情報</p>
-            <p className="mt-1 text-xs font-bold text-gray-600">WorkLife WH</p>
-            {locationLabel ? (
-              <p className="mt-1 line-clamp-1 text-[11px] font-medium text-gray-500">
-                {locationLabel}
-              </p>
-            ) : null}
-          </div>
-        </div>
-      )}
+      {/* Supabase Storage URLs are configured at runtime. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={safeImageUrl ?? ""}
+        alt={`${title}の求人画像`}
+        onError={() => setHasImageError(true)}
+        className="h-full w-full object-cover object-[center_58%]"
+        loading="lazy"
+      />
     </div>
   );
 }
@@ -778,6 +761,7 @@ export default function JobsPage() {
             locationLabel: getLocationDisplayName(job),
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
+            imageUrl: getSafeImageUrl(job.image_url),
             priceLabel: formatHourlyRate(job.hourly_rate_min ?? job.hourly_rate),
             metaLabel: job.employment_type || "採用形態未設定",
           };
@@ -1092,16 +1076,10 @@ export default function JobsPage() {
                 id={`job-${selectedMapJob.id}`}
                 className="overflow-hidden rounded-2xl bg-white shadow"
               >
-                <div className="grid gap-0 md:grid-cols-[180px_1fr]">
+                <div>
                   <PublicJobImage
                     imageUrl={selectedMapJob.image_url}
                     title={selectedMapJob.title}
-                    locationLabel={
-                      selectedMapJob.area ||
-                      selectedMapJob.suburb ||
-                      selectedMapJob.district ||
-                      selectedMapJob.city
-                    }
                     variant="map"
                   />
                   <div className="p-4">
@@ -1236,17 +1214,16 @@ export default function JobsPage() {
             ) : null}
           </div>
         ) : (
-          <div className="grid items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
             {paginatedJobs.map((job) => (
               <article
                 id={`job-${job.id}`}
                 key={job.id}
-                className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow"
+                className="flex flex-col overflow-hidden rounded-2xl bg-white shadow"
               >
                 <PublicJobImage
                   imageUrl={job.image_url}
                   title={job.title}
-                  locationLabel={job.area || job.suburb || job.district || job.city}
                 />
                 <div className="flex flex-1 flex-col p-3 md:p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between md:gap-3">

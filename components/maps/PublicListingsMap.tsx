@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import LeafletStyles from "@/components/maps/LeafletStyles";
@@ -15,6 +15,7 @@ export type MapPoint = {
   locationLabel?: string;
   latitude: number;
   longitude: number;
+  imageUrl?: string | null;
   priceLabel?: string;
   metaLabel?: string;
 };
@@ -71,6 +72,43 @@ function MapBoundsUpdater({ points }: { points: MapPoint[] }) {
   return null;
 }
 
+function getSafePopupImageUrl(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  const lowered = trimmed.toLowerCase();
+  if (lowered === "null" || lowered === "undefined") return null;
+
+  return trimmed;
+}
+
+function PopupListingImage({
+  imageUrl,
+  title,
+}: {
+  imageUrl?: string | null;
+  title: string;
+}) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const safeImageUrl = getSafePopupImageUrl(imageUrl);
+
+  if (!safeImageUrl || hasImageError) return null;
+
+  return (
+    <div className="mb-2 aspect-[4/3] w-full overflow-hidden rounded-lg bg-gray-50">
+      {/* Listing images are user-provided/public storage URLs. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={safeImageUrl}
+        alt={`${title}の画像`}
+        className="h-full w-full object-cover object-[center_58%]"
+        loading="lazy"
+        onError={() => setHasImageError(true)}
+      />
+    </div>
+  );
+}
+
 export default function PublicListingsMap({
   points,
   selectedId,
@@ -114,7 +152,8 @@ export default function PublicListingsMap({
             }}
           >
             <Popup>
-              <div className="min-w-44 space-y-2 text-gray-900">
+              <div className="w-56 space-y-2 text-gray-900 sm:w-64">
+                <PopupListingImage imageUrl={point.imageUrl} title={point.title} />
                 <p className="font-bold">{point.title}</p>
                 {point.subtitle ? (
                   <p className="text-sm">{point.subtitle}</p>

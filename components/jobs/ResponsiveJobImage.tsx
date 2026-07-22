@@ -45,7 +45,7 @@ function getContainerClassName(mode: JobImageMode, className?: string) {
         ? "aspect-[4/3] max-h-[520px] rounded-xl md:aspect-[3/2]"
         : mode === "map"
           ? "aspect-[4/3] border-b border-gray-100 md:max-h-64"
-          : "aspect-[4/3] border-b border-gray-100";
+          : "aspect-[3/2] border-b border-gray-100 bg-neutral-100";
 
   return [base, modeClassName, className].filter(Boolean).join(" ");
 }
@@ -69,9 +69,10 @@ export default function ResponsiveJobImage({
   if (!safeSrc || hasImageError) return null;
 
   const shouldContain =
-    orientation === "portrait" ||
-    orientation === "square" ||
-    orientation === "unknown";
+    mode !== "card" &&
+    (orientation === "portrait" ||
+      orientation === "square" ||
+      orientation === "unknown");
   const imageClassName = shouldContain
     ? "h-full w-full object-contain object-center p-1.5"
     : "h-full w-full object-cover object-center";

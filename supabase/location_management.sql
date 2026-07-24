@@ -39,6 +39,11 @@ create index if not exists nz_locations_active_region_idx
 
 alter table public.nz_locations enable row level security;
 
+grant usage on schema public to anon, authenticated, service_role;
+grant select on public.nz_locations to anon, authenticated, service_role;
+grant insert, update on public.nz_locations to authenticated, service_role;
+grant all privileges on public.nz_locations to service_role;
+
 drop policy if exists "Allow public read active nz locations" on public.nz_locations;
 drop policy if exists "Admins manage nz locations" on public.nz_locations;
 drop policy if exists "Admins can select all nz locations" on public.nz_locations;
@@ -97,6 +102,10 @@ with check (
       and profiles.role in ('admin', 'owner')
   )
 );
+
+-- If profiles does not have readable admin role policy/grant in your project yet,
+-- admin policies that check profiles.role can fail before they reach nz_locations.
+grant select on public.profiles to authenticated, service_role;
 
 alter table public.public_jobs
   add column if not exists location_master_id uuid null references public.nz_locations(id),

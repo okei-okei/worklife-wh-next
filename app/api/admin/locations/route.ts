@@ -25,6 +25,13 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
+function isPermissionDenied(error: { message?: string; code?: string } | null) {
+  return (
+    error?.code === "42501" ||
+    Boolean(error?.message?.toLowerCase().includes("permission denied"))
+  );
+}
+
 function normalizeBody(body: LocationBody) {
   const region = cleanLocationText(body.region);
   const cityDistrict = cleanLocationText(body.cityDistrict);
@@ -127,7 +134,16 @@ export async function GET(request: NextRequest) {
   }
 
   const { data, error } = await query;
-  if (error) return jsonError(error.message, 500);
+  if (error) {
+    if (isPermissionDenied(error)) {
+      return NextResponse.json({
+        locations: [],
+        warning:
+          "nz_locationsの権限設定が未反映です。supabase/location_management.sql のGRANT/RLSを実行してください。",
+      });
+    }
+    return jsonError(error.message, 500);
+  }
 
   const records = (data || []).map(dbRowToLocationMasterRecord);
   const counts = await usageCounts(

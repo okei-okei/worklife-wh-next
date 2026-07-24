@@ -67,16 +67,18 @@ export default function AdminLocationsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [warning, setWarning] = useState("");
 
   const loadLocations = useCallback(async (token: string) => {
     setIsLoading(true);
     setError("");
+    setWarning("");
 
     const response = await fetch("/api/admin/locations", {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = (await response.json().catch(() => null)) as
-      | { locations?: AdminLocation[]; error?: string }
+      | { locations?: AdminLocation[]; error?: string; warning?: string }
       | null;
 
     if (!response.ok) {
@@ -88,6 +90,7 @@ export default function AdminLocationsPage() {
     }
 
     setLocations(data?.locations || []);
+    setWarning(data?.warning || "");
     setIsLoading(false);
   }, []);
 
@@ -282,6 +285,11 @@ export default function AdminLocationsPage() {
         {error ? (
           <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-700">
             {error}
+          </p>
+        ) : null}
+        {warning ? (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-800">
+            {warning}
           </p>
         ) : null}
 

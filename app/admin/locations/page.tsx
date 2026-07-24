@@ -3,94 +3,56 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import type { LocationOption } from "@/lib/locations/locationMaster";
 
-type AdminLocation = {
-  id: string;
-  key: string;
-  region: string;
-  cityDistrict: string;
-  locality: string;
-  aliases: string[];
-  isActive: boolean;
-  displayOrder: number;
-  createdAt?: string | null;
-  usage?: { jobs: number; properties: number };
-};
-
-type LocationForm = {
-  id: string;
-  region: string;
-  cityDistrict: string;
-  locality: string;
-  aliases: string;
-  displayOrder: string;
-  isActive: boolean;
-};
-
-const emptyForm: LocationForm = {
-  id: "",
-  region: "",
-  cityDistrict: "",
-  locality: "",
-  aliases: "",
-  displayOrder: "0",
-  isActive: true,
-};
+type AddLevel = "region" | "city_district" | "locality";
 
 const inputClass =
-  "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
-const pageSize = 20;
+  "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100";
 
-function toForm(location: AdminLocation): LocationForm {
-  return {
-    id: location.id,
-    region: location.region,
-    cityDistrict: location.cityDistrict,
-    locality: location.locality,
-    aliases: location.aliases.join(", "),
-    displayOrder: String(location.displayOrder || 0),
-    isActive: location.isActive,
-  };
+function uniqueSorted(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b),
+  );
 }
 
 export default function AdminLocationsPage() {
   const [accessToken, setAccessToken] = useState("");
-  const [locations, setLocations] = useState<AdminLocation[]>([]);
-  const [form, setForm] = useState<LocationForm>(emptyForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [regionFilter, setRegionFilter] = useState("");
-  const [cityFilter, setCityFilter] = useState("");
-  const [activeFilter, setActiveFilter] = useState<"all" | "active" | "inactive">("all");
+  const [locations, setLocations] = useState<LocationOption[]>([]);
+  const [regionName, setRegionName] = useState("");
+  const [cityParentRegion, setCityParentRegion] = useState("");
+  const [cityName, setCityName] = useState("");
+  const [localityParentRegion, setLocalityParentRegion] = useState("");
+  const [localityParentCity, setLocalityParentCity] = useState("");
+  const [localityName, setLocalityName] = useState("");
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [warning, setWarning] = useState("");
 
   const loadLocations = useCallback(async (token: string) => {
     setIsLoading(true);
     setError("");
-    setWarning("");
 
     const response = await fetch("/api/admin/locations", {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = (await response.json().catch(() => null)) as
-      | { locations?: AdminLocation[]; error?: string; warning?: string }
+      | { locations?: LocationOption[]; error?: string }
       | null;
 
     if (!response.ok) {
-      setError(data?.error || "地域を取得できませんでした。");
-      if (response.status === 401) window.location.replace("/login?redirect=/admin/locations");
+      setError(data?.error || "地域選択肢を取得できませんでした。");
+      if (response.status === 401) {
+        window.location.replace("/login?redirect=/admin/locations");
+      }
       if (response.status === 403) window.location.replace("/");
       setIsLoading(false);
       return;
     }
 
     setLocations(data?.locations || []);
-    setWarning(data?.warning || "");
     setIsLoading(false);
   }, []);
 
@@ -113,77 +75,58 @@ export default function AdminLocationsPage() {
   }, [loadLocations]);
 
   const regions = useMemo(
-    () =>
-      Array.from(new Set(locations.map((location) => location.region)))
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b)),
+    () => uniqueSorted(locations.map((location) => location.region)),
     [locations],
   );
   const cityDistricts = useMemo(
     () =>
-      Array.from(
-        new Set(
-          locations
-            .filter((location) => !regionFilter || location.region === regionFilter)
-            .map((location) => location.cityDistrict),
-        ),
-      )
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b)),
-    [locations, regionFilter],
+      uniqueSorted(
+        locations
+          .filter((location) => location.region === localityParentRegion)
+          .map((location) => location.cityDistrict),
+      ),
+    [locations, localityParentRegion],
   );
-
   const filteredLocations = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     return locations.filter((location) => {
-      if (regionFilter && location.region !== regionFilter) return false;
-      if (cityFilter && location.cityDistrict !== cityFilter) return false;
-      if (activeFilter === "active" && !location.isActive) return false;
-      if (activeFilter === "inactive" && location.isActive) return false;
       if (!normalizedSearch) return true;
       return [
         location.region,
         location.cityDistrict,
         location.locality,
         location.key,
-        ...location.aliases,
       ]
         .join(" ")
         .toLowerCase()
         .includes(normalizedSearch);
     });
-  }, [activeFilter, cityFilter, locations, regionFilter, search]);
+  }, [locations, search]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredLocations.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const paginatedLocations = filteredLocations.slice(
-    (safePage - 1) * pageSize,
-    safePage * pageSize,
-  );
-
-  const resetForm = () => {
-    setForm(emptyForm);
-    setEditingId(null);
-  };
-
-  const saveLocation = async () => {
+  const addOption = async (level: AddLevel) => {
     if (!accessToken || isSaving) return;
     setIsSaving(true);
     setError("");
     setMessage("");
 
-    const payload = {
-      id: form.id || undefined,
-      region: form.region,
-      cityDistrict: form.cityDistrict,
-      locality: form.locality,
-      aliases: form.aliases,
-      displayOrder: form.displayOrder,
-      isActive: form.isActive,
-    };
+    const payload =
+      level === "region"
+        ? { level, name: regionName }
+        : level === "city_district"
+          ? {
+              level,
+              name: cityName,
+              parentRegion: cityParentRegion,
+            }
+          : {
+              level,
+              name: localityName,
+              parentRegion: localityParentRegion,
+              parentCityDistrict: localityParentCity,
+            };
 
     const response = await fetch("/api/admin/locations", {
-      method: editingId ? "PATCH" : "POST",
+      method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
@@ -196,57 +139,14 @@ export default function AdminLocationsPage() {
 
     setIsSaving(false);
     if (!response.ok) {
-      setError(data?.error || "地域を保存できませんでした。");
+      setError(data?.error || "選択肢を追加できませんでした。");
       return;
     }
 
-    setMessage(editingId ? "地域を更新しました。" : "地域を追加しました。");
-    resetForm();
-    await loadLocations(accessToken);
-  };
-
-  const toggleLocationActive = async (location: AdminLocation) => {
-    if (!accessToken || isSaving) return;
-    const usageCount = (location.usage?.jobs || 0) + (location.usage?.properties || 0);
-    const ok =
-      location.isActive && usageCount > 0
-        ? window.confirm(
-            `この地域は公開求人${location.usage?.jobs || 0}件、公開物件${location.usage?.properties || 0}件で使用されています。無効化しても既存掲載には引き続き表示されます。`,
-          )
-        : true;
-    if (!ok) return;
-
-    setIsSaving(true);
-    setError("");
-    setMessage("");
-
-    const response = await fetch("/api/admin/locations", {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: location.id,
-        region: location.region,
-        cityDistrict: location.cityDistrict,
-        locality: location.locality,
-        aliases: location.aliases,
-        displayOrder: location.displayOrder,
-        isActive: !location.isActive,
-      }),
-    });
-    const data = (await response.json().catch(() => null)) as
-      | { error?: string }
-      | null;
-
-    setIsSaving(false);
-    if (!response.ok) {
-      setError(data?.error || "地域の状態を更新できませんでした。");
-      return;
-    }
-
-    setMessage(location.isActive ? "地域を無効化しました。" : "地域を有効化しました。");
+    setMessage("選択肢を追加しました。公開求人・公開物件の絞り込みにも反映されます。");
+    if (level === "region") setRegionName("");
+    if (level === "city_district") setCityName("");
+    if (level === "locality") setLocalityName("");
     await loadLocations(accessToken);
   };
 
@@ -256,9 +156,9 @@ export default function AdminLocationsPage() {
         <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-bold text-blue-700">WorkLife WH Admin</p>
-            <h1 className="mt-1 text-2xl font-bold md:text-4xl">地域管理</h1>
+            <h1 className="mt-1 text-2xl font-bold md:text-4xl">地域選択肢管理</h1>
             <p className="mt-2 text-sm font-medium text-gray-700">
-              Region → City / District → Area / Suburb の3階層だけで管理します。
+              既存地域は変更せず、新しい選択肢だけを3階層で追加します。
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -287,300 +187,213 @@ export default function AdminLocationsPage() {
             {error}
           </p>
         ) : null}
-        {warning ? (
-          <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-800">
-            {warning}
-          </p>
-        ) : null}
 
-        <section className="grid gap-4 lg:grid-cols-[360px_1fr]">
+        <section className="grid gap-4 lg:grid-cols-3">
           <form
             className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
             onSubmit={(event) => {
               event.preventDefault();
-              saveLocation();
+              addOption("region");
             }}
           >
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-bold">
-                {editingId ? "地域を編集" : "地域を追加"}
-              </h2>
-              {editingId ? (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold"
-                >
-                  新規追加へ戻る
-                </button>
-              ) : null}
-            </div>
-
-            <div className="mt-4 space-y-3">
-              <label className="block">
-                <span className="text-xs font-bold text-gray-700">
-                  Region <span className="text-red-600">*</span>
-                </span>
-                <input
-                  value={form.region}
-                  onChange={(event) =>
-                    setForm({ ...form, region: event.target.value })
-                  }
-                  className={inputClass}
-                  placeholder="例: Auckland"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold text-gray-700">
-                  City / District <span className="text-red-600">*</span>
-                </span>
-                <input
-                  value={form.cityDistrict}
-                  onChange={(event) =>
-                    setForm({ ...form, cityDistrict: event.target.value })
-                  }
-                  className={inputClass}
-                  placeholder="例: North Shore"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold text-gray-700">
-                  Area / Suburb <span className="text-red-600">*</span>
-                </span>
-                <input
-                  value={form.locality}
-                  onChange={(event) =>
-                    setForm({ ...form, locality: event.target.value })
-                  }
-                  className={inputClass}
-                  placeholder="例: Browns Bay"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold text-gray-700">
-                  aliases（カンマ区切り）
-                </span>
-                <input
-                  value={form.aliases}
-                  onChange={(event) =>
-                    setForm({ ...form, aliases: event.target.value })
-                  }
-                  className={inputClass}
-                  placeholder="例: Browns Bay Central, East Coast Bays"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold text-gray-700">表示順</span>
-                <input
-                  type="number"
-                  value={form.displayOrder}
-                  onChange={(event) =>
-                    setForm({ ...form, displayOrder: event.target.value })
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label className="flex items-center gap-2 rounded-lg border border-gray-200 p-3 text-sm font-bold">
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(event) =>
-                    setForm({ ...form, isActive: event.target.checked })
-                  }
-                />
-                有効にする
-              </label>
-            </div>
-
+            <h2 className="text-lg font-bold">Regionを追加</h2>
+            <p className="mt-1 text-xs font-medium leading-5 text-gray-600">
+              例: Auckland、Canterbury、Wellington
+            </p>
+            <label className="mt-4 block">
+              <span className="text-xs font-bold text-gray-700">
+                新しいRegion名
+              </span>
+              <input
+                value={regionName}
+                onChange={(event) => setRegionName(event.target.value)}
+                className={inputClass}
+                placeholder="例: Auckland"
+              />
+            </label>
             <button
               type="submit"
               disabled={isSaving}
               className="mt-4 w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white disabled:bg-gray-300"
             >
-              {isSaving ? "保存中..." : editingId ? "更新する" : "追加する"}
+              Regionを追加
             </button>
-            <p className="mt-3 text-xs font-medium leading-5 text-gray-600">
-              地域は物理削除せず、不要になった場合は無効化してください。既存掲載の地域文字列は自動変更しません。
-            </p>
           </form>
 
-          <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="grid gap-3 md:grid-cols-4">
-              <label className="block">
-                <span className="text-xs font-bold text-gray-700">Region</span>
-                <select
-                  value={regionFilter}
-                  onChange={(event) => {
-                    setRegionFilter(event.target.value);
-                    setCityFilter("");
-                    setPage(1);
-                  }}
-                  className={inputClass}
-                >
-                  <option value="">全て</option>
-                  {regions.map((region) => (
-                    <option key={region} value={region}>
-                      {region}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold text-gray-700">
-                  City / District
-                </span>
-                <select
-                  value={cityFilter}
-                  onChange={(event) => {
-                    setCityFilter(event.target.value);
-                    setPage(1);
-                  }}
-                  className={inputClass}
-                >
-                  <option value="">全て</option>
-                  {cityDistricts.map((cityDistrict) => (
-                    <option key={cityDistrict} value={cityDistrict}>
-                      {cityDistrict}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold text-gray-700">状態</span>
-                <select
-                  value={activeFilter}
-                  onChange={(event) => {
-                    setActiveFilter(event.target.value as typeof activeFilter);
-                    setPage(1);
-                  }}
-                  className={inputClass}
-                >
-                  <option value="all">全て</option>
-                  <option value="active">有効</option>
-                  <option value="inactive">無効</option>
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-xs font-bold text-gray-700">検索</span>
-                <input
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(1);
-                  }}
-                  className={inputClass}
-                  placeholder="Area / Suburbを検索"
-                />
-              </label>
-            </div>
-
-            <div className="mt-4 flex flex-col gap-2 text-sm font-bold text-gray-700 sm:flex-row sm:items-center sm:justify-between">
-              <p>
-                表示中: {filteredLocations.length}件 / 全{locations.length}件
-              </p>
-              <button
-                type="button"
-                onClick={() => loadLocations(accessToken)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold"
+          <form
+            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+            onSubmit={(event) => {
+              event.preventDefault();
+              addOption("city_district");
+            }}
+          >
+            <h2 className="text-lg font-bold">City / Districtを追加</h2>
+            <p className="mt-1 text-xs font-medium leading-5 text-gray-600">
+              選択したRegion内に新しいCity / Districtを追加します。
+            </p>
+            <label className="mt-4 block">
+              <span className="text-xs font-bold text-gray-700">Region</span>
+              <select
+                value={cityParentRegion}
+                onChange={(event) => setCityParentRegion(event.target.value)}
+                className={inputClass}
               >
-                再読み込み
-              </button>
-            </div>
-
-            {isLoading ? (
-              <p className="mt-6 text-sm font-bold text-gray-700">読み込み中...</p>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {paginatedLocations.map((location) => (
-                  <article
-                    key={location.id}
-                    className="rounded-xl border border-gray-200 p-3"
-                  >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap gap-2">
-                          <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
-                            {location.region}
-                          </span>
-                          <span className="rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-700">
-                            {location.cityDistrict}
-                          </span>
-                          <span
-                            className={`rounded-full px-2 py-1 text-[11px] font-bold ${
-                              location.isActive
-                                ? "bg-green-50 text-green-700"
-                                : "bg-gray-100 text-gray-600"
-                            }`}
-                          >
-                            {location.isActive ? "有効" : "無効"}
-                          </span>
-                        </div>
-                        <h3 className="mt-2 text-base font-bold text-gray-950">
-                          {location.locality}
-                        </h3>
-                        <p className="mt-1 break-all text-xs font-medium text-gray-600">
-                          key: {location.key}
-                        </p>
-                        {location.aliases.length ? (
-                          <p className="mt-1 text-xs font-medium text-gray-600">
-                            aliases: {location.aliases.join(" / ")}
-                          </p>
-                        ) : null}
-                        <p className="mt-2 text-xs font-bold text-gray-700">
-                          使用中: 求人 {location.usage?.jobs || 0}件 / 物件{" "}
-                          {location.usage?.properties || 0}件
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingId(location.id);
-                            setForm(toForm(location));
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold"
-                        >
-                          編集
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => toggleLocationActive(location)}
-                          className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white"
-                        >
-                          {location.isActive ? "無効化" : "有効化"}
-                        </button>
-                      </div>
-                    </div>
-                  </article>
+                <option value="">Regionを選択</option>
+                {regions.map((region) => (
+                  <option key={region} value={region}>
+                    {region}
+                  </option>
                 ))}
-              </div>
-            )}
+              </select>
+            </label>
+            <label className="mt-3 block">
+              <span className="text-xs font-bold text-gray-700">
+                新しいCity / District名
+              </span>
+              <input
+                value={cityName}
+                onChange={(event) => setCityName(event.target.value)}
+                className={inputClass}
+                placeholder="例: North Shore"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="mt-4 w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white disabled:bg-gray-300"
+            >
+              City / Districtを追加
+            </button>
+          </form>
 
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={safePage <= 1}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold disabled:opacity-40"
+          <form
+            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+            onSubmit={(event) => {
+              event.preventDefault();
+              addOption("locality");
+            }}
+          >
+            <h2 className="text-lg font-bold">Area / Suburbを追加</h2>
+            <p className="mt-1 text-xs font-medium leading-5 text-gray-600">
+              RegionとCity / Districtを選び、地域名を追加します。
+            </p>
+            <label className="mt-4 block">
+              <span className="text-xs font-bold text-gray-700">Region</span>
+              <select
+                value={localityParentRegion}
+                onChange={(event) => {
+                  setLocalityParentRegion(event.target.value);
+                  setLocalityParentCity("");
+                }}
+                className={inputClass}
               >
-                前へ
-              </button>
-              <p className="text-xs font-bold text-gray-700">
-                {safePage} / {totalPages} ページ
+                <option value="">Regionを選択</option>
+                {regions.map((region) => (
+                  <option key={region} value={region}>
+                    {region}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-3 block">
+              <span className="text-xs font-bold text-gray-700">
+                City / District
+              </span>
+              <select
+                value={localityParentCity}
+                onChange={(event) => setLocalityParentCity(event.target.value)}
+                disabled={!localityParentRegion}
+                className={inputClass}
+              >
+                <option value="">
+                  {localityParentRegion
+                    ? "City / Districtを選択"
+                    : "先にRegionを選択"}
+                </option>
+                {cityDistricts.map((cityDistrict) => (
+                  <option key={cityDistrict} value={cityDistrict}>
+                    {cityDistrict}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-3 block">
+              <span className="text-xs font-bold text-gray-700">
+                新しいArea / Suburb名
+              </span>
+              <input
+                value={localityName}
+                onChange={(event) => setLocalityName(event.target.value)}
+                className={inputClass}
+                placeholder="例: Browns Bay"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="mt-4 w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white disabled:bg-gray-300"
+            >
+              地域を追加
+            </button>
+          </form>
+        </section>
+
+        <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="text-lg font-bold">現在の選択肢</h2>
+              <p className="mt-1 text-xs font-medium text-gray-600">
+                既存選択肢と管理画面から追加した選択肢を統合表示しています。
               </p>
-              <button
-                type="button"
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
-                disabled={safePage >= totalPages}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold disabled:opacity-40"
-              >
-                次へ
-              </button>
             </div>
-          </section>
+            <label className="block md:w-72">
+              <span className="text-xs font-bold text-gray-700">検索</span>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className={inputClass}
+                placeholder="Region / City / Area"
+              />
+            </label>
+          </div>
+
+          {isLoading ? (
+            <p className="mt-5 text-sm font-bold text-gray-700">読み込み中...</p>
+          ) : (
+            <div className="mt-4 max-h-[520px] overflow-y-auto rounded-xl border border-gray-200">
+              <table className="min-w-full text-left text-sm">
+                <thead className="sticky top-0 bg-gray-50 text-xs font-bold text-gray-700">
+                  <tr>
+                    <th className="px-3 py-3">Region</th>
+                    <th className="px-3 py-3">City / District</th>
+                    <th className="px-3 py-3">Area / Suburb</th>
+                    <th className="px-3 py-3">区分</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLocations.slice(0, 200).map((location) => (
+                    <tr
+                      key={`${location.key}-${location.databaseId || ""}`}
+                      className="border-t border-gray-100"
+                    >
+                      <td className="px-3 py-2 font-bold">{location.region}</td>
+                      <td className="px-3 py-2">{location.cityDistrict || "-"}</td>
+                      <td className="px-3 py-2">{location.locality || "-"}</td>
+                      <td className="px-3 py-2">
+                        <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
+                          {location.level === "region"
+                            ? "Region"
+                            : location.level === "city_district"
+                              ? "City / District"
+                              : "Area / Suburb"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </div>
     </main>

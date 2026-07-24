@@ -6,7 +6,6 @@ import ThreeLevelLocationSelector from "@/components/locations/ThreeLevelLocatio
 import {
   mergeLocationOptions,
   normalizeNullableUuid,
-  type LocationMasterRecord,
   type LocationOption,
   type ThreeLevelLocationValue,
 } from "@/lib/locations/locationMaster";
@@ -346,13 +345,7 @@ export default function AdminListingsPage() {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = (await response.json().catch(() => null)) as
-      | {
-          locations?: Array<
-            LocationMasterRecord & {
-              usage?: { jobs: number; properties: number };
-            }
-          >;
-        }
+      | { locations?: LocationOption[] }
       | null;
 
     if (!response.ok) {
@@ -361,19 +354,7 @@ export default function AdminListingsPage() {
     }
 
     setLocationOptions(
-      mergeLocationOptions(
-        (data?.locations || []).map((location) => ({
-          databaseId: normalizeNullableUuid(location.id),
-          key: location.key,
-          region: location.region,
-          cityDistrict: location.cityDistrict,
-          locality: location.locality,
-          aliases: location.aliases || [],
-          isActive: location.isActive,
-          displayOrder: location.displayOrder || 0,
-        })),
-        true,
-      ),
+      mergeLocationOptions(data?.locations || [], true),
     );
   }, []);
 

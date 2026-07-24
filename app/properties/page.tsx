@@ -1066,10 +1066,10 @@ export default function PropertiesPage() {
           </div>
         )}
 
-        <section className="rounded-2xl bg-white p-3 shadow md:p-6">
+        <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm md:p-5 lg:p-5">
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between md:mb-4">
             <div>
-              <h2 className="text-lg font-bold text-gray-900 md:text-xl">物件を探す</h2>
+              <h2 className="text-lg font-bold text-gray-900 md:text-xl">条件を絞り込む</h2>
               <p className="mt-1 text-xs font-medium text-gray-700 md:text-sm">
                 エリア、家賃、部屋数などで絞り込めます。
               </p>
@@ -1079,7 +1079,7 @@ export default function PropertiesPage() {
             </p>
           </div>
 
-          <div>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(260px,1fr)_auto] lg:items-end">
             <label className="block">
               <span className="text-sm font-bold text-gray-900">検索</span>
               <input
@@ -1089,6 +1089,13 @@ export default function PropertiesPage() {
                 placeholder="物件名、エリア、住所、説明で検索"
               />
             </label>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="hidden h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm font-bold text-gray-900 hover:bg-gray-50 lg:inline-flex lg:items-center lg:justify-center"
+            >
+              条件をクリア
+            </button>
           </div>
 
           <button

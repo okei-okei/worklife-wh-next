@@ -66,7 +66,8 @@ export default function ThreeLevelLocationSelector({
         .filter(
           (location) =>
             location.region === value.region &&
-            location.cityDistrict === value.cityDistrict,
+            location.cityDistrict === value.cityDistrict &&
+            Boolean(location.locality),
         )
         .sort(
           (a, b) =>

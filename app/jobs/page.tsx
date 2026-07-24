@@ -853,10 +853,10 @@ export default function JobsPage() {
           </div>
         )}
 
-        <section className="rounded-2xl bg-white p-3 shadow md:p-6">
+        <section className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm md:p-5 lg:p-5">
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between md:mb-4">
             <div>
-              <h2 className="text-lg font-bold text-gray-900 md:text-xl">求人を探す</h2>
+              <h2 className="text-lg font-bold text-gray-900 md:text-xl">条件を絞り込む</h2>
               <p className="mt-1 text-xs font-medium text-gray-600 md:text-sm">
                 地域、時給、勤務時間、採用形態で絞り込めます。
               </p>
@@ -866,7 +866,7 @@ export default function JobsPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-[minmax(260px,1fr)_auto] lg:items-end">
             <label className="block">
               <span className="text-sm font-bold text-gray-900">検索</span>
               <input
@@ -876,6 +876,13 @@ export default function JobsPage() {
                 placeholder="求人名、会社名、仕事内容、地域、住所で検索"
               />
             </label>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="hidden h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm font-bold text-gray-900 hover:bg-gray-50 lg:inline-flex lg:items-center lg:justify-center"
+            >
+              条件をクリア
+            </button>
           </div>
 
           <button

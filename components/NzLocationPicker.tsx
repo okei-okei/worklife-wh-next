@@ -106,7 +106,7 @@ export default function NzLocationPicker({
           )
           .map((location) => location.district),
       ),
-    );
+    ).filter(Boolean);
   }, [allLocations, selectedRegion]);
 
   const areas = useMemo(() => {

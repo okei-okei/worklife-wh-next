@@ -17,6 +17,7 @@ export type LocationMasterRecord = {
 export type LocationOption = {
   databaseId: string | null;
   key: string;
+  level?: "region" | "city_district" | "locality";
   region: string;
   cityDistrict: string;
   locality: string;
@@ -48,6 +49,17 @@ type NzLocationRow = {
   display_order?: number | null;
   created_at?: string | null;
   updated_at?: string | null;
+  created_by?: string | null;
+};
+
+export type LocationOptionRow = {
+  id?: string | null;
+  level?: "region" | "city_district" | "locality" | null;
+  name?: string | null;
+  parent_region?: string | null;
+  parent_city_district?: string | null;
+  is_active?: boolean | null;
+  created_at?: string | null;
   created_by?: string | null;
 };
 
@@ -129,12 +141,40 @@ export function dbRowToLocationOption(row: NzLocationRow): LocationOption {
   return {
     databaseId: normalizeNullableUuid(row.id || null),
     key,
+    level: "locality",
     region,
     cityDistrict,
     locality,
     aliases: parseAliases(row.aliases || row.additional_names || []),
     isActive: row.is_active !== false,
     displayOrder: row.display_order ?? 0,
+  };
+}
+
+export function optionRowToLocationOption(row: LocationOptionRow): LocationOption {
+  const level = row.level || "locality";
+  const name = cleanLocationText(row.name);
+  const region =
+    level === "region" ? name : cleanLocationText(row.parent_region);
+  const cityDistrict =
+    level === "city_district"
+      ? name
+      : level === "locality"
+        ? cleanLocationText(row.parent_city_district)
+        : "";
+  const locality = level === "locality" ? name : "";
+  const key = createLocationKey(region, cityDistrict || level, locality || name);
+
+  return {
+    databaseId: normalizeNullableUuid(row.id || null),
+    key,
+    level,
+    region,
+    cityDistrict,
+    locality,
+    aliases: [],
+    isActive: row.is_active !== false,
+    displayOrder: 0,
   };
 }
 
@@ -160,6 +200,7 @@ export function dbRowToLocationMasterRecord(
 export function staticLocationToOption(location: NzLocation): LocationOption {
   return {
     databaseId: normalizeNullableUuid(location.databaseId || location.id),
+    level: "locality",
     key:
       location.key ||
       createLocationKey(location.region, location.district, location.area),
@@ -203,7 +244,9 @@ export function optionToNzLocation(option: LocationOption): NzLocation {
     additionalNames: option.aliases,
     latitude: null,
     longitude: null,
-    label: `${option.region} / ${option.cityDistrict} / ${option.locality}`,
+    label: [option.region, option.cityDistrict, option.locality]
+      .filter(Boolean)
+      .join(" / "),
     searchText,
     isActive: option.isActive,
   };
@@ -224,7 +267,7 @@ export function mergeLocationOptions(
   }
 
   for (const option of dynamicOptions) {
-    if (!option.region || !option.cityDistrict || !option.locality) continue;
+    if (!option.region) continue;
     if (!includeInactive && !option.isActive) continue;
     merged.set(
       locationCompareKey(option.region, option.cityDistrict, option.locality),

@@ -1,4 +1,5 @@
 import type { NzLocation } from "@/lib/constants/nzLocations";
+import { normalizeNullableUuid } from "@/lib/locations/locationMaster";
 
 export type LocationLikeRecord = {
   location_master_id?: string | null;
@@ -44,7 +45,9 @@ export function getNormalizedLocationPayload(
   location: NzLocation | null,
 ): NormalizedLocationPayload {
   return {
-    location_master_id: location?.id || null,
+    location_master_id: normalizeNullableUuid(
+      location?.databaseId || location?.id || null,
+    ),
     region_normalized: location?.region || null,
     territorial_authority_normalized:
       location?.territorialAuthority || location?.district || null,

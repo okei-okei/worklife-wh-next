@@ -2,6 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import ThreeLevelLocationSelector from "@/components/locations/ThreeLevelLocationSelector";
+import {
+  mergeLocationOptions,
+  normalizeNullableUuid,
+  type LocationMasterRecord,
+  type LocationOption,
+  type ThreeLevelLocationValue,
+} from "@/lib/locations/locationMaster";
 import { supabase } from "@/lib/supabase";
 
 type ListingType = "job" | "property";
@@ -16,6 +24,11 @@ type AdminJob = {
   suburb?: string | null;
   city: string | null;
   area?: string | null;
+  location_master_id?: string | null;
+  region_normalized?: string | null;
+  territorial_authority_normalized?: string | null;
+  suburb_locality_normalized?: string | null;
+  custom_locality?: string | null;
   address: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -48,6 +61,11 @@ type AdminProperty = {
   suburb?: string | null;
   city: string | null;
   area: string | null;
+  location_master_id?: string | null;
+  region_normalized?: string | null;
+  territorial_authority_normalized?: string | null;
+  suburb_locality_normalized?: string | null;
+  custom_locality?: string | null;
   address: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -72,6 +90,8 @@ type EditForm = {
   title: string;
   name: string;
   countryCode: string;
+  locationMasterId: string | null;
+  locationKey: string | null;
   region: string;
   district: string;
   suburb: string;
@@ -160,15 +180,27 @@ async function resizeImageForUpload(file: File) {
 }
 
 function jobToForm(job: AdminJob): EditForm {
+  const region = job.region_normalized || job.region || "";
+  const district =
+    job.territorial_authority_normalized || job.district || job.city || "";
+  const suburb =
+    job.suburb_locality_normalized ||
+    job.custom_locality ||
+    job.suburb ||
+    job.area ||
+    "";
+
   return {
     title: job.title || "",
     name: job.company || "",
     countryCode: job.country_code || "NZ",
-    region: job.region || "",
-    district: job.district || job.city || "",
-    suburb: job.suburb || job.area || "",
-    city: job.city || job.district || "",
-    area: job.area || job.suburb || "",
+    locationMasterId: normalizeNullableUuid(job.location_master_id || null),
+    locationKey: null,
+    region,
+    district,
+    suburb,
+    city: job.city || district,
+    area: job.area || suburb,
     address: job.address || "",
     latitude: String(job.latitude ?? ""),
     longitude: String(job.longitude ?? ""),
@@ -199,15 +231,30 @@ function jobToForm(job: AdminJob): EditForm {
 }
 
 function propertyToForm(property: AdminProperty): EditForm {
+  const region = property.region_normalized || property.region || "";
+  const district =
+    property.territorial_authority_normalized ||
+    property.district ||
+    property.city ||
+    "";
+  const suburb =
+    property.suburb_locality_normalized ||
+    property.custom_locality ||
+    property.suburb ||
+    property.area ||
+    "";
+
   return {
     title: property.title || "",
     name: property.owner_name || "",
     countryCode: property.country_code || "NZ",
-    region: property.region || "",
-    district: property.district || property.city || "",
-    suburb: property.suburb || property.area || "",
-    city: property.city || property.district || "",
-    area: property.area || property.suburb || "",
+    locationMasterId: normalizeNullableUuid(property.location_master_id || null),
+    locationKey: null,
+    region,
+    district,
+    suburb,
+    city: property.city || district,
+    area: property.area || suburb,
     address: property.address || "",
     latitude: String(property.latitude ?? ""),
     longitude: String(property.longitude ?? ""),
@@ -250,6 +297,7 @@ export default function AdminListingsPage() {
   const [accessToken, setAccessToken] = useState("");
   const [jobs, setJobs] = useState<AdminJob[]>([]);
   const [properties, setProperties] = useState<AdminProperty[]>([]);
+  const [locationOptions, setLocationOptions] = useState<LocationOption[]>([]);
   const [selectedType, setSelectedType] = useState<ListingType>("job");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
@@ -293,6 +341,42 @@ export default function AdminListingsPage() {
     setIsLoading(false);
   }, []);
 
+  const loadLocations = useCallback(async (token: string) => {
+    const response = await fetch("/api/admin/locations", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = (await response.json().catch(() => null)) as
+      | {
+          locations?: Array<
+            LocationMasterRecord & {
+              usage?: { jobs: number; properties: number };
+            }
+          >;
+        }
+      | null;
+
+    if (!response.ok) {
+      setLocationOptions(mergeLocationOptions([], true));
+      return;
+    }
+
+    setLocationOptions(
+      mergeLocationOptions(
+        (data?.locations || []).map((location) => ({
+          databaseId: normalizeNullableUuid(location.id),
+          key: location.key,
+          region: location.region,
+          cityDistrict: location.cityDistrict,
+          locality: location.locality,
+          aliases: location.aliases || [],
+          isActive: location.isActive,
+          displayOrder: location.displayOrder || 0,
+        })),
+        true,
+      ),
+    );
+  }, []);
+
   useEffect(() => {
     const initialize = async () => {
       const {
@@ -305,11 +389,14 @@ export default function AdminListingsPage() {
       }
 
       setAccessToken(session.access_token);
-      await loadListings(session.access_token);
+      await Promise.all([
+        loadLocations(session.access_token),
+        loadListings(session.access_token),
+      ]);
     };
 
     initialize();
-  }, [loadListings]);
+  }, [loadListings, loadLocations]);
 
   const beginEdit = (type: ListingType, item: AdminJob | AdminProperty) => {
     setEditing({ type, id: item.id });
@@ -436,6 +523,11 @@ export default function AdminListingsPage() {
             title: form.title,
             company: form.name,
             country_code: form.countryCode,
+            location_master_id: normalizeNullableUuid(form.locationMasterId),
+            region_normalized: form.region || null,
+            territorial_authority_normalized: form.district || null,
+            suburb_locality_normalized: form.suburb || null,
+            custom_locality: null,
             region: form.region,
             district: form.district,
             suburb: form.suburb,
@@ -471,6 +563,11 @@ export default function AdminListingsPage() {
             title: form.title,
             owner_name: form.name,
             country_code: form.countryCode,
+            location_master_id: normalizeNullableUuid(form.locationMasterId),
+            region_normalized: form.region || null,
+            territorial_authority_normalized: form.district || null,
+            suburb_locality_normalized: form.suburb || null,
+            custom_locality: null,
             region: form.region,
             district: form.district,
             suburb: form.suburb,
@@ -881,67 +978,30 @@ export default function AdminListingsPage() {
                   <option value="CA">Canada</option>
                 </select>
               </label>
-              <label>
-                <span className="text-sm font-bold">Region</span>
-                <input
-                  value={form.region}
-                  onChange={(event) =>
-                    setForm({ ...form, region: event.target.value })
-                  }
-                  className={inputClass}
-                  placeholder="例: Auckland"
-                />
-              </label>
-              <label>
-                <span className="text-sm font-bold">City / District</span>
-                <input
-                  value={form.district}
-                  onChange={(event) =>
+              <div className="md:col-span-2">
+                <ThreeLevelLocationSelector
+                  locations={locationOptions}
+                  value={{
+                    locationMasterId: form.locationMasterId,
+                    locationKey: form.locationKey,
+                    region: form.region,
+                    cityDistrict: form.district,
+                    locality: form.suburb,
+                  }}
+                  onChange={(next: ThreeLevelLocationValue) =>
                     setForm({
                       ...form,
-                      district: event.target.value,
-                      city: event.target.value,
+                      locationMasterId: next.locationMasterId,
+                      locationKey: next.locationKey,
+                      region: next.region,
+                      district: next.cityDistrict,
+                      suburb: next.locality,
+                      city: next.cityDistrict,
+                      area: next.locality,
                     })
                   }
-                  className={inputClass}
-                  placeholder="例: Auckland"
                 />
-              </label>
-              <label>
-                <span className="text-sm font-bold">Area / Suburb</span>
-                <input
-                  value={form.suburb}
-                  onChange={(event) =>
-                    setForm({
-                      ...form,
-                      suburb: event.target.value,
-                      area: event.target.value,
-                    })
-                  }
-                  className={inputClass}
-                  placeholder="例: Auckland CBD"
-                />
-              </label>
-              <label>
-                <span className="text-sm font-bold">都市（表示用）</span>
-                <input
-                  value={form.city}
-                  onChange={(event) =>
-                    setForm({ ...form, city: event.target.value })
-                  }
-                  className={inputClass}
-                />
-              </label>
-              <label>
-                <span className="text-sm font-bold">エリア（表示用）</span>
-                <input
-                  value={form.area}
-                  onChange={(event) =>
-                    setForm({ ...form, area: event.target.value })
-                  }
-                  className={inputClass}
-                />
-              </label>
+              </div>
               <label className="md:col-span-2">
                 <span className="text-sm font-bold">住所</span>
                 <input

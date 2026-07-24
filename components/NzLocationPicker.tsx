@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  filterNzLocations,
-  nzLocations,
-  type NzLocation,
-} from "@/lib/constants/nzLocations";
+import { useEffect, useMemo, useState } from "react";
+import { nzLocations, type NzLocation } from "@/lib/constants/nzLocations";
 import {
   getCurrentLocation,
   getGeolocationFailureMessage,
 } from "@/lib/geolocation";
+import {
+  mergeLocationOptions,
+  optionToNzLocation,
+  type LocationOption,
+} from "@/lib/locations/locationMaster";
 
 const OTHER_AREA_VALUE = "__other_area__";
 
@@ -64,15 +65,41 @@ export default function NzLocationPicker({
   const [searchQuery, setSearchQuery] = useState("");
   const [geoMessage, setGeoMessage] = useState("");
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [dynamicLocationOptions, setDynamicLocationOptions] = useState<
+    LocationOption[]
+  >([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/locations")
+      .then((response) => response.json())
+      .then((data: { locations?: LocationOption[] }) => {
+        if (isMounted) setDynamicLocationOptions(data.locations || []);
+      })
+      .catch(() => {
+        if (isMounted) setDynamicLocationOptions([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const allLocations = useMemo(() => {
+    const merged = mergeLocationOptions(dynamicLocationOptions);
+    if (!merged.length) return nzLocations;
+    return merged.map(optionToNzLocation);
+  }, [dynamicLocationOptions]);
 
   const regions = useMemo(() => {
-    return Array.from(new Set(nzLocations.map((location) => location.region)));
-  }, []);
+    return Array.from(new Set(allLocations.map((location) => location.region)));
+  }, [allLocations]);
 
   const districts = useMemo(() => {
     return Array.from(
       new Set(
-        nzLocations
+        allLocations
           .filter(
             (location) =>
               !selectedRegion || location.region === selectedRegion,
@@ -80,12 +107,12 @@ export default function NzLocationPicker({
           .map((location) => location.district),
       ),
     );
-  }, [selectedRegion]);
+  }, [allLocations, selectedRegion]);
 
   const areas = useMemo(() => {
     return Array.from(
       new Set(
-        nzLocations
+        allLocations
           .filter(
             (location) =>
               location.region === selectedRegion &&
@@ -95,11 +122,46 @@ export default function NzLocationPicker({
           .map((location) => location.area),
       ),
     );
-  }, [selectedDistrict, selectedRegion]);
+  }, [allLocations, selectedDistrict, selectedRegion]);
 
   const searchResults = useMemo(() => {
-    return filterNzLocations(searchQuery, 30);
-  }, [searchQuery]);
+    const normalizedQuery = normalizeLocationText(searchQuery);
+
+    if (!normalizedQuery) {
+      return allLocations.slice(0, 30);
+    }
+
+    return allLocations
+      .map((location) => {
+        const normalizedSearchText = normalizeLocationText(location.searchText);
+        const normalizedArea = normalizeLocationText(location.area);
+        const normalizedDistrict = normalizeLocationText(location.district);
+        const normalizedRegion = normalizeLocationText(location.region);
+        const normalizedAliases = (location.aliases || []).map(
+          normalizeLocationText,
+        );
+        const words = normalizedSearchText.split(/\s+/);
+        let score = 0;
+
+        if (normalizedArea === normalizedQuery) score = 100;
+        else if (normalizedAliases.includes(normalizedQuery)) score = 95;
+        else if (normalizedDistrict === normalizedQuery) score = 90;
+        else if (normalizedRegion === normalizedQuery) score = 80;
+        else if (normalizedArea.startsWith(normalizedQuery)) score = 70;
+        else if (normalizedDistrict.startsWith(normalizedQuery)) score = 65;
+        else if (words.includes(normalizedQuery)) score = 60;
+        else if (normalizedSearchText.includes(normalizedQuery)) score = 40;
+
+        return { location, score };
+      })
+      .filter((item) => item.score > 0)
+      .sort(
+        (a, b) =>
+          b.score - a.score || a.location.label.localeCompare(b.location.label),
+      )
+      .map((item) => item.location)
+      .slice(0, 30);
+  }, [allLocations, searchQuery]);
 
   const selectedValues = multiple ? values : value ? [value] : [];
 
@@ -203,7 +265,7 @@ export default function NzLocationPicker({
     }
 
     const location =
-      nzLocations.find(
+      allLocations.find(
         (item) =>
           item.region === selectedRegion &&
           item.district === selectedDistrict &&
@@ -493,4 +555,15 @@ export default function NzLocationPicker({
       </p>
     </div>
   );
+}
+
+function normalizeLocationText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[-_/]+/g, " ")
+    .replace(/\bsaint\b/g, "st")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/server/adminAuth";
 import { geocodeAddress } from "@/lib/geocoder";
+import { normalizeNullableUuid } from "@/lib/locations/locationMaster";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type ListingType = "job" | "property";
@@ -12,6 +13,11 @@ type UpdateBody = {
   company?: string | null;
   owner_name?: string | null;
   country_code?: string | null;
+  location_master_id?: string | null;
+  region_normalized?: string | null;
+  territorial_authority_normalized?: string | null;
+  suburb_locality_normalized?: string | null;
+  custom_locality?: string | null;
   region?: string | null;
   district?: string | null;
   suburb?: string | null;
@@ -219,13 +225,13 @@ export async function GET(request: NextRequest) {
       selectListings(
         clients,
         "public_jobs",
-        "id, title, company, country_code, region, district, suburb, city, area, address, latitude, longitude, hourly_rate, hourly_rate_min, hourly_rate_max, work_hours, weekly_hours, employment_type, start_date, accommodation_available, japanese_ok, english_level, visa_conditions, visa_support, description, application_method, apply_url, image_url, is_active, created_at",
+        "id, title, company, country_code, location_master_id, region_normalized, territorial_authority_normalized, suburb_locality_normalized, custom_locality, region, district, suburb, city, area, address, latitude, longitude, hourly_rate, hourly_rate_min, hourly_rate_max, work_hours, weekly_hours, employment_type, start_date, accommodation_available, japanese_ok, english_level, visa_conditions, visa_support, description, application_method, apply_url, image_url, is_active, created_at",
         "id, title, company, city, address, latitude, longitude, hourly_rate, work_hours, description, apply_url, is_active, created_at",
       ),
       selectListings(
         clients,
         "public_properties",
-        "id, title, owner_name, country_code, region, district, suburb, city, area, address, latitude, longitude, rent_weekly, bedrooms, bathrooms, parking_spaces, available_from, pets_allowed, smoking_allowed, furnished, utilities_included, bills_included, description, inquiry_method, url, image_urls, is_active, created_at",
+        "id, title, owner_name, country_code, location_master_id, region_normalized, territorial_authority_normalized, suburb_locality_normalized, custom_locality, region, district, suburb, city, area, address, latitude, longitude, rent_weekly, bedrooms, bathrooms, parking_spaces, available_from, pets_allowed, smoking_allowed, furnished, utilities_included, bills_included, description, inquiry_method, url, image_urls, is_active, created_at",
         "id, title, owner_name, city, area, address, latitude, longitude, rent_weekly, description, url, image_urls, is_active, created_at",
       ),
     ]);
@@ -262,6 +268,19 @@ export async function PATCH(request: NextRequest) {
           title: body.title.trim(),
           company: body.company?.trim() || null,
           country_code: body.country_code?.trim() || "NZ",
+          location_master_id: normalizeNullableUuid(body.location_master_id),
+          region_normalized: body.region_normalized?.trim() || body.region?.trim() || null,
+          territorial_authority_normalized:
+            body.territorial_authority_normalized?.trim() ||
+            body.district?.trim() ||
+            body.city?.trim() ||
+            null,
+          suburb_locality_normalized:
+            body.suburb_locality_normalized?.trim() ||
+            body.suburb?.trim() ||
+            body.area?.trim() ||
+            null,
+          custom_locality: body.custom_locality?.trim() || null,
           region: body.region?.trim() || null,
           district: body.district?.trim() || null,
           suburb: body.suburb?.trim() || null,
@@ -296,6 +315,19 @@ export async function PATCH(request: NextRequest) {
           title: body.title.trim(),
           owner_name: body.owner_name?.trim() || null,
           country_code: body.country_code?.trim() || "NZ",
+          location_master_id: normalizeNullableUuid(body.location_master_id),
+          region_normalized: body.region_normalized?.trim() || body.region?.trim() || null,
+          territorial_authority_normalized:
+            body.territorial_authority_normalized?.trim() ||
+            body.district?.trim() ||
+            body.city?.trim() ||
+            null,
+          suburb_locality_normalized:
+            body.suburb_locality_normalized?.trim() ||
+            body.suburb?.trim() ||
+            body.area?.trim() ||
+            null,
+          custom_locality: body.custom_locality?.trim() || null,
           region: body.region?.trim() || null,
           district: body.district?.trim() || null,
           suburb: body.suburb?.trim() || null,

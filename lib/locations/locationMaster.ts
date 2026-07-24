@@ -18,6 +18,7 @@ export type LocationOption = {
   databaseId: string | null;
   key: string;
   level?: "region" | "city_district" | "locality";
+  origin?: "static" | "master" | "admin" | "listing";
   region: string;
   cityDistrict: string;
   locality: string;
@@ -142,6 +143,7 @@ export function dbRowToLocationOption(row: NzLocationRow): LocationOption {
     databaseId: normalizeNullableUuid(row.id || null),
     key,
     level: "locality",
+    origin: "master",
     region,
     cityDistrict,
     locality,
@@ -169,6 +171,7 @@ export function optionRowToLocationOption(row: LocationOptionRow): LocationOptio
     databaseId: normalizeNullableUuid(row.id || null),
     key,
     level,
+    origin: "admin",
     region,
     cityDistrict,
     locality,
@@ -201,6 +204,7 @@ export function staticLocationToOption(location: NzLocation): LocationOption {
   return {
     databaseId: normalizeNullableUuid(location.databaseId || location.id),
     level: "locality",
+    origin: "static",
     key:
       location.key ||
       createLocationKey(location.region, location.district, location.area),
@@ -269,10 +273,13 @@ export function mergeLocationOptions(
   for (const option of dynamicOptions) {
     if (!option.region) continue;
     if (!includeInactive && !option.isActive) continue;
-    merged.set(
-      locationCompareKey(option.region, option.cityDistrict, option.locality),
-      option,
+    const key = locationCompareKey(
+      option.region,
+      option.cityDistrict,
+      option.locality,
     );
+    if (option.origin === "listing" && merged.has(key)) continue;
+    merged.set(key, option);
   }
 
   return Array.from(merged.values()).sort((a, b) => {

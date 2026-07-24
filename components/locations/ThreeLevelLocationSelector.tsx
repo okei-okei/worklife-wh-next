@@ -28,13 +28,46 @@ export default function ThreeLevelLocationSelector({
   className = "",
 }: Props) {
   const activeLocations = useMemo(
-    () =>
-      locations.filter(
+    () => {
+      const base = locations.filter(
         (location) =>
           location.isActive ||
           location.databaseId === value.locationMasterId ||
           location.key === value.locationKey,
-      ),
+      );
+      const hasCurrent = base.some(
+        (location) =>
+          location.region === value.region &&
+          location.cityDistrict === value.cityDistrict &&
+          location.locality === value.locality,
+      );
+
+      if (hasCurrent || !value.region) return base;
+
+      return [
+        ...base,
+        {
+          databaseId: value.locationMasterId,
+          key:
+            value.locationKey ||
+            [value.region, value.cityDistrict, value.locality]
+              .filter(Boolean)
+              .join("-"),
+          level: value.locality
+            ? ("locality" as const)
+            : value.cityDistrict
+              ? ("city_district" as const)
+              : ("region" as const),
+          origin: "listing" as const,
+          region: value.region,
+          cityDistrict: value.cityDistrict,
+          locality: value.locality,
+          aliases: [],
+          isActive: true,
+          displayOrder: -1,
+        },
+      ];
+    },
     [locations, value.locationKey, value.locationMasterId],
   );
 
@@ -213,6 +246,7 @@ export default function ThreeLevelLocationSelector({
                 value={location.databaseId || location.key}
               >
                 {location.locality}
+                {location.origin === "listing" ? "（現在の保存値）" : ""}
                 {!location.isActive ? "（無効）" : ""}
               </option>
             ))}

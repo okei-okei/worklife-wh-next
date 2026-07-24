@@ -9,6 +9,7 @@ import {
   type LocationOption,
   type ThreeLevelLocationValue,
 } from "@/lib/locations/locationMaster";
+import { resolveLocation } from "@/lib/locations/resolveLocation";
 import { supabase } from "@/lib/supabase";
 
 type ListingType = "job" | "property";
@@ -91,6 +92,7 @@ type EditForm = {
   countryCode: string;
   locationMasterId: string | null;
   locationKey: string | null;
+  locationChanged: boolean;
   region: string;
   district: string;
   suburb: string;
@@ -179,22 +181,18 @@ async function resizeImageForUpload(file: File) {
 }
 
 function jobToForm(job: AdminJob): EditForm {
-  const region = job.region_normalized || job.region || "";
-  const district =
-    job.territorial_authority_normalized || job.district || job.city || "";
-  const suburb =
-    job.suburb_locality_normalized ||
-    job.custom_locality ||
-    job.suburb ||
-    job.area ||
-    "";
+  const resolvedLocation = resolveLocation(job);
+  const region = resolvedLocation.region;
+  const district = resolvedLocation.cityDistrict;
+  const suburb = resolvedLocation.locality;
 
   return {
     title: job.title || "",
     name: job.company || "",
     countryCode: job.country_code || "NZ",
     locationMasterId: normalizeNullableUuid(job.location_master_id || null),
-    locationKey: null,
+    locationKey: resolvedLocation.label ? `legacy-${resolvedLocation.label}` : null,
+    locationChanged: false,
     region,
     district,
     suburb,
@@ -230,25 +228,18 @@ function jobToForm(job: AdminJob): EditForm {
 }
 
 function propertyToForm(property: AdminProperty): EditForm {
-  const region = property.region_normalized || property.region || "";
-  const district =
-    property.territorial_authority_normalized ||
-    property.district ||
-    property.city ||
-    "";
-  const suburb =
-    property.suburb_locality_normalized ||
-    property.custom_locality ||
-    property.suburb ||
-    property.area ||
-    "";
+  const resolvedLocation = resolveLocation(property);
+  const region = resolvedLocation.region;
+  const district = resolvedLocation.cityDistrict;
+  const suburb = resolvedLocation.locality;
 
   return {
     title: property.title || "",
     name: property.owner_name || "",
     countryCode: property.country_code || "NZ",
     locationMasterId: normalizeNullableUuid(property.location_master_id || null),
-    locationKey: null,
+    locationKey: resolvedLocation.label ? `legacy-${resolvedLocation.label}` : null,
+    locationChanged: false,
     region,
     district,
     suburb,
@@ -504,16 +495,20 @@ export default function AdminListingsPage() {
             title: form.title,
             company: form.name,
             country_code: form.countryCode,
-            location_master_id: normalizeNullableUuid(form.locationMasterId),
-            region_normalized: form.region || null,
-            territorial_authority_normalized: form.district || null,
-            suburb_locality_normalized: form.suburb || null,
-            custom_locality: null,
-            region: form.region,
-            district: form.district,
-            suburb: form.suburb,
-            city: form.city || form.district,
-            area: form.area || form.suburb,
+            ...(form.locationChanged
+              ? {
+                  location_master_id: normalizeNullableUuid(form.locationMasterId),
+                  region_normalized: form.region || null,
+                  territorial_authority_normalized: form.district || null,
+                  suburb_locality_normalized: form.suburb || null,
+                  custom_locality: null,
+                  region: form.region,
+                  district: form.district,
+                  suburb: form.suburb,
+                  city: form.city || form.district,
+                  area: form.area || form.suburb,
+                }
+              : {}),
             address: form.address,
             latitude: form.latitude ? Number(form.latitude) : null,
             longitude: form.longitude ? Number(form.longitude) : null,
@@ -544,16 +539,20 @@ export default function AdminListingsPage() {
             title: form.title,
             owner_name: form.name,
             country_code: form.countryCode,
-            location_master_id: normalizeNullableUuid(form.locationMasterId),
-            region_normalized: form.region || null,
-            territorial_authority_normalized: form.district || null,
-            suburb_locality_normalized: form.suburb || null,
-            custom_locality: null,
-            region: form.region,
-            district: form.district,
-            suburb: form.suburb,
-            city: form.city || form.district,
-            area: form.area || form.suburb,
+            ...(form.locationChanged
+              ? {
+                  location_master_id: normalizeNullableUuid(form.locationMasterId),
+                  region_normalized: form.region || null,
+                  territorial_authority_normalized: form.district || null,
+                  suburb_locality_normalized: form.suburb || null,
+                  custom_locality: null,
+                  region: form.region,
+                  district: form.district,
+                  suburb: form.suburb,
+                  city: form.city || form.district,
+                  area: form.area || form.suburb,
+                }
+              : {}),
             address: form.address,
             latitude: form.latitude ? Number(form.latitude) : null,
             longitude: form.longitude ? Number(form.longitude) : null,
@@ -974,6 +973,7 @@ export default function AdminListingsPage() {
                       ...form,
                       locationMasterId: next.locationMasterId,
                       locationKey: next.locationKey,
+                      locationChanged: true,
                       region: next.region,
                       district: next.cityDistrict,
                       suburb: next.locality,

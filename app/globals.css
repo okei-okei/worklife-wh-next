@@ -139,7 +139,28 @@ button,
 span,
 label {
   min-width: 0;
-  overflow-wrap: break-word;
+  line-break: strict;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.wl-app-shell .break-words {
+  line-break: strict;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.jp-heading {
+  line-break: strict;
+  overflow-wrap: normal;
+  text-wrap: balance;
+  word-break: normal;
+}
+
+.jp-copy {
+  line-break: strict;
+  overflow-wrap: normal;
+  text-wrap: pretty;
   word-break: normal;
 }
 
@@ -171,7 +192,9 @@ label {
 @supports (word-break: auto-phrase) {
   .home-heading,
   .home-copy,
-  .home-link-label {
+  .home-link-label,
+  .jp-heading,
+  .jp-copy {
     word-break: auto-phrase;
   }
 }

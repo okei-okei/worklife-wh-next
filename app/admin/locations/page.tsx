@@ -150,6 +150,44 @@ export default function AdminLocationsPage() {
     await loadLocations(accessToken);
   };
 
+  const addExistingListingLocation = async (location: LocationOption) => {
+    if (!accessToken || isSaving) return;
+    setIsSaving(true);
+    setError("");
+    setMessage("");
+
+    const response = await fetch("/api/admin/locations", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        level: location.level || "locality",
+        name:
+          location.level === "region"
+            ? location.region
+            : location.level === "city_district"
+              ? location.cityDistrict
+              : location.locality,
+        parentRegion: location.region,
+        parentCityDistrict: location.cityDistrict,
+      }),
+    });
+    const data = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+
+    setIsSaving(false);
+    if (!response.ok) {
+      setError(data?.error || "選択肢へ追加できませんでした。");
+      return;
+    }
+
+    setMessage("既存掲載で使用中の地域を選択肢へ追加しました。");
+    await loadLocations(accessToken);
+  };
+
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-gray-900 md:p-6">
       <div className="mx-auto max-w-7xl space-y-5">
@@ -368,6 +406,7 @@ export default function AdminLocationsPage() {
                     <th className="px-3 py-3">City / District</th>
                     <th className="px-3 py-3">Area / Suburb</th>
                     <th className="px-3 py-3">区分</th>
+                    <th className="px-3 py-3">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -387,6 +426,26 @@ export default function AdminLocationsPage() {
                               ? "City / District"
                               : "Area / Suburb"}
                         </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        {location.origin === "listing" ? (
+                          <button
+                            type="button"
+                            onClick={() => addExistingListingLocation(location)}
+                            disabled={isSaving}
+                            className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-800 disabled:opacity-50"
+                          >
+                            選択肢へ追加
+                          </button>
+                        ) : (
+                          <span className="text-xs font-bold text-gray-500">
+                            {location.origin === "admin"
+                              ? "管理者追加"
+                              : location.origin === "master"
+                                ? "地域マスタ"
+                                : "既存候補"}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}

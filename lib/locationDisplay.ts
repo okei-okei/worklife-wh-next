@@ -1,5 +1,6 @@
 import type { NzLocation } from "@/lib/constants/nzLocations";
 import { normalizeNullableUuid } from "@/lib/locations/locationMaster";
+import { resolveLocation } from "@/lib/locations/resolveLocation";
 
 export type LocationLikeRecord = {
   location_master_id?: string | null;
@@ -25,20 +26,7 @@ export type NormalizedLocationPayload = {
 };
 
 export function getLocationDisplayName(record: LocationLikeRecord) {
-  return (
-    record.custom_locality ||
-    record.suburb_locality_normalized ||
-    record.major_name_normalized ||
-    record.territorial_authority_normalized ||
-    record.region_normalized ||
-    record.suburb ||
-    record.area ||
-    record.location ||
-    record.city ||
-    record.district ||
-    record.region ||
-    "地域未設定"
-  );
+  return resolveLocation(record).label || record.location || "地域未設定";
 }
 
 export function getNormalizedLocationPayload(

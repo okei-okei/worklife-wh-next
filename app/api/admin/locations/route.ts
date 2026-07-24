@@ -5,9 +5,14 @@ import {
   cleanLocationText,
   dbRowToLocationOption,
   locationCompareKey,
+  mergeLocationOptions,
   optionRowToLocationOption,
   type LocationOption,
 } from "@/lib/locations/locationMaster";
+import {
+  locationOptionFromResolved,
+  resolveLocation,
+} from "@/lib/locations/resolveLocation";
 
 type AddLocationBody = {
   level?: "region" | "city_district" | "locality";
@@ -85,7 +90,7 @@ function isDuplicate(input: ReturnType<typeof normalizeBody>, options: LocationO
 async function loadAllLocationOptions(admin: Awaited<ReturnType<typeof getAdminContext>>) {
   if (!admin.ok) return [];
 
-  const [masterResult, optionResult] = await Promise.all([
+  const [masterResult, optionResult, jobResult, propertyResult] = await Promise.all([
     admin.serviceClient
       .from("nz_locations")
       .select(
@@ -99,12 +104,32 @@ async function loadAllLocationOptions(admin: Awaited<ReturnType<typeof getAdminC
       .select("id, level, name, parent_region, parent_city_district, is_active, created_at, created_by")
       .eq("is_active", true)
       .order("created_at", { ascending: true }),
+    admin.serviceClient
+      .from("public_jobs")
+      .select(
+        "location_master_id, region_normalized, territorial_authority_normalized, major_name_normalized, suburb_locality_normalized, region, city, district, area, suburb, custom_locality",
+      )
+      .eq("is_active", true),
+    admin.serviceClient
+      .from("public_properties")
+      .select(
+        "location_master_id, region_normalized, territorial_authority_normalized, major_name_normalized, suburb_locality_normalized, region, city, district, area, suburb, custom_locality",
+      )
+      .eq("is_active", true),
   ]);
 
-  return [
+  const baseOptions = [
     ...(masterResult.error ? [] : (masterResult.data || []).map(dbRowToLocationOption)),
     ...(optionResult.error ? [] : (optionResult.data || []).map(optionRowToLocationOption)),
   ];
+  const listingOptions = [
+    ...(jobResult.error ? [] : jobResult.data || []),
+    ...(propertyResult.error ? [] : propertyResult.data || []),
+  ]
+    .map((row) => locationOptionFromResolved(resolveLocation(row, baseOptions)))
+    .filter((location): location is LocationOption => Boolean(location));
+
+  return mergeLocationOptions([...baseOptions, ...listingOptions], true);
 }
 
 export async function GET(request: NextRequest) {

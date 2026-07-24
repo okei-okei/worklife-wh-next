@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import {
+  Circle,
+  MapContainer,
+  Marker,
+  Popup,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
 import L from "leaflet";
 import LeafletStyles from "@/components/maps/LeafletStyles";
 import ResponsiveJobImage from "@/components/jobs/ResponsiveJobImage";
@@ -21,11 +28,19 @@ export type MapPoint = {
   metaLabel?: string;
 };
 
+export type CurrentLocationPoint = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+};
+
 type Props = {
   points: MapPoint[];
   selectedId?: string | null;
   onSelect: (id: string) => void;
   type: MapListingType;
+  currentLocation?: CurrentLocationPoint | null;
+  currentLocationFocusKey?: number;
 };
 
 function createStandardMarkerIcon(color: "blue" | "red" | "green") {
@@ -49,6 +64,17 @@ function createStandardMarkerIcon(color: "blue" | "red" | "green") {
 const jobMarkerIcon = createStandardMarkerIcon("blue");
 const propertyMarkerIcon = createStandardMarkerIcon("red");
 const selectedMarkerIcon = createStandardMarkerIcon("green");
+const currentLocationIcon = L.divIcon({
+  className: "current-location-marker",
+  html: `
+    <span class="current-location-marker__ring">
+      <span class="current-location-marker__dot"></span>
+    </span>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -12],
+});
 
 function MapBoundsUpdater({ points }: { points: MapPoint[] }) {
   const map = useMap();
@@ -73,11 +99,42 @@ function MapBoundsUpdater({ points }: { points: MapPoint[] }) {
   return null;
 }
 
+function CurrentLocationFlyTo({
+  currentLocation,
+  focusKey = 0,
+}: {
+  currentLocation?: CurrentLocationPoint | null;
+  focusKey?: number;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!currentLocation || focusKey <= 0) return;
+
+    map.flyTo([currentLocation.latitude, currentLocation.longitude], 15, {
+      duration: 0.8,
+    });
+  }, [currentLocation, focusKey, map]);
+
+  return null;
+}
+
+function shouldShowAccuracyCircle(accuracy?: number | null) {
+  return (
+    typeof accuracy === "number" &&
+    Number.isFinite(accuracy) &&
+    accuracy > 0 &&
+    accuracy <= 2000
+  );
+}
+
 export default function PublicListingsMap({
   points,
   selectedId,
   onSelect,
   type,
+  currentLocation,
+  currentLocationFocusKey,
 }: Props) {
   const center = points[0]
     ? ([points[0].latitude, points[0].longitude] as [number, number])
@@ -94,10 +151,47 @@ export default function PublicListingsMap({
         style={{ height: "100%", width: "100%" }}
       >
         <MapBoundsUpdater points={points} />
+        <CurrentLocationFlyTo
+          currentLocation={currentLocation}
+          focusKey={currentLocationFocusKey}
+        />
         <TileLayer
           attribution="&copy; OpenStreetMap"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        {currentLocation && shouldShowAccuracyCircle(currentLocation.accuracy) ? (
+          <Circle
+            center={[currentLocation.latitude, currentLocation.longitude]}
+            radius={currentLocation.accuracy || 0}
+            pathOptions={{
+              color: "#168c66",
+              opacity: 0.25,
+              fillColor: "#168c66",
+              fillOpacity: 0.08,
+              weight: 1,
+            }}
+          />
+        ) : null}
+
+        {currentLocation ? (
+          <Marker
+            position={[currentLocation.latitude, currentLocation.longitude]}
+            icon={currentLocationIcon}
+            zIndexOffset={1200}
+          >
+            <Popup>
+              <div className="space-y-1 text-sm text-gray-900">
+                <p className="font-bold">現在地</p>
+                {currentLocation.accuracy ? (
+                  <p className="text-gray-700">
+                    誤差の目安: 約{Math.round(currentLocation.accuracy)}m
+                  </p>
+                ) : null}
+              </div>
+            </Popup>
+          </Marker>
+        ) : null}
 
         {points.map((point) => (
           <Marker

@@ -6,6 +6,10 @@ import {
   nzLocations,
   type NzLocation,
 } from "@/lib/constants/nzLocations";
+import {
+  getCurrentLocation,
+  getGeolocationFailureMessage,
+} from "@/lib/geolocation";
 
 const OTHER_AREA_VALUE = "__other_area__";
 
@@ -258,34 +262,21 @@ export default function NzLocationPicker({
     });
   };
 
-  const handleUseCurrentLocation = () => {
+  const handleUseCurrentLocation = async () => {
     setGeoMessage("");
-
-    if (!navigator.geolocation) {
-      setGeoMessage("このブラウザでは現在地取得を利用できません。");
-      return;
-    }
-
     setIsGettingLocation(true);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        onChange?.("現在地");
-        onValuesChange?.(["現在地"]);
-        onCoordinatesChange?.({ latitude, longitude });
-        setGeoMessage("現在地を取得しました。");
-        setIsGettingLocation(false);
-      },
-      () => {
-        setGeoMessage("現在地を取得できませんでした。権限設定を確認してください。");
-        setIsGettingLocation(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-      },
-    );
+    try {
+      const { latitude, longitude } = await getCurrentLocation();
+      onChange?.("現在地");
+      onValuesChange?.(["現在地"]);
+      onCoordinatesChange?.({ latitude, longitude });
+      setGeoMessage("現在地を取得しました。");
+    } catch (error) {
+      setGeoMessage(getGeolocationFailureMessage(error));
+    } finally {
+      setIsGettingLocation(false);
+    }
   };
 
   return (
@@ -471,7 +462,7 @@ export default function NzLocationPicker({
             disabled={isGettingLocation}
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-900 disabled:bg-gray-100 sm:w-auto"
           >
-            {isGettingLocation ? "取得中..." : "現在地を取得する"}
+            {isGettingLocation ? "現在地を確認中" : "現在地を取得する"}
           </button>
         ) : null}
       </div>

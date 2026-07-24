@@ -2,6 +2,7 @@
 
 import {
   MapContainer,
+  Circle,
   TileLayer,
   Marker,
   Popup,
@@ -34,6 +35,17 @@ function createStandardMarkerIcon(color: "blue" | "red" | "green") {
 const jobMarkerIcon = createStandardMarkerIcon("blue");
 const propertyMarkerIcon = createStandardMarkerIcon("red");
 const selectedMarkerIcon = createStandardMarkerIcon("green");
+const currentLocationIcon = L.divIcon({
+  className: "current-location-marker",
+  html: `
+    <span class="current-location-marker__ring">
+      <span class="current-location-marker__dot"></span>
+    </span>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -12],
+});
 
 type Point = {
   id: string;
@@ -61,6 +73,12 @@ type Line = {
   }>;
 };
 
+type CurrentLocationPoint = {
+  lat: number;
+  lng: number;
+  accuracy?: number | null;
+};
+
 type Props = {
   jobs: Point[];
   properties: Point[];
@@ -68,6 +86,8 @@ type Props = {
   highlightedJobId?: string;
   highlightedPropertyId?: string;
   highlightedLine?: Line | null;
+  currentLocation?: CurrentLocationPoint | null;
+  currentLocationFocusKey?: number;
   onJobSelect?: (id: string) => void;
   onPropertySelect?: (id: string) => void;
 };
@@ -140,6 +160,35 @@ function MapBoundsUpdater({
   return null;
 }
 
+function CurrentLocationFlyTo({
+  currentLocation,
+  focusKey = 0,
+}: {
+  currentLocation?: CurrentLocationPoint | null;
+  focusKey?: number;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!currentLocation || focusKey <= 0) return;
+
+    map.flyTo([currentLocation.lat, currentLocation.lng], 15, {
+      duration: 0.8,
+    });
+  }, [currentLocation, focusKey, map]);
+
+  return null;
+}
+
+function shouldShowAccuracyCircle(accuracy?: number | null) {
+  return (
+    typeof accuracy === "number" &&
+    Number.isFinite(accuracy) &&
+    accuracy > 0 &&
+    accuracy <= 2000
+  );
+}
+
 export default function MapView({
   jobs,
   properties,
@@ -147,6 +196,8 @@ export default function MapView({
   highlightedJobId,
   highlightedPropertyId,
   highlightedLine,
+  currentLocation,
+  currentLocationFocusKey,
   onJobSelect,
   onPropertySelect,
 }: Props) {
@@ -174,10 +225,47 @@ export default function MapView({
           lines={lines}
           highlightedLine={highlightedLine}
         />
+        <CurrentLocationFlyTo
+          currentLocation={currentLocation}
+          focusKey={currentLocationFocusKey}
+        />
         <TileLayer
           attribution="&copy; OpenStreetMap"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        {currentLocation && shouldShowAccuracyCircle(currentLocation.accuracy) ? (
+          <Circle
+            center={[currentLocation.lat, currentLocation.lng]}
+            radius={currentLocation.accuracy || 0}
+            pathOptions={{
+              color: "#168c66",
+              opacity: 0.25,
+              fillColor: "#168c66",
+              fillOpacity: 0.08,
+              weight: 1,
+            }}
+          />
+        ) : null}
+
+        {currentLocation ? (
+          <Marker
+            position={[currentLocation.lat, currentLocation.lng]}
+            icon={currentLocationIcon}
+            zIndexOffset={1200}
+          >
+            <Popup>
+              <div className="space-y-1 text-sm text-gray-900">
+                <p className="font-bold">現在地</p>
+                {currentLocation.accuracy ? (
+                  <p className="text-gray-700">
+                    誤差の目安: 約{Math.round(currentLocation.accuracy)}m
+                  </p>
+                ) : null}
+              </div>
+            </Popup>
+          </Marker>
+        ) : null}
 
         {jobs.map((job) => (
           <Marker

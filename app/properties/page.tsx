@@ -8,6 +8,11 @@ import ListMapToggle from "@/components/ListMapToggle";
 import NzLocationPicker from "@/components/NzLocationPicker";
 import { supabase } from "@/lib/supabase";
 import { trackMetric } from "@/lib/analytics";
+import {
+  getCurrentLocation,
+  getGeolocationFailureMessage,
+  type UserCoordinates,
+} from "@/lib/geolocation";
 import { resolveNzAddressApproximateCoordinates } from "@/lib/locationCoordinates";
 import { getLocationDisplayName } from "@/lib/locationDisplay";
 
@@ -253,6 +258,12 @@ export default function PropertiesPage() {
     latitude: number | null;
     longitude: number | null;
   }>({ latitude: null, longitude: null });
+  const [currentLocation, setCurrentLocation] =
+    useState<UserCoordinates | null>(null);
+  const [currentLocationFocusKey, setCurrentLocationFocusKey] = useState(0);
+  const [isGettingCurrentLocation, setIsGettingCurrentLocation] =
+    useState(false);
+  const [currentLocationMessage, setCurrentLocationMessage] = useState("");
   const [minRentWeekly, setMinRentWeekly] = useState("");
   const [maxRentWeekly, setMaxRentWeekly] = useState("");
   const [minBedrooms, setMinBedrooms] = useState("");
@@ -822,6 +833,44 @@ export default function PropertiesPage() {
     setUtilitiesFilter("all");
     setCurrentPage(1);
     setSelectedMapPropertyId(null);
+    setCurrentLocation(null);
+    setCurrentLocationMessage("");
+  };
+
+  const handleLocationCoordinatesChange = (coords: {
+    latitude: number | null;
+    longitude: number | null;
+  }) => {
+    setFilterCoordinates(coords);
+
+    if (typeof coords.latitude === "number" && typeof coords.longitude === "number") {
+      setCurrentLocation({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        accuracy: null,
+      });
+      setCurrentLocationFocusKey((current) => current + 1);
+      return;
+    }
+
+    setCurrentLocation(null);
+    setCurrentLocationMessage("");
+  };
+
+  const handleShowCurrentLocation = async () => {
+    setCurrentLocationMessage("");
+    setIsGettingCurrentLocation(true);
+
+    try {
+      const location = await getCurrentLocation();
+      setCurrentLocation(location);
+      setCurrentLocationFocusKey((current) => current + 1);
+      setCurrentLocationMessage("現在地を表示中");
+    } catch (error) {
+      setCurrentLocationMessage(getGeolocationFailureMessage(error));
+    } finally {
+      setIsGettingCurrentLocation(false);
+    }
   };
 
   const activeFilterCount =
@@ -1059,7 +1108,7 @@ export default function PropertiesPage() {
               multiple
               values={locationFilters}
               onValuesChange={setLocationFilters}
-              onCoordinatesChange={setFilterCoordinates}
+              onCoordinatesChange={handleLocationCoordinatesChange}
             />
             <RangeNumberInput
               label="週家賃"
@@ -1224,38 +1273,66 @@ export default function PropertiesPage() {
         ) : viewMode === "map" ? (
           <div className="space-y-4">
             <section className="rounded-2xl bg-white p-3 shadow md:p-4">
-              {mapProperties.length ? (
-                <div className="space-y-3">
-                  <div className="flex flex-col gap-1 text-sm font-bold text-gray-700 sm:flex-row sm:items-center sm:justify-between">
-                    <p>
-                      地図上のピンを選択すると、下に選択中の物件を1件だけ表示します。
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
-                        一覧表示中: {paginatedProperties.length}件
-                      </span>
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
-                        地図表示中: {mapProperties.length}件
-                      </span>
+              <div className="space-y-3">
+                <div className="flex flex-col gap-1 text-sm font-bold text-gray-700 sm:flex-row sm:items-center sm:justify-between">
+                  <p>
+                    地図上のピンを選択すると、下に選択中の物件を1件だけ表示します。
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+                      一覧表示中: {paginatedProperties.length}件
+                    </span>
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
+                      地図表示中: {mapProperties.length}件
+                    </span>
+                    <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+                      条件に一致: {filteredProperties.length}件
+                    </span>
+                    {propertiesWithoutCoordinates > 0 ? (
                       <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
-                        条件に一致: {filteredProperties.length}件
+                        位置情報なし: {propertiesWithoutCoordinates}件
                       </span>
-                      {propertiesWithoutCoordinates > 0 ? (
-                        <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">
-                          位置情報なし: {propertiesWithoutCoordinates}件
-                        </span>
-                      ) : null}
-                    </div>
+                    ) : null}
                   </div>
-                  <PublicListingsMap
-                    points={mapProperties}
-                    selectedId={selectedMapProperty?.id}
-                    onSelect={handleSelectMapProperty}
-                    type="property"
-                  />
                 </div>
-              ) : (
-                <div className="space-y-2 p-4 font-medium text-gray-700">
+                <div className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm font-medium text-gray-800 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-bold text-gray-900">
+                      現在地を地図に表示
+                    </p>
+                    {currentLocationMessage ? (
+                      <p className="mt-1 text-xs text-gray-700">
+                        {currentLocationMessage}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs text-gray-600">
+                        現在地はこの画面内だけで使用し、保存しません。
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleShowCurrentLocation}
+                    disabled={isGettingCurrentLocation}
+                    className="min-h-11 w-full rounded-lg border border-green-700 bg-white px-4 py-2 text-sm font-bold text-green-800 hover:bg-green-50 disabled:border-gray-300 disabled:text-gray-400 sm:w-auto"
+                  >
+                    {isGettingCurrentLocation
+                      ? "現在地を確認中"
+                      : currentLocation
+                        ? "現在地を更新"
+                        : "現在地を表示"}
+                  </button>
+                </div>
+                <PublicListingsMap
+                  points={mapProperties}
+                  selectedId={selectedMapProperty?.id}
+                  onSelect={handleSelectMapProperty}
+                  type="property"
+                  currentLocation={currentLocation}
+                  currentLocationFocusKey={currentLocationFocusKey}
+                />
+                {!mapProperties.length ? (
+                  <div className="space-y-2 rounded-xl border border-dashed border-gray-300 p-4 font-medium text-gray-700">
                   <p>
                     地図に表示できる座標付き物件がありません。リスト表示ではすべての物件を確認できます。
                   </p>
@@ -1264,8 +1341,9 @@ export default function PropertiesPage() {
                     <br />
                     地図表示は条件に合う座標付き物件を最大100件まで表示します。
                   </p>
-                </div>
-              )}
+                  </div>
+                ) : null}
+              </div>
             </section>
 
             {selectedMapProperty ? (

@@ -106,6 +106,7 @@ alter table public.location_options enable row level security;
 
 grant select on public.location_options to anon, authenticated, service_role;
 grant insert on public.location_options to authenticated, service_role;
+grant update on public.location_options to authenticated, service_role;
 grant all privileges on public.location_options to service_role;
 
 drop policy if exists "Allow public read active location options" on public.location_options;
@@ -123,6 +124,27 @@ create policy "Admins can insert location options"
 on public.location_options
 for insert
 to authenticated
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+);
+
+create policy "Admins can update location options"
+on public.location_options
+for update
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+)
 with check (
   exists (
     select 1

@@ -827,7 +827,12 @@ export default function JobsPage() {
               ワーホリ向け求人
             </h1>
             <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-gray-800 md:text-base md:leading-7">
-              ニュージーランドでの仕事探しに使える公開求人を確認できます。気になる求人は保存して、応募文の作成に進めます。
+              <span className="block">
+                ニュージーランドでの仕事探しに使える公開求人を確認できます。
+              </span>
+              <span className="block">
+                気になる求人は保存して、応募文の作成に進めます。
+              </span>
             </p>
           </div>
 

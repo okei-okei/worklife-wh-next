@@ -68,7 +68,14 @@ export default function ThreeLevelLocationSelector({
         },
       ];
     },
-    [locations, value.locationKey, value.locationMasterId],
+    [
+      locations,
+      value.cityDistrict,
+      value.locality,
+      value.locationKey,
+      value.locationMasterId,
+      value.region,
+    ],
   );
 
   const regions = useMemo(
@@ -146,7 +153,7 @@ export default function ThreeLevelLocationSelector({
 
       {currentLabel && !selectedExists ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs font-semibold text-amber-900">
-          現在の地域: 旧データ「{currentLabel}」。地域マスタに一致する項目がありません。
+          現在の地域: {currentLabel}。選択肢にないため、変更する場合は新しい地域を選んでください。
         </p>
       ) : null}
 

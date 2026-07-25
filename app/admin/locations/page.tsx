@@ -6,6 +6,12 @@ import { supabase } from "@/lib/supabase";
 import type { LocationOption } from "@/lib/locations/locationMaster";
 
 type AddLevel = "region" | "city_district" | "locality";
+type AdminLocationOption = LocationOption & {
+  jobUsageCount: number;
+  propertyUsageCount: number;
+  canDelete: boolean;
+  deleteReason: string;
+};
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-gray-100";
@@ -18,7 +24,7 @@ function uniqueSorted(values: string[]) {
 
 export default function AdminLocationsPage() {
   const [accessToken, setAccessToken] = useState("");
-  const [locations, setLocations] = useState<LocationOption[]>([]);
+  const [locations, setLocations] = useState<AdminLocationOption[]>([]);
   const [regionName, setRegionName] = useState("");
   const [cityParentRegion, setCityParentRegion] = useState("");
   const [cityName, setCityName] = useState("");
@@ -28,6 +34,7 @@ export default function AdminLocationsPage() {
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -39,7 +46,7 @@ export default function AdminLocationsPage() {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = (await response.json().catch(() => null)) as
-      | { locations?: LocationOption[]; error?: string }
+      | { locations?: AdminLocationOption[]; error?: string }
       | null;
 
     if (!response.ok) {
@@ -150,41 +157,38 @@ export default function AdminLocationsPage() {
     await loadLocations(accessToken);
   };
 
-  const addExistingListingLocation = async (location: LocationOption) => {
-    if (!accessToken || isSaving) return;
-    setIsSaving(true);
+  const deleteLocation = async (location: AdminLocationOption) => {
+    if (!accessToken || !location.databaseId || deletingId) return;
+    const label =
+      location.locality || location.cityDistrict || location.region || "この地域";
+    const confirmed = window.confirm(
+      `「${label}」を地域選択肢から削除しますか？\n\n既存の求人・物件データは変更されません。`,
+    );
+    if (!confirmed) return;
+
+    setDeletingId(location.databaseId);
     setError("");
     setMessage("");
 
     const response = await fetch("/api/admin/locations", {
-      method: "POST",
+      method: "DELETE",
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        level: location.level || "locality",
-        name:
-          location.level === "region"
-            ? location.region
-            : location.level === "city_district"
-              ? location.cityDistrict
-              : location.locality,
-        parentRegion: location.region,
-        parentCityDistrict: location.cityDistrict,
-      }),
+      body: JSON.stringify({ id: location.databaseId }),
     });
     const data = (await response.json().catch(() => null)) as
       | { error?: string }
       | null;
 
-    setIsSaving(false);
+    setDeletingId(null);
     if (!response.ok) {
-      setError(data?.error || "選択肢へ追加できませんでした。");
+      setError(data?.error || "地域選択肢を削除できませんでした。");
       return;
     }
 
-    setMessage("既存掲載で使用中の地域を選択肢へ追加しました。");
+    setMessage("地域選択肢を削除しました。既存の求人・物件データは変更していません。");
     await loadLocations(accessToken);
   };
 
@@ -196,7 +200,7 @@ export default function AdminLocationsPage() {
             <p className="text-sm font-bold text-blue-700">WorkLife WH Admin</p>
             <h1 className="mt-1 text-2xl font-bold md:text-4xl">地域選択肢管理</h1>
             <p className="mt-2 text-sm font-medium text-gray-700">
-              既存地域は変更せず、新しい選択肢だけを3階層で追加します。
+              求人・物件の編集や公開ページの絞り込みで使用する地域を管理します。
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -381,7 +385,7 @@ export default function AdminLocationsPage() {
             <div>
               <h2 className="text-lg font-bold">現在の選択肢</h2>
               <p className="mt-1 text-xs font-medium text-gray-600">
-                既存選択肢と管理画面から追加した選択肢を統合表示しています。
+                Region、City / District、Area / Suburbで検索できます。
               </p>
             </div>
             <label className="block md:w-72">
@@ -405,7 +409,7 @@ export default function AdminLocationsPage() {
                     <th className="px-3 py-3">Region</th>
                     <th className="px-3 py-3">City / District</th>
                     <th className="px-3 py-3">Area / Suburb</th>
-                    <th className="px-3 py-3">区分</th>
+                    <th className="px-3 py-3">使用件数</th>
                     <th className="px-3 py-3">操作</th>
                   </tr>
                 </thead>
@@ -419,31 +423,26 @@ export default function AdminLocationsPage() {
                       <td className="px-3 py-2">{location.cityDistrict || "-"}</td>
                       <td className="px-3 py-2">{location.locality || "-"}</td>
                       <td className="px-3 py-2">
-                        <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
-                          {location.level === "region"
-                            ? "Region"
-                            : location.level === "city_district"
-                              ? "City / District"
-                              : "Area / Suburb"}
+                        <span className="text-xs font-bold text-gray-700">
+                          求人{location.jobUsageCount}件・物件
+                          {location.propertyUsageCount}件
                         </span>
                       </td>
                       <td className="px-3 py-2">
-                        {location.origin === "listing" ? (
+                        {location.canDelete && location.databaseId ? (
                           <button
                             type="button"
-                            onClick={() => addExistingListingLocation(location)}
-                            disabled={isSaving}
-                            className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-800 disabled:opacity-50"
+                            onClick={() => deleteLocation(location)}
+                            disabled={deletingId === location.databaseId}
+                            className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
                           >
-                            選択肢へ追加
+                            {deletingId === location.databaseId
+                              ? "削除中..."
+                              : "削除"}
                           </button>
                         ) : (
                           <span className="text-xs font-bold text-gray-500">
-                            {location.origin === "admin"
-                              ? "管理者追加"
-                              : location.origin === "master"
-                                ? "地域マスタ"
-                                : "既存候補"}
+                            {location.deleteReason || "削除できません。"}
                           </span>
                         )}
                       </td>

@@ -605,7 +605,9 @@ export default function AdminListingsPage() {
 
   const deleteListing = async (type: ListingType, id: string) => {
     if (!accessToken) return;
-    const ok = window.confirm("この掲載を削除します。よろしいですか？");
+    const ok = window.confirm(
+      "この掲載を完全に削除します。非公開ではなく公開管理から削除されます。よろしいですか？",
+    );
     if (!ok) return;
 
     setMessage("");
@@ -621,11 +623,11 @@ export default function AdminListingsPage() {
       | null;
 
     if (!response.ok) {
-      setErrorMessage(data?.error || "掲載を削除できませんでした。");
+      setErrorMessage(data?.error || "掲載を完全に削除できませんでした。");
       return;
     }
 
-    setMessage("掲載を削除しました。");
+    setMessage("掲載を完全に削除しました。");
     await loadListings(accessToken);
   };
 

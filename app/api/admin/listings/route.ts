@@ -198,16 +198,13 @@ async function deleteListing(
   const errors: string[] = [];
 
   for (const { label, client } of clients) {
-    const result = await client.from(table).delete().eq("id", id);
-    if (!result.error) return;
+    const result = await client.from(table).delete().eq("id", id).select("id");
+    if (!result.error) {
+      if ((result.data || []).length > 0) return;
+      errors.push(`${label}: 対象の掲載が見つかりません。`);
+      continue;
+    }
     errors.push(`${label}: ${result.error.message}`);
-
-    const softDelete = await client
-      .from(table)
-      .update({ is_active: false })
-      .eq("id", id);
-    if (!softDelete.error) return;
-    errors.push(`${label} soft delete: ${softDelete.error.message}`);
   }
 
   throw new Error(errors.join(" / "));

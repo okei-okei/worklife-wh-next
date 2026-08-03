@@ -39,8 +39,8 @@ grant usage on schema public to anon, authenticated;
 grant select on public.profiles to authenticated;
 grant select, insert, update on public.listing_submissions to authenticated;
 grant insert on public.listing_submissions to anon;
-grant insert, update on public.public_jobs to authenticated;
-grant insert, update on public.public_properties to authenticated;
+grant insert, update, delete on public.public_jobs to authenticated;
+grant insert, update, delete on public.public_properties to authenticated;
 
 drop policy if exists "Anyone can submit listing applications" on public.listing_submissions;
 create policy "Anyone can submit listing applications"
@@ -143,6 +143,21 @@ with check (
   )
 );
 
+drop policy if exists "Admins can delete public jobs" on public.public_jobs;
+create policy "Admins can delete public jobs"
+on public.public_jobs
+for delete
+to authenticated
+using (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+);
+
 drop policy if exists "Admins can insert public properties" on public.public_properties;
 create policy "Admins can insert public properties"
 on public.public_properties
@@ -173,6 +188,21 @@ using (
   )
 )
 with check (
+  lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
+  or exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('admin', 'owner')
+  )
+);
+
+drop policy if exists "Admins can delete public properties" on public.public_properties;
+create policy "Admins can delete public properties"
+on public.public_properties
+for delete
+to authenticated
+using (
   lower(coalesce(auth.jwt() ->> 'email', '')) = 'worklife.wh@gmail.com'
   or exists (
     select 1

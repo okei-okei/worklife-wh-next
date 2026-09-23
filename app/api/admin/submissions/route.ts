@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
-import { normalizeNullableUuid } from "@/lib/uuid";
+import { resolveValidLocationMasterId } from "@/lib/locations/resolveValidLocationMasterId";
 
 type ListingSubmission = {
   id: string;
@@ -335,6 +335,10 @@ async function approveSubmission(
   const clients = getAdminDbClients();
   const details = getSubmissionDetails(submission);
   const imageUrls = getImageUrls(submission);
+  const locationMasterId = await resolveValidLocationMasterId(
+    clients[0].client,
+    details.location_master_id,
+  );
   let publishedRecordId: string | null = null;
   let publishedTable: string | null = null;
 
@@ -356,7 +360,7 @@ async function approveSubmission(
       suburb: details.suburb,
       area: details.area,
       address: details.address,
-      location_master_id: normalizeNullableUuid(details.location_master_id),
+      location_master_id: locationMasterId,
       region_normalized: details.region_normalized,
       territorial_authority_normalized:
         details.territorial_authority_normalized,
@@ -468,7 +472,7 @@ async function approveSubmission(
       suburb: details.suburb,
       area: details.area,
       address: details.address,
-      location_master_id: normalizeNullableUuid(details.location_master_id),
+      location_master_id: locationMasterId,
       region_normalized: details.region_normalized,
       territorial_authority_normalized:
         details.territorial_authority_normalized,

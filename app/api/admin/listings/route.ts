@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/server/adminAuth";
 import { geocodeAddress } from "@/lib/geocoder";
-import { normalizeNullableUuid } from "@/lib/locations/locationMaster";
+import { resolveValidLocationMasterId } from "@/lib/locations/resolveValidLocationMasterId";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type ListingType = "job" | "property";
@@ -268,9 +268,15 @@ export async function PATCH(request: NextRequest) {
     "territorial_authority_normalized" in body ||
     "suburb_locality_normalized" in body ||
     "location_master_id" in body;
+  const locationMasterId = hasLocationUpdate
+    ? await resolveValidLocationMasterId(
+        admin.serviceClient,
+        body.location_master_id,
+      )
+    : null;
   const locationPayload = hasLocationUpdate
     ? {
-        location_master_id: normalizeNullableUuid(body.location_master_id),
+        location_master_id: locationMasterId,
         region_normalized:
           body.region_normalized?.trim() || body.region?.trim() || null,
         territorial_authority_normalized:
@@ -353,7 +359,11 @@ export async function PATCH(request: NextRequest) {
       ? {
           title: body.title.trim(),
           company: body.company?.trim() || null,
+          ...locationPayload,
           city: body.city?.trim() || null,
+          district: body.district?.trim() || null,
+          suburb: body.suburb?.trim() || null,
+          area: body.area?.trim() || body.suburb?.trim() || null,
           address: body.address?.trim() || null,
           latitude: coordinates.latitude,
           longitude: coordinates.longitude,
@@ -367,7 +377,10 @@ export async function PATCH(request: NextRequest) {
       : {
           title: body.title.trim(),
           owner_name: body.owner_name?.trim() || null,
+          ...locationPayload,
           city: body.city?.trim() || null,
+          district: body.district?.trim() || null,
+          suburb: body.suburb?.trim() || null,
           area: body.area?.trim() || null,
           address: body.address?.trim() || null,
           latitude: coordinates.latitude,

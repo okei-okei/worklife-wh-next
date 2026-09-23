@@ -94,15 +94,15 @@ export function resolveLocation(
   const { payload, location } = payloadLocation(record);
 
   const regionCandidates: Array<[string, unknown]> = [
-    ["location_master_id", master?.region],
     ["region_normalized", record.region_normalized],
+    ["location_master_id", master?.region],
     ["region", record.region],
     ["payload.region", payload.region],
     ["payload.location.region", location.region],
   ];
   const cityCandidates: Array<[string, unknown]> = [
-    ["location_master_id", master?.cityDistrict],
     ["territorial_authority_normalized", record.territorial_authority_normalized],
+    ["location_master_id", master?.cityDistrict],
     ["city", record.city],
     ["district", record.district],
     ["major_name_normalized", record.major_name_normalized],
@@ -111,8 +111,8 @@ export function resolveLocation(
     ["payload.location.district", location.district],
   ];
   const localityCandidates: Array<[string, unknown]> = [
-    ["location_master_id", master?.locality],
     ["suburb_locality_normalized", record.suburb_locality_normalized],
+    ["location_master_id", master?.locality],
     ["suburb", record.suburb],
     ["locality", record.locality],
     ["area", record.area],

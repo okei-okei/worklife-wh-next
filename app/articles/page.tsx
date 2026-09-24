@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import AuthAwareCta from "@/components/AuthAwareCta";
+import TrackedLink from "@/components/TrackedLink";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import type { Article } from "@/lib/articles";
 import { staticArticles } from "@/lib/constants/articles";
@@ -92,12 +93,21 @@ function ArticleCard({ article }: { article: Article }) {
         更新 {formatDate(article.updated_at)}
       </p>
       <div className="mt-auto pt-3 md:pt-4">
-        <Link
+        <TrackedLink
           href={`/articles/${article.slug}`}
+          eventName="article_click"
+          targetType="article"
+          targetId={article.slug}
+          pagePath="/articles"
+          metadata={{
+            slug: article.slug,
+            category: article.category,
+            title: article.title,
+          }}
           className="block w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto md:px-4 md:py-3"
         >
           読む
-        </Link>
+        </TrackedLink>
       </div>
     </article>
   );
@@ -190,9 +200,19 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {beginnerArticles.map((article, index) => (
-              <Link
+              <TrackedLink
                 key={article.slug}
                 href={`/articles/${article.slug}`}
+                eventName="article_click"
+                targetType="article"
+                targetId={article.slug}
+                pagePath="/articles"
+                metadata={{
+                  slug: article.slug,
+                  category: article.category,
+                  title: article.title,
+                  section: "beginner",
+                }}
                 className="rounded-xl bg-gray-50 p-3 hover:bg-blue-50"
               >
                 <span className="text-xs font-bold text-blue-700">
@@ -201,7 +221,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                 <h3 className="mt-1 line-clamp-2 text-sm font-bold leading-6 text-gray-900 md:line-clamp-3">
                   {article.title}
                 </h3>
-              </Link>
+              </TrackedLink>
             ))}
           </div>
         </section>
@@ -279,9 +299,19 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           <h2 className="text-lg font-bold text-gray-900">人気記事</h2>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             {popularArticles.map((article) => (
-              <Link
+              <TrackedLink
                 key={article.slug}
                 href={`/articles/${article.slug}`}
+                eventName="article_click"
+                targetType="article"
+                targetId={article.slug}
+                pagePath="/articles"
+                metadata={{
+                  slug: article.slug,
+                  category: article.category,
+                  title: article.title,
+                  section: "popular",
+                }}
                 className="rounded-xl bg-gray-50 p-3 hover:bg-blue-50"
               >
                 <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">
@@ -290,7 +320,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                 <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-6 text-gray-900 md:line-clamp-3">
                   {article.title}
                 </h3>
-              </Link>
+              </TrackedLink>
             ))}
           </div>
         </section>

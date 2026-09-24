@@ -5,19 +5,29 @@ import { trackGAEvent } from "@/lib/services/ga";
 
 export type MetricEventName =
   | "sign_up"
+  | "signup_click"
   | "login"
+  | "login_click"
   | "planner_calculation"
+  | "simulator_click"
   | "job_saved"
+  | "save_job_click"
   | "property_saved"
+  | "save_property_click"
   | "checklist_used"
   | "email_template_generated"
   | "partners_viewed"
   | "partner_clicked"
+  | "recommendation_click"
   | "affiliate_clicked"
+  | "affiliate_click"
   | "article_viewed"
+  | "article_click"
   | "page_view"
   | "public_job_view"
   | "public_property_view"
+  | "job_detail_click"
+  | "property_detail_click"
   | "job_save"
   | "property_save"
   | "job_application_template_generate"
@@ -96,13 +106,19 @@ function getGAEventName(eventName: MetricEventName) {
     comparison_page_view: "partner_page_view",
     partners_viewed: "partner_page_view",
     register_cta_click: "register_click",
+    signup_click: "register_click",
     checklist_cta_click: "checklist_click",
     article_related_checklist_click: "checklist_click",
     checklist_partner_click: "checklist_click",
     planner_cta_click: "planner_click",
     planner_calculation: "simulation_run",
+    simulator_click: "simulation_run",
     job_saved: "job_save",
+    save_job_click: "job_save",
     property_saved: "property_save",
+    save_property_click: "property_save",
+    affiliate_click: "affiliate_link_click",
+    recommendation_click: "partner_recommendation_click",
   };
 
   return gaEventNameMap[eventName] || eventName;

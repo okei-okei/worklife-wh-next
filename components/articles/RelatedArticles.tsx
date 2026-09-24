@@ -1,4 +1,4 @@
-import Link from "next/link";
+import TrackedLink from "@/components/TrackedLink";
 import type { Article } from "@/lib/articles";
 
 export default function RelatedArticles({
@@ -34,12 +34,21 @@ export default function RelatedArticles({
               {article.excerpt || "記事の内容を確認する"}
             </p>
             <div className="mt-auto pt-4">
-              <Link
+              <TrackedLink
                 href={`/articles/${article.slug}`}
+                eventName="article_click"
+                targetType="article"
+                targetId={article.slug}
+                metadata={{
+                  slug: article.slug,
+                  category: article.category,
+                  title: article.title,
+                  section: "related",
+                }}
                 className="inline-flex w-full rounded-lg bg-blue-700 px-4 py-3 text-center text-sm font-bold text-white hover:bg-blue-800 sm:w-auto"
               >
                 読む
-              </Link>
+              </TrackedLink>
             </div>
           </article>
         ))}

@@ -45,8 +45,18 @@ type Metrics = {
       articleViewsTotal: number;
       partnerViewsTotal: number;
       checklistPartnerClicks: number;
+      pageViewsToday: number;
+      pageViews7Days: number;
+      pageViews30Days: number;
+      pageViewsTotal: number;
+      clickEventsToday: number;
+      clickEvents7Days: number;
+      clickEvents30Days: number;
+      clickEventsTotal: number;
     };
     categories: CategoryAnalytics[];
+    pageViews: Ranked[];
+    clickActions: Ranked[];
     popularServices: Ranked[];
     popularAdServices: Ranked[];
     popularArticles: Ranked[];
@@ -71,6 +81,7 @@ export default function AdminPage() {
     {error ? <p className="rounded-md border border-red-200 bg-red-50 p-4 font-bold text-red-700">{error}<span className="mt-2 block text-sm">Supabaseで最新版の analytics_and_articles.sql を実行してください。</span></p> : null}
     <section><h2 className="mb-3 text-lg font-bold">主要KPI</h2><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"><Card label="総ユーザー数" value={m?.users.total ?? 0} note={`30日アクティブ率 ${(m?.users.activeRate ?? 0).toFixed(1)}%`} /><Card label="30日間新規登録" value={m?.users.newUsers.days30 ?? 0} note={`今日 ${m?.users.newUsers.today ?? 0} / 7日 ${m?.users.newUsers.days7 ?? 0}`} /><Card label="30日アクティブ" value={m?.users.active30 ?? 0} note={`7日 ${m?.users.active7 ?? 0}`} /><Card label="紹介リンククリック" value={m?.comparison.affiliateClicks ?? 0} note={`CTR ${(m?.comparison.ctr ?? 0).toFixed(1)}%`} /></div></section>
     <section><h2 className="mb-3 text-lg font-bold">比較・記事計測KPI</h2><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5"><Card label="記事PV" value={m?.analytics?.kpis.articleViewsTotal ?? 0} note={`今日 ${m?.analytics?.kpis.articleViewsToday ?? 0} / 7日 ${m?.analytics?.kpis.articleViews7Days ?? 0}`} /><Card label="比較ページPV" value={m?.analytics?.kpis.partnerViewsTotal ?? 0} note={`今日 ${m?.analytics?.kpis.partnerViewsToday ?? 0} / 7日 ${m?.analytics?.kpis.partnerViews7Days ?? 0}`} /><Card label="広告クリック数" value={m?.analytics?.kpis.affiliateClicksTotal ?? 0} note={`今日 ${m?.analytics?.kpis.affiliateClicksToday ?? 0} / 7日 ${m?.analytics?.kpis.affiliateClicks7Days ?? 0}`} /><Card label="公式リンククリック数" value={m?.analytics?.kpis.officialClicksTotal ?? 0} note={`今日 ${m?.analytics?.kpis.officialClicksToday ?? 0} / 7日 ${m?.analytics?.kpis.officialClicks7Days ?? 0}`} /><Card label="チェックリスト遷移数" value={m?.analytics?.kpis.checklistPartnerClicks ?? 0} note="チェックリスト→比較ページ" /></div></section>
+    <section><h2 className="mb-3 text-lg font-bold">ページ閲覧・クリック計測</h2><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"><Card label="ページ閲覧数" value={m?.analytics?.kpis.pageViewsTotal ?? 0} note={`今日 ${m?.analytics?.kpis.pageViewsToday ?? 0} / 7日 ${m?.analytics?.kpis.pageViews7Days ?? 0} / 30日 ${m?.analytics?.kpis.pageViews30Days ?? 0}`} /><Card label="クリック数" value={m?.analytics?.kpis.clickEventsTotal ?? 0} note={`今日 ${m?.analytics?.kpis.clickEventsToday ?? 0} / 7日 ${m?.analytics?.kpis.clickEvents7Days ?? 0} / 30日 ${m?.analytics?.kpis.clickEvents30Days ?? 0}`} /><Card label="求人詳細クリック" value={m?.analytics?.clickActions.find((item) => item.name === "job_detail_click")?.count ?? 0} note="公開求人の詳細を見る" /><Card label="物件詳細クリック" value={m?.analytics?.clickActions.find((item) => item.name === "property_detail_click")?.count ?? 0} note="公開物件の詳細を見る" /></div></section>
     <CategoryTable rows={m?.analytics?.categories || []} />
     <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       <Group title="ユーザー" values={[["ログイン済み", m?.users.loggedIn ?? 0], ["NZ", m?.users.countries.NZ ?? 0], ["AU", m?.users.countries.AU ?? 0], ["CA", m?.users.countries.CA ?? 0], ["その他", m?.users.countries.other ?? 0], ["訪問→登録CVR", `${(m?.conversion.visitorToSignup ?? 0).toFixed(1)}%`]]} />
@@ -82,7 +93,7 @@ export default function AdminPage() {
       <Group title="リスク管理" values={[["通報", m?.risk.reports ?? 0], ["未対応通報", m?.risk.unresolvedReports ?? 0], ["問い合わせ", m?.risk.contacts ?? 0], ["プライバシー申請", m?.risk.privacyRequests ?? 0]]} />
       <Group title="地域・分類" values={[["求人カテゴリ数", m?.jobs.categories.length ?? 0], ["求人地域数", m?.jobs.regions.length ?? 0], ["物件地域数", m?.properties.regions.length ?? 0], ["比較→紹介CVR", `${(m?.conversion.partnerToAffiliate ?? 0).toFixed(1)}%`]]} />
     </section>
-    <section><h2 className="mb-3 text-lg font-bold">人気コンテンツ</h2><div className="grid grid-cols-1 gap-4 lg:grid-cols-2"><Ranking title="クリック数TOP10" items={m?.analytics?.popularServices || m?.popularPartners || []} /><Ranking title="広告クリック数TOP10" items={m?.analytics?.popularAdServices || m?.popularAffiliateLinks || []} /><Ranking title="記事閲覧数TOP10" items={m?.analytics?.popularArticles || []} /><Ranking title="記事→比較ページ遷移TOP10" items={m?.analytics?.articlePartnerTransitions || []} /></div></section>
+    <section><h2 className="mb-3 text-lg font-bold">人気コンテンツ</h2><div className="grid grid-cols-1 gap-4 lg:grid-cols-2"><Ranking title="ページ閲覧数TOP10" items={m?.analytics?.pageViews || []} /><Ranking title="アクション別クリックTOP10" items={m?.analytics?.clickActions || []} /><Ranking title="サービスクリック数TOP10" items={m?.analytics?.popularServices || m?.popularPartners || []} /><Ranking title="広告クリック数TOP10" items={m?.analytics?.popularAdServices || m?.popularAffiliateLinks || []} /><Ranking title="記事閲覧数TOP10" items={m?.analytics?.popularArticles || []} /><Ranking title="記事→比較ページ遷移TOP10" items={m?.analytics?.articlePartnerTransitions || []} /></div></section>
     <RecentEvents items={m?.analytics?.recentEvents || []} />
     <div className="flex justify-end"><Link href="/mypage" className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-center font-bold text-gray-900 hover:bg-gray-50 sm:w-auto">マイページへ戻る</Link></div>
   </div></main>;

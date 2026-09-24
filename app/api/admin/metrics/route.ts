@@ -4,6 +4,7 @@ import { getAdminContext } from "@/lib/server/adminAuth";
 type Row = Record<string, unknown>;
 type EventRow = {
   event_name: string;
+  event_type?: string | null;
   user_id: string | null;
   target_type?: string | null;
   target_id?: string | null;
@@ -12,9 +13,39 @@ type EventRow = {
   created_at: string;
 };
 const since = (days: number) => new Date(Date.now() - days * 86400000);
-const startOfToday = () => { const date = new Date(); date.setHours(0, 0, 0, 0); return date; };
+const startOfToday = () => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const year = Number(parts.find((part) => part.type === "year")?.value);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  const day = Number(parts.find((part) => part.type === "day")?.value);
+  return new Date(Date.UTC(year, month - 1, day, -9, 0, 0));
+};
 const countAfter = (values: Array<string | null | undefined>, date: Date) => values.filter((value) => value && new Date(value) >= date).length;
 const rank = (values: string[], limit = 5) => Object.entries(values.reduce<Record<string, number>>((a, value) => ({ ...a, [value || "未設定"]: (a[value || "未設定"] || 0) + 1 }), {})).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, limit);
+
+const eventAliases = {
+  partnerViews: ["partner_category_view", "comparison_page_view", "partners_viewed"],
+  partnerClicks: [
+    "partner_service_click",
+    "partner_clicked",
+    "recommendation_click",
+    "partner_recommendation_click",
+    "comparison_card_click",
+  ],
+  affiliateClicks: ["affiliate_link_click", "affiliate_clicked", "affiliate_click"],
+  officialClicks: ["official_link_click", "outbound_click"],
+  articleViews: ["article_view", "article_viewed"],
+  checklistClicks: [
+    "checklist_partner_click",
+    "checklist_partner_transition",
+    "article_related_checklist_click",
+  ],
+};
 
 export async function GET(request: NextRequest) {
   const admin = await getAdminContext(request);
@@ -38,6 +69,9 @@ export async function GET(request: NextRequest) {
     const eventCount = (...names: string[]) => events.filter((event) => names.includes(event.event_name)).length;
     const eventCountSince = (date: Date, ...names: string[]) =>
       events.filter((event) => names.includes(event.event_name) && new Date(event.created_at) >= date).length;
+    const eventMatches = (event: EventRow, names: string[]) => names.includes(event.event_name);
+    const eventCountBy = (names: string[]) => eventCount(...names);
+    const eventCountSinceBy = (date: Date, names: string[]) => eventCountSince(date, ...names);
     const eventValues = (name: string, key: string) => events.filter((event) => event.event_name === name).map((event) => String(event.metadata?.[key] || "未設定"));
     const eventMeta = (event: EventRow, key: string) => String(event.metadata?.[key] || "");
     const eventCategory = (event: EventRow) => {
@@ -75,9 +109,23 @@ export async function GET(request: NextRequest) {
     const rents = properties.map((row) => numeric(row.rent_weekly)).filter((value) => value > 0);
     const checklistUsers = new Set(checklist.map((row) => row.user_id).filter(Boolean)).size;
     const completedChecklist = checklist.filter((row) => row.is_completed === true || row.completed === true).length;
-    const partnerViews = eventCount("comparison_page_view", "partners_viewed");
-    const cardClicks = eventCount("comparison_card_click", "partner_clicked") + leads.length;
-    const affiliateClicks = Math.max(affiliates.length, eventCount("affiliate_link_click", "affiliate_clicked"));
+    const pageViewEvents = events.filter((event) => event.event_name === "page_view");
+    const normalizedPageViews = pageViewEvents.length
+      ? pageViewEvents
+      : (pageViews as unknown as EventRow[]).map((row) => ({
+          event_name: "page_view",
+          user_id: (row.user_id as string | null) || null,
+          page_path: (row.page_path as string | null) || "/",
+          metadata: {},
+          created_at: String(row.created_at),
+        }));
+    const publicPageViews = normalizedPageViews.filter((event) => {
+      const path = event.page_path || "";
+      return !path.startsWith("/admin") && !path.startsWith("/api");
+    });
+    const partnerViews = eventCountBy(eventAliases.partnerViews);
+    const cardClicks = eventCountBy(eventAliases.partnerClicks) + leads.length;
+    const affiliateClicks = Math.max(affiliates.length, eventCountBy(eventAliases.affiliateClicks));
     const publishedArticles = articles.filter((a) => a.status === "published" || a.status === "approved");
     const uniqueVisitors = new Set(pageViews.map((row) => row.visitor_id || row.user_id).filter(Boolean)).size;
     const articleRanking = [...publishedArticles].sort((a, b) => numeric(b.views) - numeric(a.views)).slice(0, 5).map((a) => ({ name: String(a.title), count: numeric(a.views), href: `/articles/${a.slug}` }));
@@ -97,12 +145,22 @@ export async function GET(request: NextRequest) {
     ];
     const categoryAnalytics = partnerCategoryLabels.map((category) => {
       const categoryEvents = events.filter((event) => eventCategory(event) === category);
-      const pageViewsCount = categoryEvents.filter((event) => event.event_name === "partner_category_view").length;
-      const serviceClicks = categoryEvents.filter((event) =>
-        ["partner_service_click", "official_link_click", "affiliate_link_click"].includes(event.event_name),
+      const pageViewsCount = categoryEvents.filter((event) =>
+        eventMatches(event, eventAliases.partnerViews),
       ).length;
-      const adClicks = categoryEvents.filter((event) => event.event_name === "affiliate_link_click").length;
-      const officialClicks = categoryEvents.filter((event) => event.event_name === "official_link_click").length;
+      const serviceClicks = categoryEvents.filter((event) =>
+        [
+          ...eventAliases.partnerClicks,
+          ...eventAliases.officialClicks,
+          ...eventAliases.affiliateClicks,
+        ].includes(event.event_name),
+      ).length;
+      const adClicks = categoryEvents.filter((event) =>
+        eventMatches(event, eventAliases.affiliateClicks),
+      ).length;
+      const officialClicks = categoryEvents.filter((event) =>
+        eventMatches(event, eventAliases.officialClicks),
+      ).length;
       return {
         category,
         pageViews: pageViewsCount,
@@ -114,20 +172,36 @@ export async function GET(request: NextRequest) {
     });
     const popularServices = rank(
       events
-        .filter((event) => ["partner_service_click", "official_link_click", "affiliate_link_click"].includes(event.event_name))
+        .filter((event) =>
+          [
+            ...eventAliases.partnerClicks,
+            ...eventAliases.officialClicks,
+            ...eventAliases.affiliateClicks,
+          ].includes(event.event_name),
+        )
         .map((event) => eventMeta(event, "serviceName") || event.target_id || "未設定"),
       10,
     );
     const popularAdServices = rank(
       events
-        .filter((event) => event.event_name === "affiliate_link_click")
+        .filter((event) => eventMatches(event, eventAliases.affiliateClicks))
         .map((event) => eventMeta(event, "serviceName") || event.target_id || "未設定"),
       10,
     );
     const popularArticleViews = rank(
       events
-        .filter((event) => event.event_name === "article_view")
+        .filter((event) => eventMatches(event, eventAliases.articleViews))
         .map((event) => eventMeta(event, "title") || eventMeta(event, "slug") || event.target_id || "未設定"),
+      10,
+    );
+    const pageViewRanking = rank(
+      publicPageViews.map((event) => event.page_path || "未設定"),
+      10,
+    );
+    const clickRanking = rank(
+      events
+        .filter((event) => event.event_type === "click" || event.event_name.endsWith("_click"))
+        .map((event) => event.event_name),
       10,
     );
     const articlePartnerClicks = rank(
@@ -160,21 +234,31 @@ export async function GET(request: NextRequest) {
       conversion: { visitorToSignup: uniqueVisitors ? countAfter(created, month) / uniqueVisitors * 100 : 0, partnerToAffiliate: partnerViews ? affiliateClicks / partnerViews * 100 : 0 },
       analytics: {
         kpis: {
-          partnerViewsToday: eventCountSince(today, "partner_category_view"),
-          partnerViews7Days: eventCountSince(week, "partner_category_view"),
-          affiliateClicksToday: eventCountSince(today, "affiliate_link_click"),
-          affiliateClicks7Days: eventCountSince(week, "affiliate_link_click"),
-          officialClicksToday: eventCountSince(today, "official_link_click"),
-          officialClicks7Days: eventCountSince(week, "official_link_click"),
-          officialClicksTotal: eventCount("official_link_click"),
-          affiliateClicksTotal: eventCount("affiliate_link_click"),
-          articleViewsTotal: eventCount("article_view"),
-          partnerViewsTotal: eventCount("partner_category_view"),
-          articleViewsToday: eventCountSince(today, "article_view"),
-          articleViews7Days: eventCountSince(week, "article_view"),
-          checklistPartnerClicks: eventCount("checklist_partner_click"),
+          partnerViewsToday: eventCountSinceBy(today, eventAliases.partnerViews),
+          partnerViews7Days: eventCountSinceBy(week, eventAliases.partnerViews),
+          affiliateClicksToday: eventCountSinceBy(today, eventAliases.affiliateClicks),
+          affiliateClicks7Days: eventCountSinceBy(week, eventAliases.affiliateClicks),
+          officialClicksToday: eventCountSinceBy(today, eventAliases.officialClicks),
+          officialClicks7Days: eventCountSinceBy(week, eventAliases.officialClicks),
+          officialClicksTotal: eventCountBy(eventAliases.officialClicks),
+          affiliateClicksTotal: eventCountBy(eventAliases.affiliateClicks),
+          articleViewsTotal: eventCountBy(eventAliases.articleViews),
+          partnerViewsTotal: eventCountBy(eventAliases.partnerViews),
+          articleViewsToday: eventCountSinceBy(today, eventAliases.articleViews),
+          articleViews7Days: eventCountSinceBy(week, eventAliases.articleViews),
+          checklistPartnerClicks: eventCountBy(eventAliases.checklistClicks),
+          pageViewsToday: publicPageViews.filter((event) => new Date(event.created_at) >= today).length,
+          pageViews7Days: publicPageViews.filter((event) => new Date(event.created_at) >= week).length,
+          pageViews30Days: publicPageViews.filter((event) => new Date(event.created_at) >= month).length,
+          pageViewsTotal: publicPageViews.length,
+          clickEventsToday: events.filter((event) => (event.event_type === "click" || event.event_name.endsWith("_click")) && new Date(event.created_at) >= today).length,
+          clickEvents7Days: events.filter((event) => (event.event_type === "click" || event.event_name.endsWith("_click")) && new Date(event.created_at) >= week).length,
+          clickEvents30Days: events.filter((event) => (event.event_type === "click" || event.event_name.endsWith("_click")) && new Date(event.created_at) >= month).length,
+          clickEventsTotal: events.filter((event) => event.event_type === "click" || event.event_name.endsWith("_click")).length,
         },
         categories: categoryAnalytics,
+        pageViews: pageViewRanking,
+        clickActions: clickRanking,
         popularServices,
         popularAdServices,
         popularArticles: popularArticleViews,

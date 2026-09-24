@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import CategoryChips, { type CategoryChip } from "@/components/ui/CategoryChips";
+import { trackMetric } from "@/lib/analytics";
 
 export type PartnerCategoryCardForSelector = {
   title: string;
@@ -142,6 +143,18 @@ export default function PartnerCategorySelector({
 
             <Link
               href={category.href}
+              onClick={() => {
+                void trackMetric("recommendation_click", {
+                  eventType: "click",
+                  targetType: "partner_category",
+                  targetId: category.href,
+                  pagePath: "/partners",
+                  metadata: {
+                    categoryTitle: category.title,
+                    destination: category.href,
+                  },
+                });
+              }}
               className="mt-4 block w-full rounded-lg bg-blue-700 px-3 py-2 text-center text-sm font-bold text-white hover:bg-blue-800 md:mt-5 md:px-4 md:py-3 md:text-base"
             >
               {category.buttonLabel}

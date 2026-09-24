@@ -12,11 +12,17 @@ function getVisitorId() {
 
 export function trackPageView(pagePath: string) {
   if (typeof window === "undefined") return;
+  const safePath = pagePath.split("?")[0] || "/";
+  const now = Date.now();
+  const key = `worklife-wh-page-view:${safePath}`;
+  const previous = Number(window.sessionStorage.getItem(key) || 0);
+  if (now - previous < 1200) return;
+  window.sessionStorage.setItem(key, String(now));
 
   const payload = JSON.stringify({
     eventName: "page_view",
     eventType: "page_view",
-    pagePath,
+    pagePath: safePath,
     metadata: { eventType: "page_view" },
     referrer: document.referrer,
     visitorId: getVisitorId(),

@@ -1362,13 +1362,25 @@ export default function JobsPage() {
                 <div className="mt-auto flex flex-col gap-2 pt-3 sm:flex-row sm:flex-wrap md:pt-5">
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      const willOpen = !expandedJobIds.includes(job.id);
+                      if (willOpen) {
+                        void trackMetric("job_detail_click", {
+                          eventType: "click",
+                          targetType: "public_job",
+                          targetId: job.id,
+                          pagePath: "/jobs",
+                          metadata: {
+                            source: viewMode,
+                          },
+                        });
+                      }
                       setExpandedJobIds((current) =>
                         current.includes(job.id)
                           ? current.filter((id) => id !== job.id)
                           : [...current, job.id],
-                      )
-                    }
+                      );
+                    }}
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
                   >
                     {expandedJobIds.includes(job.id)

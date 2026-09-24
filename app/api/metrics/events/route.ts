@@ -3,19 +3,29 @@ import { createClient } from "@supabase/supabase-js";
 
 const allowedEvents = new Set([
   "sign_up",
+  "signup_click",
   "login",
+  "login_click",
   "planner_calculation",
+  "simulator_click",
   "job_saved",
+  "save_job_click",
   "property_saved",
+  "save_property_click",
   "checklist_used",
   "email_template_generated",
   "partners_viewed",
   "partner_clicked",
+  "recommendation_click",
   "affiliate_clicked",
+  "affiliate_click",
   "article_viewed",
+  "article_click",
   "page_view",
   "public_job_view",
   "public_property_view",
+  "job_detail_click",
+  "property_detail_click",
   "job_save",
   "property_save",
   "job_application_template_generate",
@@ -50,6 +60,36 @@ const allowedEvents = new Set([
   "public_property_pin_select",
   "content_report_submit",
 ]);
+
+function sanitizeText(value: unknown, maxLength: number) {
+  if (typeof value !== "string") return null;
+  const sanitized = value.replace(/[\u0000-\u001F\u007F]/g, "").trim();
+  return sanitized ? sanitized.slice(0, maxLength) : null;
+}
+
+function sanitizeMetadata(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  const entries = Object.entries(value as Record<string, unknown>).slice(0, 30);
+  const metadata: Record<string, unknown> = {};
+
+  for (const [key, item] of entries) {
+    const safeKey = key.replace(/[\u0000-\u001F\u007F]/g, "").slice(0, 80);
+    if (!safeKey) continue;
+
+    if (
+      typeof item === "string" ||
+      typeof item === "number" ||
+      typeof item === "boolean" ||
+      item === null
+    ) {
+      metadata[safeKey] =
+        typeof item === "string" ? item.slice(0, 1000) : item;
+    }
+  }
+
+  return metadata;
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -90,34 +130,42 @@ export async function POST(request: NextRequest) {
   const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const pagePath = body.pagePath?.slice(0, 500) || null;
-  const metadata = body.metadata || {};
+  const pagePath = sanitizeText(body.pagePath, 500);
+  const metadata = sanitizeMetadata(body.metadata);
+  const targetType = sanitizeText(body.targetType, 100);
+  const targetId = sanitizeText(body.targetId, 300);
+  const eventType = sanitizeText(body.eventType, 100) || "action";
 
-  const inserts: PromiseLike<unknown>[] = [
-    serviceClient.from("analytics_events").insert({
-      user_id: userId,
-      event_name: body.eventName,
-      target_type: body.targetType?.slice(0, 100) || null,
-      target_id: body.targetId?.slice(0, 300) || null,
-      page_path: pagePath,
-      metadata,
-    }),
+  const primaryResult = await serviceClient.from("analytics_events").insert({
+    user_id: userId,
+    event_name: body.eventName,
+    target_type: targetType,
+    target_id: targetId,
+    page_path: pagePath,
+    metadata,
+  });
+
+  if (primaryResult.error) {
+    return NextResponse.json({ recorded: false }, { status: 500 });
+  }
+
+  const optionalInserts: PromiseLike<unknown>[] = [
     serviceClient.from("admin_metrics_events").insert({
       user_id: userId,
       event_name: body.eventName,
-      event_type: body.eventType?.slice(0, 100) || "action",
+      event_type: eventType,
       page_path: pagePath,
       metadata,
     }),
   ];
 
   if (body.eventName === "page_view") {
-    inserts.push(
+    optionalInserts.push(
       serviceClient.from("page_views").insert({
         user_id: userId,
-        visitor_id: body.visitorId?.slice(0, 100) || null,
+        visitor_id: sanitizeText(body.visitorId, 100),
         page_path: pagePath || "/",
-        referrer: body.referrer?.slice(0, 1000) || null,
+        referrer: sanitizeText(body.referrer, 1000),
       }),
     );
   }
@@ -127,10 +175,12 @@ export async function POST(request: NextRequest) {
     body.eventName === "partner_service_click" ||
     body.eventName === "official_link_click" ||
     body.eventName === "affiliate_clicked" ||
+    body.eventName === "affiliate_click" ||
     body.eventName === "comparison_card_click" ||
+    body.eventName === "recommendation_click" ||
     body.eventName === "affiliate_link_click"
   ) {
-    inserts.push(
+    optionalInserts.push(
       serviceClient.from("affiliate_clicks").insert({
         user_id: userId,
         service_name:
@@ -150,8 +200,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const results = await Promise.all(inserts);
-  const failed = results.some(
+  const results = await Promise.all(optionalInserts);
+  const optionalFailed = results.some(
     (result) =>
       typeof result === "object" &&
       result !== null &&
@@ -159,5 +209,5 @@ export async function POST(request: NextRequest) {
       Boolean(result.error),
   );
 
-  return NextResponse.json({ recorded: !failed }, { status: failed ? 500 : 201 });
+  return NextResponse.json({ recorded: true, optionalFailed }, { status: 201 });
 }

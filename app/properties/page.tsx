@@ -1633,13 +1633,25 @@ export default function PropertiesPage() {
                 <div className="mt-auto flex flex-col gap-2 pt-3 sm:flex-row sm:flex-wrap md:pt-5">
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      const willOpen = !expandedPropertyIds.includes(property.id);
+                      if (willOpen) {
+                        void trackMetric("property_detail_click", {
+                          eventType: "click",
+                          targetType: "public_property",
+                          targetId: property.id,
+                          pagePath: "/properties",
+                          metadata: {
+                            source: viewMode,
+                          },
+                        });
+                      }
                       setExpandedPropertyIds((current) =>
                         current.includes(property.id)
                           ? current.filter((id) => id !== property.id)
                           : [...current, property.id],
-                      )
-                    }
+                      );
+                    }}
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
                   >
                     {expandedPropertyIds.includes(property.id)

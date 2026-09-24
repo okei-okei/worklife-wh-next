@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type ImageOrientation = "landscape" | "portrait" | "square" | "unknown";
 type JobImageMode = "card" | "map" | "popup" | "detail";
@@ -56,15 +56,20 @@ export default function ResponsiveJobImage({
   mode,
   className,
 }: ResponsiveJobImageProps) {
-  const [hasImageError, setHasImageError] = useState(false);
-  const [orientation, setOrientation] =
-    useState<ImageOrientation>("unknown");
   const safeSrc = getSafeJobImageUrl(src);
-
-  useEffect(() => {
-    setHasImageError(false);
-    setOrientation("unknown");
-  }, [safeSrc]);
+  const [imageState, setImageState] = useState<{
+    src: string | null;
+    hasError: boolean;
+    orientation: ImageOrientation;
+  }>({
+    src: safeSrc,
+    hasError: false,
+    orientation: "unknown",
+  });
+  const hasImageError =
+    imageState.src === safeSrc ? imageState.hasError : false;
+  const orientation =
+    imageState.src === safeSrc ? imageState.orientation : "unknown";
 
   if (!safeSrc || hasImageError) return null;
 
@@ -86,14 +91,22 @@ export default function ResponsiveJobImage({
         alt={alt}
         className={imageClassName}
         loading="lazy"
-        onError={() => setHasImageError(true)}
+        onError={() =>
+          setImageState({
+            src: safeSrc,
+            hasError: true,
+            orientation: "unknown",
+          })
+        }
         onLoad={(event) => {
-          setOrientation(
-            getImageOrientation(
+          setImageState({
+            src: safeSrc,
+            hasError: false,
+            orientation: getImageOrientation(
               event.currentTarget.naturalWidth,
               event.currentTarget.naturalHeight,
             ),
-          );
+          });
         }}
       />
     </div>

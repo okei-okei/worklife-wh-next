@@ -1240,7 +1240,7 @@ export default function JobsPage() {
                       >
                         {savingJobId === selectedMapJob.id
                           ? "準備中..."
-                          : "応募する"}
+                          : "応募メールを作る"}
                       </button>
                       {selectedMapJob.apply_url ? (
                         <a
@@ -1249,7 +1249,7 @@ export default function JobsPage() {
                           rel="noreferrer"
                           className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
                         >
-                          外部ページを見る
+                          求人ページから応募
                         </a>
                       ) : null}
                     </div>
@@ -1400,7 +1400,7 @@ export default function JobsPage() {
                     disabled={savingJobId === job.id}
                     className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-gray-300 sm:w-auto md:px-4 md:py-3"
                   >
-                    {savingJobId === job.id ? "準備中..." : "応募する"}
+                    {savingJobId === job.id ? "準備中..." : "応募メールを作る"}
                   </button>
 
                   {job.apply_url && (
@@ -1410,7 +1410,7 @@ export default function JobsPage() {
                       rel="noreferrer"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
                     >
-                      外部ページを見る
+                      求人ページから応募
                     </a>
                   )}
                 </div>

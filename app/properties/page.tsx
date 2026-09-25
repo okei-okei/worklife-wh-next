@@ -1491,7 +1491,7 @@ export default function PropertiesPage() {
                     >
                       {savingPropertyId === selectedMapProperty.id
                         ? "準備中..."
-                        : "問い合わせる"}
+                        : "問い合わせメールを作る"}
                     </button>
                     {selectedMapProperty.url ? (
                       <a
@@ -1500,7 +1500,7 @@ export default function PropertiesPage() {
                         rel="noreferrer"
                         className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto"
                       >
-                        物件ページを見る
+                        物件ページから問い合わせ
                       </a>
                     ) : null}
                   </div>
@@ -1673,7 +1673,7 @@ export default function PropertiesPage() {
                   >
                     {savingPropertyId === property.id
                       ? "準備中..."
-                      : "問い合わせる"}
+                      : "問い合わせメールを作る"}
                   </button>
 
                   {property.url && (
@@ -1683,7 +1683,7 @@ export default function PropertiesPage() {
                       rel="noreferrer"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-sm font-bold text-gray-900 hover:bg-gray-50 sm:w-auto md:px-4 md:py-3"
                     >
-                      物件ページを見る
+                      物件ページから問い合わせ
                     </a>
                   )}
                 </div>
